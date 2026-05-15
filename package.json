@@ -1,0 +1,12 @@
+{
+  "name": "careerforge-root",
+  "version": "1.0.0",
+  "description": "Root package for CareerForge",
+  "scripts": {
+    "seed": "cd backend && npm run seed",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  }
+}
