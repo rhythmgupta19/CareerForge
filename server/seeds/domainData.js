@@ -7,7 +7,8 @@ const domains = [
     color: '#6366f1',
     difficultyLevel: 'beginner',
     estimatedDuration: '4-6 months',
-    order: 1
+    order: 1,
+    certificationLink: 'https://www.freecodecamp.org/learn/2022/responsive-web-design/'
   },
   {
     name: 'Data Science',
@@ -17,7 +18,8 @@ const domains = [
     color: '#10b981',
     difficultyLevel: 'intermediate',
     estimatedDuration: '5-7 months',
-    order: 2
+    order: 2,
+    certificationLink: 'https://www.coursera.org/professional-certificates/ibm-data-science'
   },
   {
     name: 'Data Analytics',
@@ -27,7 +29,8 @@ const domains = [
     color: '#f59e0b',
     difficultyLevel: 'beginner',
     estimatedDuration: '3-5 months',
-    order: 3
+    order: 3,
+    certificationLink: 'https://grow.google/certificates/data-analytics/'
   },
   {
     name: 'DevOps',
@@ -37,7 +40,8 @@ const domains = [
     color: '#ef4444',
     difficultyLevel: 'intermediate',
     estimatedDuration: '5-7 months',
-    order: 4
+    order: 4,
+    certificationLink: 'https://aws.amazon.com/certification/certified-devops-engineer-professional/'
   },
   {
     name: 'Cloud Computing',
@@ -47,7 +51,8 @@ const domains = [
     color: '#3b82f6',
     difficultyLevel: 'intermediate',
     estimatedDuration: '5-8 months',
-    order: 5
+    order: 5,
+    certificationLink: 'https://cloud.google.com/learn/certification'
   },
   {
     name: 'Cybersecurity',
@@ -57,7 +62,8 @@ const domains = [
     color: '#8b5cf6',
     difficultyLevel: 'intermediate',
     estimatedDuration: '5-7 months',
-    order: 6
+    order: 6,
+    certificationLink: 'https://grow.google/certificates/cybersecurity/'
   },
   {
     name: 'App Development',
@@ -67,7 +73,8 @@ const domains = [
     color: '#06b6d4',
     difficultyLevel: 'beginner',
     estimatedDuration: '4-6 months',
-    order: 7
+    order: 7,
+    certificationLink: 'https://developers.google.com/certification/associate-android-developer'
   },
   {
     name: 'AI/ML',
@@ -77,7 +84,8 @@ const domains = [
     color: '#ec4899',
     difficultyLevel: 'advanced',
     estimatedDuration: '6-9 months',
-    order: 8
+    order: 8,
+    certificationLink: 'https://www.coursera.org/specializations/machine-learning-introduction'
   },
   {
     name: 'Blockchain',
@@ -87,7 +95,8 @@ const domains = [
     color: '#f97316',
     difficultyLevel: 'advanced',
     estimatedDuration: '5-7 months',
-    order: 9
+    order: 9,
+    certificationLink: 'https://www.coursera.org/specializations/blockchain'
   },
   {
     name: 'UI/UX',
@@ -97,7 +106,8 @@ const domains = [
     color: '#a855f7',
     difficultyLevel: 'beginner',
     estimatedDuration: '3-5 months',
-    order: 10
+    order: 10,
+    certificationLink: 'https://grow.google/certificates/ux-design/'
   },
   {
     name: 'Database Administration',
@@ -107,7 +117,8 @@ const domains = [
     color: '#14b8a6',
     difficultyLevel: 'intermediate',
     estimatedDuration: '4-6 months',
-    order: 11
+    order: 11,
+    certificationLink: 'https://education.oracle.com/oracle-database-administration-i/pExam_1Z0-082'
   },
   {
     name: 'QA Testing',
@@ -117,7 +128,8 @@ const domains = [
     color: '#84cc16',
     difficultyLevel: 'beginner',
     estimatedDuration: '3-5 months',
-    order: 12
+    order: 12,
+    certificationLink: 'https://www.istqb.org/certifications/certified-tester-foundation-level'
   },
   {
     name: 'DSA',
@@ -127,7 +139,8 @@ const domains = [
     color: '#eab308',
     difficultyLevel: 'intermediate',
     estimatedDuration: '4-6 months',
-    order: 13
+    order: 13,
+    certificationLink: 'https://www.hackerrank.com/skills-verification/data_structures'
   },
   {
     name: 'Open Source',
@@ -137,7 +150,8 @@ const domains = [
     color: '#22c55e',
     difficultyLevel: 'beginner',
     estimatedDuration: '2-4 months',
-    order: 14
+    order: 14,
+    certificationLink: 'https://summerofcode.withgoogle.com/'
   }
 ];
 

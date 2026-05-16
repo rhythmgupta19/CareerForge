@@ -7,6 +7,8 @@ import {
 } from 'react-icons/fi';
 import { MdOutlineDashboard } from "react-icons/md";
 
+import logo from '../assets/logo.png';
+
 const Sidebar = ({ isAdmin }) => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -38,7 +40,9 @@ const Sidebar = ({ isAdmin }) => {
       <div className="flex flex-col h-full w-full">
         {/* Brand */}
         <div className="mb-12 px-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20">CF</div>
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-primary/10">
+            <img src={logo} alt="CareerForge Logo" className="w-full h-full object-contain" />
+          </div>
           <div>
             <h1 className="text-2xl font-black text-[#1a1a1a] tracking-tight">CareerForge</h1>
             <div className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] -mt-1">Future Architect</div>

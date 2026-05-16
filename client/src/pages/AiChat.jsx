@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { FiSend, FiTrash2, FiUser, FiCpu } from 'react-icons/fi';
+import { FiSend, FiTrash2, FiUser, FiCpu, FiMessageSquare, FiInfo, FiPlus } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
+import { motion, AnimatePresence } from 'framer-motion';
+import aiLogo from '../assets/ai-logo.png';
 
 const AiChat = () => {
   const { user } = useAuth();
@@ -25,7 +27,6 @@ const AiChat = () => {
     try {
       const res = await api.get('/ai/history');
       if (res.data.data.length === 0) {
-        // Add initial greeting
         setMessages([{
           _id: 'initial',
           role: 'assistant',
@@ -52,7 +53,6 @@ const AiChat = () => {
     const userMessage = input.trim();
     setInput('');
     
-    // Optimistic UI update
     const newMsg = { _id: Date.now(), role: 'user', content: userMessage };
     setMessages(prev => [...prev, newMsg]);
     setSending(true);
@@ -62,7 +62,6 @@ const AiChat = () => {
       setMessages(prev => [...prev, { _id: Date.now() + 1, role: 'assistant', content: res.data.data.message }]);
     } catch (err) {
       toast.error('Failed to get response');
-      // Remove failed message
       setMessages(prev => prev.filter(m => m._id !== newMsg._id));
     } finally {
       setSending(false);
@@ -88,94 +87,142 @@ const AiChat = () => {
     "What should be my next step?",
     "How to prepare for interviews?",
     "Suggest a good project idea",
-    "I'm stuck, how to improve?"
+    "Explain React hooks clearly"
   ];
 
   if (loading) return <div className="flex justify-center py-20"><div className="spinner"></div></div>;
 
   return (
-    <div className="fade-in max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <FiCpu className="text-indigo-400" /> AI Career Mentor
-          </h1>
-          <p className="text-sm text-slate-400">Ask anything about your learning path</p>
+    <div className="flex flex-col h-[calc(100vh-100px)] max-w-5xl mx-auto px-4">
+      {/* Header */}
+      <div className="flex items-center justify-between py-6 border-b border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-primary/10">
+            <img src={aiLogo} alt="AI Mentor Logo" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-[#1a1a1a] tracking-tight">AI Mentor</h1>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Active System</span>
+            </div>
+          </div>
         </div>
-        <button onClick={handleClear} className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-slate-800 transition-colors" title="Clear History">
-          <FiTrash2 />
+        <button 
+          onClick={handleClear} 
+          className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+          title="Clear History"
+        >
+          <FiTrash2 size={20} />
         </button>
       </div>
 
-      <div className="glass flex-1 flex flex-col overflow-hidden rounded-2xl border border-slate-700/50">
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-          {messages.map((msg) => (
-            <div key={msg._id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`flex items-center gap-2 mb-1 px-1 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${msg.role === 'user' ? 'bg-indigo-500 text-white' : 'bg-pink-500 text-white'}`}>
-                  {msg.role === 'user' ? <FiUser /> : <FiCpu />}
-                </div>
-                <span className="text-xs text-slate-400 font-medium">{msg.role === 'user' ? 'You' : 'CareerForge AI'}</span>
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto py-8 space-y-8 custom-scrollbar scroll-smooth">
+        <AnimatePresence initial={false}>
+          {messages.map((msg, idx) => (
+            <motion.div 
+              key={msg._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`flex gap-4 md:gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            >
+              <div className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden flex items-center justify-center text-xl shadow-sm ${
+                msg.role === 'user' ? 'bg-white border-2 border-gray-100 text-[#1a1a1a]' : 'bg-white shadow-lg shadow-primary/10'
+              }`}>
+                {msg.role === 'user' ? <FiUser /> : <img src={aiLogo} alt="AI" className="w-full h-full object-contain p-2" />}
               </div>
               
-              <div className={`text-sm ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai text-slate-200'}`}>
-                {msg.role === 'user' ? (
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
-                ) : (
-                  <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-headings:mb-2 prose-headings:mt-4 prose-ul:my-1 prose-li:my-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                )}
+              <div className={`max-w-[85%] md:max-w-[75%] space-y-2 ${msg.role === 'user' ? 'items-end text-right' : ''}`}>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+                  {msg.role === 'user' ? 'You' : 'CareerForge AI'}
+                </div>
+                <div className={`p-5 rounded-3xl text-sm leading-relaxed ${
+                  msg.role === 'user' 
+                    ? 'bg-primary text-white shadow-xl shadow-primary/10 rounded-tr-none font-medium' 
+                    : 'bg-white border-2 border-gray-50 text-[#1a1a1a] shadow-sm rounded-tl-none'
+                }`}>
+                  {msg.role === 'user' ? (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  ) : (
+                    <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:font-black prose-headings:text-[#1a1a1a] prose-strong:text-primary">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-          {sending && (
-            <div className="flex flex-col items-start">
-              <div className="chat-bubble-ai text-slate-400 flex items-center gap-2">
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+        </AnimatePresence>
 
-        {/* Suggested Questions */}
-        {messages.length <= 2 && (
-          <div className="px-6 py-2 flex flex-wrap gap-2">
+        {sending && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex gap-6"
+          >
+            <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-primary/10">
+              <img src={aiLogo} alt="AI" className="w-full h-full object-contain p-2" />
+            </div>
+            <div className="bg-white border-2 border-gray-50 p-6 rounded-3xl rounded-tl-none shadow-sm flex gap-1">
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </motion.div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area Container */}
+      <div className="pb-8 pt-4">
+        {/* Suggested Actions */}
+        {messages.length <= 2 && !sending && (
+          <div className="flex flex-wrap gap-2 mb-6">
             {commonQuestions.map((q, i) => (
               <button 
                 key={i} 
                 onClick={() => setInput(q)}
-                className="text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-100 hover:border-primary/30 hover:bg-primary/5 text-xs font-bold text-gray-500 hover:text-primary rounded-full transition-all"
               >
-                {q}
+                <FiPlus className="text-gray-300" /> {q}
               </button>
             ))}
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="p-4 bg-[#0a0a0f]/80 border-t border-slate-700/50">
-          <form onSubmit={handleSend} className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask for guidance, project ideas, or roadmaps..."
-              className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors"
-              disabled={sending}
-            />
+        {/* Real Input */}
+        <form 
+          onSubmit={handleSend} 
+          className="relative bg-white border-2 border-gray-100 rounded-[2rem] p-2 focus-within:border-primary/30 focus-within:shadow-2xl focus-within:shadow-primary/5 transition-all"
+        >
+          <div className="flex items-center">
+            <div className="flex-1 px-4">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message your AI Mentor..."
+                className="w-full py-4 text-sm font-medium text-[#1a1a1a] placeholder-gray-400 focus:outline-none bg-transparent"
+                disabled={sending}
+              />
+            </div>
             <button 
               type="submit" 
               disabled={!input.trim() || sending}
-              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${!input.trim() || sending ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-indigo-500 text-white hover:bg-indigo-600'}`}
+              className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all ${
+                !input.trim() || sending 
+                  ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
+                  : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95'
+              }`}
             >
-              <FiSend />
+              <FiSend size={24} />
             </button>
-          </form>
+          </div>
+        </form>
+        <div className="flex items-center justify-center gap-2 mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+           <FiInfo className="text-primary" /> CareerForge AI can make mistakes. Verify important information.
         </div>
       </div>
     </div>

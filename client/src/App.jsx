@@ -28,7 +28,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" toastOptions={{ className: 'premium-toast', style: { background: '#ffffff', color: '#101828', border: '1px solid #eaecf0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(16, 24, 40, 0.1)' } }} />
+        <Toaster position="top-right" toastOptions={{ className: 'premium-toast', style: { background: '#ffffff', color: '#1a1a1a', border: '1px solid #e5e7eb', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' } }} />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />

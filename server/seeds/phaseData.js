@@ -38,7 +38,7 @@ const phaseData = {
     { phaseNumber: 9, name: 'Dashboard Project', description: 'Build interactive dashboards', estimatedDuration: '1 week' },
     { phaseNumber: 10, name: 'Final Analytics Case Study', description: 'Real-world business analytics project', estimatedDuration: '2 weeks' }
   ],
-  'devops-engineering': [
+  'devops': [
     { phaseNumber: 1, name: 'Linux Basics', description: 'Commands, file system, permissions', estimatedDuration: '1 week' },
     { phaseNumber: 2, name: 'Networking Basics', description: 'TCP/IP, DNS, HTTP, firewalls', estimatedDuration: '1 week' },
     { phaseNumber: 3, name: 'Git & GitHub', description: 'Version control for DevOps', estimatedDuration: '3 days' },
@@ -93,7 +93,7 @@ const phaseData = {
     { phaseNumber: 10, name: 'App Deployment', description: 'Play Store, App Store publishing', estimatedDuration: '1 week' },
     { phaseNumber: 11, name: 'Final Mobile App Project', description: 'Full-featured cross-platform app', estimatedDuration: '2 weeks' }
   ],
-  'ai-ml-engineering': [
+  'ai-ml': [
     { phaseNumber: 1, name: 'Python Basics', description: 'Python for ML', estimatedDuration: '2 weeks' },
     { phaseNumber: 2, name: 'Math for ML', description: 'Linear algebra, calculus, optimization', estimatedDuration: '2 weeks' },
     { phaseNumber: 3, name: 'Statistics', description: 'Probability, distributions, Bayes', estimatedDuration: '1 week' },
@@ -106,7 +106,7 @@ const phaseData = {
     { phaseNumber: 10, name: 'Model Deployment', description: 'FastAPI, Flask, Docker for ML', estimatedDuration: '1 week' },
     { phaseNumber: 11, name: 'Final AI/ML Project', description: 'Build and deploy a production ML model', estimatedDuration: '2 weeks' }
   ],
-  'blockchain-development': [
+  'blockchain': [
     { phaseNumber: 1, name: 'Blockchain Fundamentals', description: 'Blocks, chains, consensus, wallets', estimatedDuration: '1 week' },
     { phaseNumber: 2, name: 'Cryptography Basics', description: 'Hashing, digital signatures, keys', estimatedDuration: '1 week' },
     { phaseNumber: 3, name: 'Ethereum Basics', description: 'EVM, accounts, gas, transactions', estimatedDuration: '1 week' },
@@ -119,7 +119,7 @@ const phaseData = {
     { phaseNumber: 10, name: 'Deployment', description: 'Testnet and mainnet deployment', estimatedDuration: '1 week' },
     { phaseNumber: 11, name: 'Final DApp Project', description: 'Full decentralized application', estimatedDuration: '2 weeks' }
   ],
-  'ui-ux-design': [
+  'ui-ux': [
     { phaseNumber: 1, name: 'Design Fundamentals', description: 'Principles of visual design', estimatedDuration: '1 week' },
     { phaseNumber: 2, name: 'Color Theory', description: 'Color palettes, psychology, accessibility', estimatedDuration: '3 days' },
     { phaseNumber: 3, name: 'Typography', description: 'Font selection, hierarchy, spacing', estimatedDuration: '3 days' },
@@ -145,7 +145,7 @@ const phaseData = {
     { phaseNumber: 10, name: 'Security', description: 'Encryption, auditing, compliance', estimatedDuration: '1 week' },
     { phaseNumber: 11, name: 'Final Database Project', description: 'Design and optimize production DB', estimatedDuration: '2 weeks' }
   ],
-  'software-testing-qa': [
+  'qa-testing': [
     { phaseNumber: 1, name: 'Testing Fundamentals', description: 'Types of testing, QA lifecycle', estimatedDuration: '1 week' },
     { phaseNumber: 2, name: 'Manual Testing', description: 'Test planning, execution', estimatedDuration: '1 week' },
     { phaseNumber: 3, name: 'Test Cases', description: 'Writing effective test cases', estimatedDuration: '1 week' },
@@ -158,7 +158,7 @@ const phaseData = {
     { phaseNumber: 10, name: 'Performance Testing Basics', description: 'JMeter, load testing', estimatedDuration: '1 week' },
     { phaseNumber: 11, name: 'Final QA Project', description: 'Complete test suite for a web app', estimatedDuration: '2 weeks' }
   ],
-  'competitive-programming-dsa': [
+  'dsa': [
     { phaseNumber: 1, name: 'Programming Basics', description: 'Language syntax, I/O, basics', estimatedDuration: '1 week' },
     { phaseNumber: 2, name: 'Time & Space Complexity', description: 'Big O, analysis', estimatedDuration: '3 days' },
     { phaseNumber: 3, name: 'Arrays', description: 'Array operations, two pointers, sliding window', estimatedDuration: '1 week' },
@@ -174,7 +174,7 @@ const phaseData = {
     { phaseNumber: 13, name: 'Dynamic Programming', description: 'Memoization, tabulation, classic DP', estimatedDuration: '2 weeks' },
     { phaseNumber: 14, name: 'Greedy & Final Challenge', description: 'Greedy algorithms and contest', estimatedDuration: '1 week' }
   ],
-  'open-source-contribution': [
+  'open-source': [
     { phaseNumber: 1, name: 'Git Basics', description: 'Init, commit, push, pull', estimatedDuration: '3 days' },
     { phaseNumber: 2, name: 'GitHub Basics', description: 'Repos, forks, stars, issues', estimatedDuration: '3 days' },
     { phaseNumber: 3, name: 'Markdown', description: 'README, docs, formatting', estimatedDuration: '2 days' },

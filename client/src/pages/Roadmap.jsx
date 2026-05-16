@@ -180,6 +180,7 @@ const Roadmap = () => {
 };
 
 const TopicsList = ({ phaseId, isTopicCompleted, activeLevel }) => {
+  const { user } = useAuth();
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -195,11 +196,47 @@ const TopicsList = ({ phaseId, isTopicCompleted, activeLevel }) => {
   if (!phaseId) return <div className="text-center py-10 text-gray-400 italic">No missions defined for this level yet.</div>;
   if (loading) return <div className="text-center py-10"><div className="spinner w-8 h-8 border-2 mx-auto"></div></div>;
 
+  const learnerType = user?.profile?.onboardingAnswers?.learner_type || 'mixed';
+  
+  const filteredTopics = topics.filter(t => {
+     if (t.title.includes('Video Learner Overview') && learnerType !== 'video') return false;
+     if (t.title.includes('Practice Learner Overview') && learnerType !== 'practice') return false;
+     if (t.title.includes('Project Based Learner Overview') && learnerType !== 'project') return false;
+     if (t.title.includes('Mixed Learner Overview') && learnerType !== 'mixed') return false;
+     return true;
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {topics.map((topic, i) => {
+      {filteredTopics.map((topic, i) => {
         const completed = isTopicCompleted(topic._id);
         
+        let isLocked = false;
+        if (topic.title === 'Final Assessment') {
+           const tempAssignment = topics.find(t => t.title === 'Temporary Assignment');
+           if (tempAssignment && !isTopicCompleted(tempAssignment._id)) {
+              isLocked = true;
+           }
+        }
+
+        if (isLocked) {
+           return (
+             <div key={topic._id} className="group p-6 rounded-2xl border-2 bg-gray-50 border-gray-200 opacity-60 flex items-center justify-between cursor-not-allowed">
+               <div className="flex items-center gap-5">
+                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl bg-gray-200 text-gray-400">
+                   <FiLock />
+                 </div>
+                 <div>
+                   <h4 className="font-black text-gray-500">{topic.title}</h4>
+                   <div className="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest flex items-center gap-2">
+                     <span>Complete previous assignment to unlock</span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+           );
+        }
+
         return (
           <Link 
             key={topic._id} 

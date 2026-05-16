@@ -5,73 +5,117 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const questions = [
-  {
-    id: 'coding_experience',
-    question: "Have you done coding before?",
-    options: [
-      { label: "Never touched coding", value: "none", description: "I'm starting from absolute zero." },
-      { label: "Basic college coding", value: "basic", description: "I know concepts like loops and variables." },
-      { label: "Built small projects", value: "projects", description: "I've made some basic apps or websites." },
-      { label: "Know frontend basics", value: "frontend", description: "I'm comfortable with HTML/CSS/JS." },
-      { label: "Intermediate developer", value: "intermediate", description: "I've worked with frameworks like React." }
-    ]
-  },
-  {
+const getQuestions = (domainSlug) => {
+  const commonQuestions = [
+    {
+      id: 'coding_experience',
+      question: "What is your current experience level?",
+      options: [
+        { label: "Absolute Beginner", value: "none", description: "I'm starting from absolute zero." },
+        { label: "Basics Clear", value: "basic", description: "I know the foundational concepts." },
+        { label: "Built small projects", value: "projects", description: "I've made some basic projects." },
+        { label: "Intermediate", value: "intermediate", description: "I've worked with frameworks/tools." },
+        { label: "Advanced", value: "advanced", description: "I'm looking for mastery." }
+      ]
+    }
+  ];
+
+  let techQuestion = {
     id: 'technologies',
     question: "Which technologies do you know?",
     multiple: true,
-    options: [
-      { label: "HTML", value: "html" },
-      { label: "CSS", value: "css" },
+    options: []
+  };
+
+  if (domainSlug === 'web-development') {
+    techQuestion.options = [
+      { label: "HTML/CSS", value: "html_css" },
       { label: "JavaScript", value: "js" },
       { label: "React", value: "react" },
       { label: "Node.js", value: "node" },
       { label: "MongoDB", value: "mongo" },
-      { label: "Git", value: "git" },
       { label: "None", value: "none" }
-    ]
-  },
-  {
-    id: 'web_page',
-    question: "Can you build a basic responsive webpage?",
-    options: [
-      { label: "No", value: "no" },
-      { label: "Somewhat", value: "somewhat" },
-      { label: "Yes confidently", value: "yes" }
-    ]
-  },
-  {
-    id: 'goal',
-    question: "What is your main goal?",
-    options: [
-      { label: "Internship", value: "internship" },
-      { label: "Job", value: "job" },
-      { label: "Freelancing", value: "freelancing" },
-      { label: "Startup", value: "startup" },
-      { label: "Exploration", value: "exploration" }
-    ]
-  },
-  {
-    id: 'daily_time',
-    question: "How much time can you give daily?",
-    options: [
-      { label: "30 mins", value: 30 },
-      { label: "1 hour", value: 60 },
-      { label: "2+ hours", value: 120 }
-    ]
-  },
-  {
-    id: 'learner_type',
-    question: "What type of learner are you?",
-    options: [
-      { label: "Video learner", value: "video" },
-      { label: "Practice-first", value: "practice" },
-      { label: "Project-based", value: "project" },
-      { label: "Mixed", value: "mixed" }
-    ]
+    ];
+  } else if (domainSlug === 'data-science' || domainSlug === 'data-analytics' || domainSlug === 'ai-ml') {
+    techQuestion.options = [
+      { label: "Python", value: "python" },
+      { label: "SQL", value: "sql" },
+      { label: "Pandas/NumPy", value: "pandas" },
+      { label: "Machine Learning Basics", value: "ml" },
+      { label: "Deep Learning", value: "dl" },
+      { label: "None", value: "none" }
+    ];
+  } else if (domainSlug === 'devops' || domainSlug === 'cloud-computing') {
+    techQuestion.options = [
+      { label: "Linux Basics", value: "linux" },
+      { label: "Networking", value: "networking" },
+      { label: "Docker/Containers", value: "docker" },
+      { label: "AWS/Azure/GCP", value: "cloud" },
+      { label: "Kubernetes", value: "k8s" },
+      { label: "None", value: "none" }
+    ];
+  } else if (domainSlug === 'app-development') {
+    techQuestion.options = [
+      { label: "Java/Kotlin", value: "android" },
+      { label: "Swift", value: "ios" },
+      { label: "Flutter/Dart", value: "flutter" },
+      { label: "React Native", value: "react_native" },
+      { label: "None", value: "none" }
+    ];
+  } else {
+    techQuestion.options = [
+      { label: "Basic Programming", value: "basic_prog" },
+      { label: "Object Oriented", value: "oop" },
+      { label: "Databases", value: "db" },
+      { label: "Version Control (Git)", value: "git" },
+      { label: "None", value: "none" }
+    ];
   }
-];
+
+  const otherQuestions = [
+    {
+      id: 'domain_specific',
+      question: `Are you familiar with the core concepts of ${domainSlug?.replace('-', ' ')}?`,
+      options: [
+        { label: "No", value: "no" },
+        { label: "Somewhat", value: "somewhat" },
+        { label: "Yes confidently", value: "yes" }
+      ]
+    },
+    {
+      id: 'goal',
+      question: "What is your main goal?",
+      options: [
+        { label: "Internship", value: "internship" },
+        { label: "Job", value: "job" },
+        { label: "Freelancing", value: "freelancing" },
+        { label: "Startup", value: "startup" },
+        { label: "Exploration", value: "exploration" }
+      ]
+    },
+    {
+      id: 'daily_time',
+      question: "How much time can you give daily?",
+      options: [
+        { label: "30 mins", value: 30 },
+        { label: "1 hour", value: 60 },
+        { label: "2+ hours", value: 120 }
+      ]
+    },
+    {
+      id: 'learner_type',
+      question: "What type of learner are you?",
+      options: [
+        { label: "Video learner", value: "video" },
+        { label: "Practice-first", value: "practice" },
+        { label: "Project-based", value: "project" },
+        { label: "Mixed", value: "mixed" }
+      ]
+    }
+  ];
+
+  return [...commonQuestions, techQuestion, ...otherQuestions];
+};
 
 const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -79,6 +123,9 @@ const Onboarding = () => {
   const [loading, setLoading] = useState(false);
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+
+  const domainSlug = user?.selectedDomain?.slug || 'web-development';
+  const questions = getQuestions(domainSlug);
 
   const handleOptionSelect = (value) => {
     const q = questions[currentStep];
@@ -135,7 +182,7 @@ const Onboarding = () => {
   const progress = ((currentStep + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#fdfcfb]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#fafafa]">
       <div className="w-full max-w-xl mb-12">
         <div className="flex justify-between items-center mb-4">
           <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Step {currentStep + 1} of {questions.length}</span>

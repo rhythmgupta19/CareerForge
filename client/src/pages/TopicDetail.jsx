@@ -87,7 +87,7 @@ const TopicDetail = () => {
   const videoId = getYouTubeId(topic.youtubeLink);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-100px)] bg-[#fdfcfb]">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-100px)] bg-[#fafafa]">
       
       {/* LEFT SIDEBAR: Roadmap Progression (Locked/Unlocked) */}
       <div className="w-full lg:w-72 flex-shrink-0 bg-white border-r border-gray-100 hidden lg:block overflow-y-auto">
@@ -155,7 +155,7 @@ const TopicDetail = () => {
 
           {/* Video Player */}
           <div className="card-glass overflow-hidden aspect-video relative group bg-black shadow-2xl rounded-3xl">
-            {videoId ? (
+            {videoId && videoId !== 'dQw4w9WgXcQ' ? (
               <iframe
                 className="w-full h-full"
                 src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`}
@@ -164,6 +164,12 @@ const TopicDetail = () => {
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
+            ) : videoId === 'dQw4w9WgXcQ' ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900 text-gray-400 p-10 text-center">
+                <FiYoutube className="text-6xl mb-4 text-red-500/50" />
+                <h3 className="font-black text-xl text-white mb-2">Link Not Available</h3>
+                <p className="font-medium text-gray-500">Cannot connect to the video source. This will be updated manually soon.</p>
+              </div>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-10 text-center">
                 <FiYoutube className="text-6xl mb-4 opacity-20" />

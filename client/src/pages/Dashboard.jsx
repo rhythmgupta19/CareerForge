@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
-import { FiTarget, FiAward, FiClock, FiActivity, FiArrowRight, FiCalendar, FiBook, FiChevronRight, FiZap, FiStar } from 'react-icons/fi';
+import { FiTarget, FiAward, FiClock, FiActivity, FiArrowRight, FiCalendar, FiBook, FiChevronRight, FiZap, FiStar, FiExternalLink } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -229,6 +229,32 @@ const Dashboard = () => {
               </Link>
             </div>
           </div>
+
+          {/* Official Certification Card */}
+          {user.selectedDomain?.certificationLink && (
+            <div className="card p-10 bg-gradient-to-br from-blue-600 to-blue-800 text-white relative overflow-hidden group border-none shadow-2xl shadow-blue-500/20">
+              <div className="absolute top-0 right-0 p-6 opacity-10">
+                <FiAward size={120} />
+              </div>
+              <div className="relative z-10">
+                <div className="px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest mb-6 inline-block">
+                  Official Certification
+                </div>
+                <h3 className="text-3xl font-black mb-4 tracking-tight">Get Industry Certified</h3>
+                <p className="text-indigo-100 font-medium mb-8 text-lg leading-relaxed">
+                  Ready to validate your skills? This official {user.selectedDomain.name} certification is recognized by top tech companies globally.
+                </p>
+                <a 
+                  href={user.selectedDomain.certificationLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full py-5 bg-white text-primary rounded-2xl font-black transition-all hover:bg-indigo-50 shadow-xl shadow-white/10"
+                >
+                  Claim My Certificate <FiExternalLink className="text-lg" />
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Deep Work Heatmap */}
           <div className="card p-10 bg-white border-gray-100">
