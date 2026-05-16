@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Color Palette - Humanized & Warm */
+  --bg-main: #fdfcfb; /* Very light warm cream */
+  --bg-sub: #f8f7f4;
+  --bg-card: #ffffff;
+  
+  --primary: #5856d6; /* Softer purple/blue */
+  --primary-light: #f0efff;
+  --primary-hover: #4543b5;
+  
+  --success: #10b981; /* Emerald */
+  --success-light: #ecfdf5;
+  
+  --accent: #f59e0b; /* Warm Amber */
+  --accent-light: #fffbeb;
+  
+  --border: #e9e5e0;
+  --border-light: #f3f0ec;
+  
+  --text-main: #2d2d2d;
+  --text-muted: #6b6b6b;
+  --text-light: #9a9a9a;
+  
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.02);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.06);
+}
+
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+/* Custom Scrollbar - Minimalist */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e0ddd8; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #d0cdc7; }
+
+/* Components */
+
+/* Premium Card - Soft & Rounded */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: #d8d4cf;
+}
+
+/* Buttons - Human & Tactile */
+.btn-primary {
+  background: var(--primary);
+  color: white !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  box-shadow: 0 4px 14px rgba(88, 86, 214, 0.25);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(88, 86, 214, 0.3);
+}
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #4a4a4a !important;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid #e0ddd8;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.btn-secondary:hover {
+  background: #fdfcfb;
+  border-color: #c9c5bf;
+}
+
+/* Onboarding Flow Styles */
+.onboarding-card {
+  max-width: 500px;
+  width: 90%;
+  padding: 2.5rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.option-card {
+  width: 100%;
+  padding: 1.25rem;
+  border: 2px solid #f3f0ec;
+  border-radius: 16px;
+  text-align: left;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: #ffffff;
+  margin-bottom: 0.75rem;
+}
+.option-card:hover {
+  border-color: var(--primary-light);
+  background: var(--primary-light);
+}
+.option-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* Sidebar & Layout */
+.sidebar {
+  width: 280px;
+  background: #fdfcfb;
+  border-right: 1px solid var(--border);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 12px;
+  color: #5a5a5a;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+}
+.sidebar-link:hover {
+  background: #f3f0ec;
+  color: #1a1a1a;
+}
+.sidebar-link.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(88, 86, 214, 0.2);
+}
+
+/* Roadmap Gamification */
+.level-node {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 4px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 10;
+}
+.level-node.unlocked {
+  border-color: var(--primary);
+  box-shadow: 0 0 20px rgba(88, 86, 214, 0.15);
+}
+.level-node.completed {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+.level-line {
+  position: absolute;
+  background: var(--border);
+  z-index: 1;
+}
+.level-line.active {
+  background: var(--primary);
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop-in {
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Gamification Badges */
+.badge-gold { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+.badge-silver { background: linear-gradient(135deg, #94a3b8 0%, #475569 100%); color: white; }
+.badge-emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+
+/* Progress */
+.progress-container {
+  height: 10px;
+  background: #f3f0ec;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, #8b5cf6 100%);
+  border-radius: 20px;
+  transition: width 0.8s ease;
+}
+
+/* Utility */
+.glass-warm {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(233, 229, 224, 0.5);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #1a1a1a 0%, #5856d6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
