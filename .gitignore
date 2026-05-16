@@ -4,3 +4,7 @@ dist/
 build/
 .DS_Store
 *.log
+
+# Archived/Old directories - do not use
+backend-old-archived/
+frontend-old-archived/

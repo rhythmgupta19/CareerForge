@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Root package for CareerForge",
   "scripts": {
-    "seed": "cd backend && npm run seed",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
+    "seed": "cd server && npm run seed",
+    "dev:backend": "cd server && npm run dev",
+    "dev:frontend": "cd client && npm run dev",
     "dev": "npm run dev:backend & npm run dev:frontend",
-    "install:all": "cd backend && npm install && cd ../frontend && npm install"
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "start:backend": "cd server && npm start",
+    "start:frontend": "cd client && npm run build && npm run preview"
   }
 }
