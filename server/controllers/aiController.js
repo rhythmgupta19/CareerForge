@@ -5,10 +5,45 @@ const Phase = require('../models/Phase');
 
 // Mock AI responses when no API key is configured
 const generateMockResponse = (userMessage, context) => {
-  const lowerMsg = userMessage.toLowerCase();
+  const lowerMsg = userMessage.toLowerCase().trim();
   const domain = context.domain || 'your selected domain';
   const progress = context.progress || 0;
   const phase = context.currentPhase || 1;
+
+  // Greetings
+  if (lowerMsg === 'hello' || lowerMsg === 'hi' || lowerMsg === 'hey' || lowerMsg.includes('greet') || lowerMsg === 'yo') {
+    return `Hello! 🤖 I am your CareerForge AI Mentor. I am here to guide your learning journey in **${domain}**!\n\nHow can I assist you today? You can ask me about:\n- 🚀 Specific tech topics (like React, JavaScript, Python, SQL, Docker)\n- 📋 Personalizing your learning roadmap\n- 💼 Preparing for internships and placements\n- 💡 Fixing coding errors or practice questions!`;
+  }
+
+  // React-specific queries
+  if (lowerMsg.includes('react') || lowerMsg.includes('component') || lowerMsg.includes('hook') || lowerMsg.includes('usestate')) {
+    return `Ah, React! ⚛️ React is a powerful library for building component-driven user interfaces.\n\n🔑 **Core Concepts to Master:**\n1. **Components:** Reusable UI bricks. Always split complex views into modular components.\n2. **State & Props:** Props allow data to flow downwards, while \`useState\` keeps components interactive.\n3. **Side Effects (\`useEffect\`):** Used to fetch data from APIs, sync with local storage, or trigger animations.\n\n💡 **Pro Tip:** In your current **${domain}** path, make sure to build a fully stateful app (like a to-do tracker or finance board) to solidify your React hooks mastery!`;
+  }
+
+  // JavaScript-specific queries
+  if (lowerMsg.includes('javascript') || lowerMsg.includes(' js') || lowerMsg.includes('es6') || lowerMsg.includes('promise') || lowerMsg.includes('async')) {
+    return `Excellent, JavaScript! 💛 JS is the operational engine of the modern web.\n\n⚡ **Crucial JS Concepts for Engineering Placements:**\n1. **Asynchronous Operations:** Promises, \`async/await\`, and the event loop are frequently tested in interviews.\n2. **Scope & Closures:** Retain access to outer function variables even after execution.\n3. **DOM Manipulation:** Select and listen for triggers without heavy external libraries.\n\n💻 **Practice Goal:** Try coding an asynchronous data fetch helper inside the CareerForge code sandbox!`;
+  }
+
+  // Python/ML-specific queries
+  if (lowerMsg.includes('python') || lowerMsg.includes('numpy') || lowerMsg.includes('pandas') || lowerMsg.includes('machine learning') || lowerMsg.includes(' ml')) {
+    return `Python & Machine Learning! 🐍 Python is the gold standard for data engineering, analytics, and modeling.\n\n📊 **Key Packages to Learn:**\n- **NumPy:** Incredibly fast vectorized matrix operations.\n- **Pandas:** Your primary tool for cleaning and reshaping massive CSV datasets.\n- **Scikit-Learn:** Excellent for regression, decision trees, and SVM modeling.\n\n💡 **Focus Area:** Since you are pursuing **${domain}**, make sure you understand the difference between Supervised (e.g. regression) and Unsupervised (e.g. clustering) learning!`;
+  }
+
+  // DevOps/Docker queries
+  if (lowerMsg.includes('docker') || lowerMsg.includes('devops') || lowerMsg.includes('kubernetes') || lowerMsg.includes('ci/cd')) {
+    return `DevOps & Containerization! 🐳 Continuous deployment is the bridge between writing code and shipping software.\n\n🚀 **Workflow Roadmap:**\n1. **Docker:** Containerize your application to ensure it runs identical locally and in cloud staging.\n2. **Kubernetes:** Automate scaling, self-healing, and service routing.\n3. **CI/CD Pipelines:** Set up automated GitHub actions to run tests on push.\n\n💡 **Teammate Recommendation:** Dockerize your backend REST APIs and connect them to a persistent database container!`;
+  }
+
+  // Database/SQL queries
+  if (lowerMsg.includes('database') || lowerMsg.includes('sql') || lowerMsg.includes('mongodb') || lowerMsg.includes('query')) {
+    return `Databases! 🗄️ Storing data efficiently and reliably is a core engineering requirement.\n\n🔑 **Key Architectural Choices:**\n- **Relational (SQL):** PostgreSQL/MySQL. Best for strict schemas, ACID compliance, and complex multi-table joins.\n- **NoSQL (Document):** MongoDB. Extremely flexible, scales horizontally, and maps naturally to JSON-oriented API backends.\n\n💻 **SQL Practice:** Master subqueries, aggregations (GROUP BY), and indexing to speed up retrieval times!`;
+  }
+
+  // DSA/LeetCode/Problem solving queries
+  if (lowerMsg.includes('dsa') || lowerMsg.includes('leetcode') || lowerMsg.includes('algorithm') || lowerMsg.includes('data structure') || lowerMsg.includes('sorting')) {
+    return `Data Structures & Algorithms (DSA)! 🧠 DSA is the primary gatekeeper for big tech interviews.\n\n🎯 **Recommended Learning Sequence:**\n1. **Arrays & Strings:** Pointers, sliding window, and sliding array puzzles.\n2. **Hash Maps:** Crucial for reducing search time complexities to O(1).\n3. **Trees & Graphs:** BFS/DFS traversals.\n4. **Dynamic Programming:** Optimizing recursive calls through memoization.\n\n💡 **CareerForge Sandbox Tip:** Use the integrated LeetCode-like sandbox in your domain steps to solve the practice tasks directly in JS!`;
+  }
 
   if (lowerMsg.includes('roadmap') || lowerMsg.includes('path') || lowerMsg.includes('plan')) {
     return `Great question! Based on your profile, here's my suggestion for ${domain}:\n\n📋 **Your Personalized Roadmap:**\n1. You're currently in Phase ${phase} - keep pushing through!\n2. Your progress is at ${progress}% - ${progress < 30 ? "you're just getting started, focus on fundamentals" : progress < 60 ? "you're making good progress, start working on projects" : "you're almost there! Focus on advanced topics and portfolio"}\n3. **Next Steps:** Complete all topics in your current phase before moving to assessments\n4. **Daily Goal:** Dedicate at least 2 hours of focused study\n5. **Weekly Goal:** Complete at least 3-4 topics and one mini-project\n\n💡 **Pro Tip:** Don't just read - practice! Build small projects after each phase.`;

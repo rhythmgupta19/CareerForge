@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
-import { FiExternalLink, FiGift, FiAward, FiInfo, FiSearch, FiFilter, FiCheckCircle } from 'react-icons/fi';
+import { FiExternalLink, FiGift, FiAward, FiInfo, FiSearch, FiFilter, FiCheckCircle, FiChevronRight } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const Resources = () => {

@@ -129,24 +129,24 @@ const AiChat = () => {
               className={`flex gap-4 md:gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               <div className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden flex items-center justify-center text-xl shadow-sm ${
-                msg.role === 'user' ? 'bg-white border-2 border-gray-100 text-[#1a1a1a]' : 'bg-white shadow-lg shadow-primary/10'
+                msg.role === 'user' ? 'bg-indigo-50 border border-indigo-100 text-indigo-600' : 'bg-white shadow-lg shadow-primary/10'
               }`}>
                 {msg.role === 'user' ? <FiUser /> : <img src={aiLogo} alt="AI" className="w-full h-full object-contain p-2" />}
               </div>
               
-              <div className={`max-w-[85%] md:max-w-[75%] space-y-2 ${msg.role === 'user' ? 'items-end text-right' : ''}`}>
+              <div className={`max-w-[85%] md:max-w-[75%] space-y-2 flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
                   {msg.role === 'user' ? 'You' : 'CareerForge AI'}
                 </div>
-                <div className={`p-5 rounded-3xl text-sm leading-relaxed ${
+                <div className={`p-5 rounded-3xl text-sm leading-relaxed text-left ${
                   msg.role === 'user' 
-                    ? 'bg-primary text-white shadow-xl shadow-primary/10 rounded-tr-none font-medium' 
+                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/10 rounded-tr-none font-medium' 
                     : 'bg-white border-2 border-gray-50 text-[#1a1a1a] shadow-sm rounded-tl-none'
                 }`}>
                   {msg.role === 'user' ? (
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   ) : (
-                    <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:font-black prose-headings:text-[#1a1a1a] prose-strong:text-primary">
+                    <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:font-black prose-headings:text-[#1a1a1a] prose-strong:text-indigo-600">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   )}
@@ -166,9 +166,9 @@ const AiChat = () => {
               <img src={aiLogo} alt="AI" className="w-full h-full object-contain p-2" />
             </div>
             <div className="bg-white border-2 border-gray-50 p-6 rounded-3xl rounded-tl-none shadow-sm flex gap-1">
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
           </motion.div>
         )}
@@ -195,7 +195,7 @@ const AiChat = () => {
         {/* Real Input */}
         <form 
           onSubmit={handleSend} 
-          className="relative bg-white border-2 border-gray-100 rounded-[2rem] p-2 focus-within:border-primary/30 focus-within:shadow-2xl focus-within:shadow-primary/5 transition-all"
+          className="relative bg-white border-2 border-gray-100 rounded-[2rem] p-2 focus-within:border-indigo-300 focus-within:shadow-2xl focus-within:shadow-indigo-500/5 transition-all"
         >
           <div className="flex items-center">
             <div className="flex-1 px-4">
@@ -211,10 +211,10 @@ const AiChat = () => {
             <button 
               type="submit" 
               disabled={!input.trim() || sending}
-              className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all ${
+              className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 hover:scale-105 active:scale-95 ${
                 !input.trim() || sending 
-                  ? 'bg-gray-50 text-gray-300 cursor-not-allowed' 
-                  : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-105 active:scale-95'
+                  ? 'opacity-40 cursor-not-allowed' 
+                  : 'opacity-100'
               }`}
             >
               <FiSend size={24} />

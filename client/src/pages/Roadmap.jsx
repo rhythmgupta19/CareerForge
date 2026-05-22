@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { FiLock, FiUnlock, FiCheckCircle, FiPlayCircle, FiZap, FiStar, FiTrendingUp } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import InteractiveRoadmap from '../components/InteractiveRoadmap';
 
 // Levels will be derived dynamically from the phases data
 const getLevelIcon = (index) => {
@@ -22,6 +23,7 @@ const Roadmap = () => {
   const [domainData, setDomainData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeLevel, setActiveLevel] = useState(null);
+  const [viewMode, setViewMode] = useState('missions');
 
   useEffect(() => {
     if (!user?.selectedDomain) {
@@ -98,82 +100,112 @@ const Roadmap = () => {
         </p>
       </div>
 
-      {/* Gamified Level Path */}
-      <div className="relative py-10 overflow-x-auto">
-        <div className="flex items-start gap-12 min-w-max px-10">
-          {phases.map((phase, index) => {
-            const isUnlocked = index <= (user.currentPhase || 0);
-            const isCompleted = index < (user.currentPhase || 0);
-            const isCurrent = index === (user.currentPhase || 0);
-
-            return (
-              <div key={phase._id} className="flex flex-col items-center relative">
-                {/* Level Node */}
-                <motion.div
-                  whileHover={isUnlocked ? { scale: 1.05 } : {}}
-                  onClick={() => isUnlocked && setActiveLevel(index)}
-                  className={`level-node ${isUnlocked ? 'unlocked' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'ring-8 ring-primary/10' : ''}`}
-                >
-                  <span className="text-4xl mb-1">{getLevelIcon(index)}</span>
-                  <span className="text-[10px] font-black uppercase tracking-tighter">LVL {index}</span>
-                  {isCurrent && <div className="absolute -top-3 -right-3 bg-primary text-white text-[10px] px-2 py-1 rounded-full font-black animate-bounce shadow-lg">YOU</div>}
-                  {!isUnlocked && <FiLock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-300 text-xl" />}
-                </motion.div>
-
-                {/* Level Title */}
-                <div className="mt-4 text-center">
-                  <div className={`text-sm font-black ${isUnlocked ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>{phase.name}</div>
-                  <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{getLevelThreshold(index)} XP Required</div>
-                </div>
-
-                {index < phases.length - 1 && (
-                  <div className={`absolute top-[60px] left-[120px] w-12 h-1 ${isUnlocked && (index + 1 <= user.currentPhase) ? 'bg-primary' : 'bg-gray-200'}`}></div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+      {/* View Toggle */}
+      <div className="flex justify-center gap-4 mb-16">
+        <button 
+          onClick={() => setViewMode('missions')} 
+          className={`px-6 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${
+            viewMode === 'missions' 
+              ? 'bg-[#101828] text-white shadow-xl shadow-slate-900/10' 
+              : 'bg-white border border-[#eaecf0] text-gray-500 hover:text-[#101828]'
+          }`}
+        >
+          🛡️ Level Missions
+        </button>
+        <button 
+          onClick={() => setViewMode('step_roadmap')} 
+          className={`px-6 py-3.5 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${
+            viewMode === 'step_roadmap' 
+              ? 'bg-[#4361ee] text-white shadow-xl shadow-indigo-100/50' 
+              : 'bg-white border border-[#eaecf0] text-gray-500 hover:text-[#4361ee]'
+          }`}
+        >
+          ⚡ Master Roadmap
+        </button>
       </div>
 
-      {/* Level Details Area */}
-      {activeLevel !== null && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-16 card p-10 bg-white shadow-2xl border-primary/10"
-        >
-          <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-10 pb-10 border-b border-gray-100">
-            <div className="flex-1">
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-5xl">{getLevelIcon(activeLevel)}</span>
-                <div>
-                  <h2 className="text-3xl font-black text-[#1a1a1a]">{phases[activeLevel].name}</h2>
-                  <div className="text-primary font-bold text-sm tracking-widest uppercase mt-1">Level {activeLevel} Mission</div>
-                </div>
-              </div>
-              <p className="text-gray-500 leading-relaxed max-w-2xl">
-                {phases.find(p => p.phaseNumber === activeLevel)?.description || "Complete these challenges to master this level and earn massive XP rewards."}
-              </p>
-            </div>
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
-              <div className="text-sm font-black text-primary uppercase tracking-widest mb-3">Rewards for Completion</div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-[#1a1a1a] font-bold">
-                  <FiZap className="text-amber-500" /> +500 XP
-                </div>
-                <div className="flex items-center gap-2 text-[#1a1a1a] font-bold">
-                  <FiStar className="text-indigo-500" /> {phases[activeLevel].name} Badge
-                </div>
-              </div>
+      {viewMode === 'step_roadmap' ? (
+        <InteractiveRoadmap domainSlug={domain.slug} />
+      ) : (
+        <>
+          {/* Gamified Level Path */}
+          <div className="relative py-10 overflow-x-auto">
+            <div className="flex items-start gap-12 min-w-max px-10">
+              {phases.map((phase, index) => {
+                const isUnlocked = index <= (user.currentPhase || 0);
+                const isCompleted = index < (user.currentPhase || 0);
+                const isCurrent = index === (user.currentPhase || 0);
+
+                return (
+                  <div key={phase._id} className="flex flex-col items-center relative">
+                    {/* Level Node */}
+                    <motion.div
+                      whileHover={isUnlocked ? { scale: 1.05 } : {}}
+                      onClick={() => isUnlocked && setActiveLevel(index)}
+                      className={`level-node ${isUnlocked ? 'unlocked' : ''} ${isCompleted ? 'completed' : ''} ${isCurrent ? 'ring-8 ring-primary/10' : ''}`}
+                    >
+                      <span className="text-4xl mb-1">{getLevelIcon(index)}</span>
+                      <span className="text-[10px] font-black uppercase tracking-tighter">LVL {index}</span>
+                      {isCurrent && <div className="absolute -top-3 -right-3 bg-primary text-white text-[10px] px-2 py-1 rounded-full font-black animate-bounce shadow-lg">YOU</div>}
+                      {!isUnlocked && <FiLock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-300 text-xl" />}
+                    </motion.div>
+
+                    {/* Level Title */}
+                    <div className="mt-4 text-center">
+                      <div className={`text-sm font-black ${isUnlocked ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>{phase.name}</div>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase mt-1">{getLevelThreshold(index)} XP Required</div>
+                    </div>
+
+                    {index < phases.length - 1 && (
+                      <div className={`absolute top-[60px] left-[120px] w-12 h-1 ${isUnlocked && (index + 1 <= user.currentPhase) ? 'bg-primary' : 'bg-gray-200'}`}></div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <TopicsList 
-            phaseId={phases.find(p => p.phaseNumber === activeLevel)?._id} 
-            isTopicCompleted={isTopicCompleted}
-            activeLevel={activeLevel}
-          />
-        </motion.div>
+          {/* Level Details Area */}
+          {activeLevel !== null && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-16 card p-10 bg-white shadow-2xl border-primary/10"
+            >
+              <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-10 pb-10 border-b border-gray-100">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-4">
+                    <span className="text-5xl">{getLevelIcon(activeLevel)}</span>
+                    <div>
+                      <h2 className="text-3xl font-black text-[#1a1a1a]">{phases[activeLevel].name}</h2>
+                      <div className="text-primary font-bold text-sm tracking-widest uppercase mt-1">Level {activeLevel} Mission</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-500 leading-relaxed max-w-2xl">
+                    {phases.find(p => p.phaseNumber === activeLevel)?.description || "Complete these challenges to master this level and earn massive XP rewards."}
+                  </p>
+                </div>
+                <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                  <div className="text-sm font-black text-primary uppercase tracking-widest mb-3">Rewards for Completion</div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-[#1a1a1a] font-bold">
+                      <FiZap className="text-amber-500" /> +500 XP
+                    </div>
+                    <div className="flex items-center gap-2 text-[#1a1a1a] font-bold">
+                      <FiStar className="text-indigo-500" /> {phases[activeLevel].name} Badge
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <TopicsList 
+                phaseId={phases.find(p => p.phaseNumber === activeLevel)?._id} 
+                isTopicCompleted={isTopicCompleted}
+                activeLevel={activeLevel}
+              />
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );

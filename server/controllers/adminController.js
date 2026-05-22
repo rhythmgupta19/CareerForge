@@ -23,6 +23,31 @@ exports.updateUserRole = async (req, res) => {
   }
 };
 
+// @desc    Update user progress/XP/profile (admin)
+exports.updateUserProgress = async (req, res) => {
+  try {
+    const { xp, overallProgress, currentPhase, profile } = req.body;
+    const updateData = {};
+    if (xp !== undefined) updateData.xp = xp;
+    if (overallProgress !== undefined) updateData.overallProgress = overallProgress;
+    if (currentPhase !== undefined) updateData.currentPhase = currentPhase;
+    if (profile !== undefined) {
+      updateData.profile = profile;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true }
+    ).select('-password').populate('selectedDomain');
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Delete user (admin)
 exports.deleteUser = async (req, res) => {
   try {
