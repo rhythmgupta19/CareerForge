@@ -119,15 +119,20 @@ exports.selectDomain = async (req, res) => {
     if (!domain) return res.status(404).json({ success: false, message: 'Domain not found' });
 
     user.activeDomain = domainId;
+    const key = getProgressKey(domain.slug);
     if (user.profile) {
-      user.profile.isProfileComplete = false;
+      const hasOnboarding = (user.domainsProgress && user.domainsProgress[key] && 
+        (user.domainsProgress[key].hasCompletedOnboarding === true || 
+         user.domainsProgress[key].completedTopics?.length > 0 || 
+         user.domainsProgress[key].currentPhase > 1)) || false;
+      user.profile.isProfileComplete = hasOnboarding;
     }
 
     // Initialize domain-specific phase if not set
-    const key = getProgressKey(domain.slug);
     if (user.domainsProgress && user.domainsProgress[key]) {
-      if (!user.domainsProgress[key].currentPhase || user.domainsProgress[key].currentPhase === 0) {
-        user.domainsProgress[key].currentPhase = 1;
+      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null) {
+        const startsAtZero = ['web-development', 'webdev', 'devops', 'dsa'].includes(domain.slug.toLowerCase());
+        user.domainsProgress[key].currentPhase = startsAtZero ? 0 : 1;
         domain.enrolledCount = (domain.enrolledCount || 0) + 1;
         await domain.save();
       }
@@ -436,9 +441,10 @@ exports.getDashboard = async (req, res) => {
     let upcomingAssessment = null;
 
     if (activeDomain) {
+      const pNum = (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 1;
       currentPhaseData = await Phase.findOne({ 
         domainId: activeDomain._id, 
-        phaseNumber: domainProgress.currentPhase || 1
+        phaseNumber: pNum
       });
 
       upcomingAssessment = await require('../models/Assessment').findOne({
@@ -459,7 +465,7 @@ exports.getDashboard = async (req, res) => {
           profile: user.profile,
           selectedDomain: activeDomain,
           activeDomain: activeDomain,
-          currentPhase: domainProgress.currentPhase || 1,
+          currentPhase: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 1,
           overallProgress: domainProgress.overallProgress || 0,
           dailyStreak: user.dailyStreak,
           totalStudyMinutes: user.totalStudyMinutes,

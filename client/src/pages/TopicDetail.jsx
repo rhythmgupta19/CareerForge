@@ -184,13 +184,20 @@ const TopicDetail = () => {
   // Progressive Question Difficulty State
   const [activeDifficulty, setActiveDifficulty] = useState(() => localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
   const [lessonAnswers, setLessonAnswers] = useState({});
+  const [isAssessmentPassed, setIsAssessmentPassed] = useState(false);
+  const [selectedQuizAnswers, setSelectedQuizAnswers] = useState({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   
   useEffect(() => {
     if (id) {
       setActiveDifficulty(localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
       setLessonAnswers({});
+      const passed = localStorage.getItem(`assessment_passed_${id}`) === 'true' || isCompleted;
+      setIsAssessmentPassed(passed);
+      setSelectedQuizAnswers({});
+      setQuizSubmitted(false);
     }
-  }, [id]);
+  }, [id, isCompleted]);
 
   // ─── CHECKPOINT MODULE STATE (for "Start Coding" Level 0 & "Arrays Explorer" Level 1) ────
   // Derived dynamically from database metadata
@@ -2406,25 +2413,32 @@ const TopicDetail = () => {
                     { id: 'description', label: 'Description', icon: <FiBookOpen size={12} /> },
                     { id: 'approach', label: 'Solution Guide', icon: <FiBook size={12} /> },
                     { id: 'submissions', label: 'Submissions', icon: <FiClock size={12} />, badge: submissions.length }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setLeftTab(tab.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                        leftTab === tab.id
-                          ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
-                          : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                      }`}
-                    >
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                      {tab.badge !== undefined && (
-                        <span className="w-4 h-4 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[8px] font-black flex items-center justify-center shadow-inner">
-                          {tab.badge}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                  ].map(tab => {
+                    const isTabLocked = (tab.id === 'approach' || tab.id === 'submissions') && !isAssessmentPassed;
+                    return (
+                      <button
+                        key={tab.id}
+                        disabled={isTabLocked}
+                        onClick={() => setLeftTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
+                          isTabLocked
+                            ? 'opacity-40 cursor-not-allowed text-[var(--text-muted)]'
+                            : leftTab === tab.id
+                              ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
+                              : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                        }`}
+                        title={isTabLocked ? 'Pass the mini assessment to unlock this tab' : ''}
+                      >
+                        {isTabLocked ? '🔒' : tab.icon}
+                        <span>{tab.label}</span>
+                        {!isTabLocked && tab.badge !== undefined && (
+                          <span className="w-4 h-4 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[8px] font-black flex items-center justify-center shadow-inner">
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -2546,6 +2560,35 @@ const TopicDetail = () => {
                   </div>
                 </div>
 
+                    {!isAssessmentPassed ? (
+                      <div className="p-6 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/20 rounded-2xl space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl shadow-inner animate-pulse">🔒</div>
+                          <div>
+                            <h3 className="text-sm font-black text-[var(--text-main)] uppercase tracking-wide">Assessment Mode Locked</h3>
+                            <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-0.5">Please pass the interactive MCQ quiz on the right to proceed.</p>
+                          </div>
+                        </div>
+                        <div className="h-px bg-indigo-500/15" />
+                        <div className="space-y-2 text-xs font-semibold text-[var(--text-muted)] leading-relaxed">
+                          <p>To ensure you have grasped the concepts from the tutorial video, we require passing a short 3-question mini-assessment.</p>
+                          <div className="flex items-center gap-2 text-indigo-400">
+                            <FiCheckCircle size={14} className="text-indigo-400" /> <span>100% Score Required</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-indigo-400">
+                            <FiCheckCircle size={14} className="text-indigo-400" /> <span>Unlocks Coding Sandbox & Editor</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-indigo-400">
+                            <FiCheckCircle size={14} className="text-indigo-400" /> <span>Unlocks Hinglish mentorship guidelines and manual progress logging</span>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)]">
+                          <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">General Topic Overview</div>
+                          <p className="text-[11px] text-[var(--text-muted)] leading-relaxed font-medium">{topic.description}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
                     {/* Difficulty Progression Map */}
                     {isDsaDomain && (
                       <div className="bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)] space-y-3">
@@ -2766,6 +2809,8 @@ const TopicDetail = () => {
                     </button>
                   </form>
                 </div>
+                      </>
+                    )}
               </div>
             )}
 
@@ -2888,6 +2933,93 @@ const TopicDetail = () => {
             isFullscreen ? 'fixed inset-0 z-50 w-screen h-screen' : 'relative'
           } ${isMobile && activeWorkspaceTab !== 'code' ? 'hidden' : 'flex'}`}
         >
+          {!isAssessmentPassed ? (
+            <div className="flex-1 h-full flex flex-col overflow-y-auto p-6 md:p-8 bg-[#09090b] justify-center items-center custom-scrollbar">
+              <div className="max-w-xl w-full bg-[#18181b] rounded-2xl border border-zinc-800 p-6 md:p-8 space-y-6 shadow-2xl">
+                <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg text-emerald-400 font-bold">📝</div>
+                  <div>
+                    <h3 className="text-base font-black text-white uppercase tracking-wider">Mini Assessment</h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Test your understanding from the tutorial</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {lessonAssessment.map((q, qIdx) => (
+                    <div key={qIdx} className="space-y-3">
+                      <div className="text-xs font-black text-white flex items-start gap-2">
+                        <span className="text-emerald-500 font-mono mt-0.5">{qIdx + 1}.</span>
+                        <span>{q.prompt}</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 pl-4">
+                        {q.options.map((opt, optIdx) => {
+                          const isSelected = selectedQuizAnswers[qIdx] === opt;
+                          return (
+                            <button
+                              key={optIdx}
+                              type="button"
+                              onClick={() => {
+                                setSelectedQuizAnswers(prev => ({
+                                  ...prev,
+                                  [qIdx]: opt
+                                }));
+                              }}
+                              className={`text-left px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 cursor-pointer ${
+                                isSelected
+                                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-bold shadow-md shadow-emerald-500/5'
+                                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {quizSubmitted && selectedQuizAnswers[qIdx] !== q.answer && (
+                        <div className="pl-4 text-[10px] text-rose-400 font-bold flex items-center gap-1.5">
+                          ❌ Incorrect choice. Think again!
+                        </div>
+                      )}
+                      {quizSubmitted && selectedQuizAnswers[qIdx] === q.answer && (
+                        <div className="pl-4 text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+                          ✓ Correct
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-[10px] text-zinc-500 font-semibold italic">
+                    Answer all questions correctly to unlock the workspace.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuizSubmitted(true);
+                      const allAnswers = lessonAssessment.map((q, qIdx) => selectedQuizAnswers[qIdx] === q.answer);
+                      const passedAll = allAnswers.every(Boolean);
+
+                      if (passedAll) {
+                        setIsAssessmentPassed(true);
+                        localStorage.setItem(`assessment_passed_${id}`, 'true');
+                        playSoundEffect('success');
+                        triggerConfettiExplosion();
+                        toast.success('🎉 Mini Assessment Passed! Coding workspace is now unlocked!', { duration: 4000 });
+                      } else {
+                        playSoundEffect('error');
+                        toast.error('Some answers are incorrect. Review your choices and try again!');
+                      }
+                    }}
+                    className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer text-xs"
+                  >
+                    Submit Answers
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           {isWebDevDomain ? (
             <WebDevPlayground 
               topicId={id} 
@@ -3120,20 +3252,13 @@ const TopicDetail = () => {
                                   <div className="text-[9px] font-bold text-[var(--text-muted)] select-all truncate mt-0.5">
                                     Input: {tr.isHidden ? '[Hidden Test Case]' : tr.input}
                                   </div>
+                                  <div className="text-[9px] font-bold text-[var(--text-muted)] select-all truncate">
+                                    Expected: {tr.expected}
+                                  </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-1 mt-1 pt-1.5 border-t border-[var(--border)] font-mono text-[8px]">
-                                  <div>
-                                    <div className="text-[6px] font-black text-[var(--text-light)] uppercase">Expected</div>
-                                    <div className="text-[9px] font-bold truncate text-emerald-400">
-                                      {tr.isHidden ? '[Hidden]' : tr.expected}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[6px] font-black text-[var(--text-light)] uppercase">Actual</div>
-                                    <div className={`text-[9px] font-bold truncate ${tr.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                      {tr.isHidden ? '[Hidden]' : tr.actual}
-                                    </div>
-                                  </div>
+                                <div className="border-t border-zinc-800/60 pt-1.5 mt-1.5">
+                                  <div className="text-[7px] font-black uppercase text-[var(--text-muted)]">Actual Output</div>
+                                  <div className="text-[9px] font-mono truncate">{tr.actual}</div>
                                 </div>
                               </div>
                             ))}
@@ -3231,6 +3356,8 @@ const TopicDetail = () => {
               </div>
             </div>
           </div>
+          </>
+          )}
           </>
           )}
         </div>

@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const domainProgressSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
+  hasCompletedOnboarding: { type: Boolean, default: false },
   currentPhase: { type: Number, default: 1 },
   overallProgress: { type: Number, default: 0, min: 0, max: 100 },
   currentCheckpoint: { type: String, default: '' },
@@ -60,6 +61,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
   role: { type: String, enum: ['student', 'admin', 'mentor'], default: 'student' },
+  isPaidSubscriber: { type: Boolean, default: false },
   avatar: { type: String, default: '' },
   phone: { type: String, default: '' },
   

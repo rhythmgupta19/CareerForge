@@ -107,7 +107,14 @@ exports.updateProfile = async (req, res) => {
     const updates = req.body;
     const user = await User.findById(req.user._id);
 
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     if (updates.fullName) user.fullName = updates.fullName;
+    if (updates.phone !== undefined) user.phone = updates.phone;
+    if (updates.isPaidSubscriber !== undefined) user.isPaidSubscriber = updates.isPaidSubscriber;
+
     if (updates.profile) {
       user.profile = { ...(user.profile?.toObject ? user.profile.toObject() : (user.profile || {})), ...updates.profile };
       // Check if profile is complete
@@ -121,42 +128,6 @@ exports.updateProfile = async (req, res) => {
 
     await user.save();
 
-    // AI roadmap generation has been fully migrated to aiController.js
-
-    res.json({
-      success: true,
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-        currentPhase: user.currentPhase,
-        overallProgress: user.overallProgress
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-exports.updateProfile = async (req, res) => {
-  try {
-    const { fullName, phone } = req.body;
-    
-    // Find and update user
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    if (fullName) user.fullName = fullName;
-    if (phone !== undefined) user.phone = phone; // Allow empty string to clear phone
-
-    await user.save();
-
     res.json({
       success: true,
       user: {
@@ -164,7 +135,11 @@ exports.updateProfile = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        role: user.role
+        role: user.role,
+        isPaidSubscriber: user.isPaidSubscriber,
+        profile: user.profile,
+        currentPhase: user.currentPhase,
+        overallProgress: user.overallProgress
       }
     });
   } catch (error) {

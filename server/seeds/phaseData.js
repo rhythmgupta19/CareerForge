@@ -33,18 +33,18 @@ const phaseData = {
     { phaseNumber: 10, name: 'Final Analytics Case Study', description: 'Real-world business analytics project', estimatedDuration: '2 weeks' }
   ],
   'devops': [
-    { phaseNumber: 1, name: 'Linux Basics', description: 'Commands, file system, permissions', estimatedDuration: '1 week' },
-    { phaseNumber: 2, name: 'Networking Basics', description: 'TCP/IP, DNS, HTTP, firewalls', estimatedDuration: '1 week' },
-    { phaseNumber: 3, name: 'Git & GitHub', description: 'Version control for DevOps', estimatedDuration: '3 days' },
-    { phaseNumber: 4, name: 'Shell Scripting', description: 'Bash scripting and automation', estimatedDuration: '1 week' },
-    { phaseNumber: 5, name: 'Docker', description: 'Containers, images, Docker Compose', estimatedDuration: '2 weeks' },
-    { phaseNumber: 6, name: 'Kubernetes', description: 'Pods, services, deployments, scaling', estimatedDuration: '2 weeks' },
-    { phaseNumber: 7, name: 'CI/CD', description: 'GitHub Actions, Jenkins, pipelines', estimatedDuration: '2 weeks' },
-    { phaseNumber: 8, name: 'Terraform', description: 'Infrastructure as code', estimatedDuration: '1 week' },
-    { phaseNumber: 9, name: 'Ansible', description: 'Configuration management', estimatedDuration: '1 week' },
-    { phaseNumber: 10, name: 'Monitoring & Logging', description: 'Prometheus, Grafana, ELK stack', estimatedDuration: '1 week' },
-    { phaseNumber: 11, name: 'Cloud Basics', description: 'AWS/GCP/Azure fundamentals', estimatedDuration: '1 week' },
-    { phaseNumber: 12, name: 'Final DevOps Pipeline Project', description: 'Full CI/CD pipeline with Docker & K8s', estimatedDuration: '2 weeks' }
+    { phaseNumber: 0, name: 'Linux Fundamentals', description: 'Linux environment, file system, commands, user permissions', estimatedDuration: '1 week' },
+    { phaseNumber: 1, name: 'Networking Basics', description: 'TCP/IP, DNS, HTTP, firewalls', estimatedDuration: '1 week' },
+    { phaseNumber: 2, name: 'Git & GitHub', description: 'Version control for DevOps', estimatedDuration: '3 days' },
+    { phaseNumber: 3, name: 'Shell Scripting', description: 'Bash scripting and automation', estimatedDuration: '1 week' },
+    { phaseNumber: 4, name: 'Docker', description: 'Containers, images, Docker Compose', estimatedDuration: '2 weeks' },
+    { phaseNumber: 5, name: 'Kubernetes', description: 'Pods, services, deployments, scaling', estimatedDuration: '2 weeks' },
+    { phaseNumber: 6, name: 'CI/CD', description: 'GitHub Actions, Jenkins, pipelines', estimatedDuration: '2 weeks' },
+    { phaseNumber: 7, name: 'Terraform', description: 'Infrastructure as code', estimatedDuration: '1 week' },
+    { phaseNumber: 8, name: 'Ansible', description: 'Configuration management', estimatedDuration: '1 week' },
+    { phaseNumber: 9, name: 'Monitoring & Logging', description: 'Prometheus, Grafana, ELK stack', estimatedDuration: '1 week' },
+    { phaseNumber: 10, name: 'Cloud Basics', description: 'AWS/GCP/Azure fundamentals', estimatedDuration: '1 week' },
+    { phaseNumber: 11, name: 'Final DevOps Pipeline Project', description: 'Full CI/CD pipeline with Docker & K8s', estimatedDuration: '2 weeks' }
   ],
   'cloud-computing': [
     { phaseNumber: 1, name: 'Cloud Fundamentals', description: 'IaaS, PaaS, SaaS, cloud models', estimatedDuration: '1 week' },

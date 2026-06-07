@@ -2470,7 +2470,7 @@ const topicData = {
   ]
 
 ,
-  'devops:1': [
+  'devops:0': [
     {
         "title": "Linux Basics",
         "description": "File system, commands, permissions",
@@ -2488,7 +2488,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=ROjZy1WbCIA"
     }
 ],
-  'devops:2': [
+  'devops:1': [
     {
         "title": "Networking Fundamentals",
         "description": "OSI Model, TCP/IP, IP Addressing",
@@ -2506,7 +2506,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=Wvf0mBNGjXY"
     }
 ],
-  'devops:3': [
+  'devops:2': [
     {
         "title": "Git Fundamentals",
         "description": "Commits, branching, merging",
@@ -2524,7 +2524,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=RGOj5yH7evk"
     }
 ],
-  'devops:4': [
+  'devops:3': [
     {
         "title": "Bash Scripting Basics",
         "description": "Variables, loops, conditions",
@@ -2542,7 +2542,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=v-F3YLd6oMw"
     }
 ],
-  'devops:5': [
+  'devops:4': [
     {
         "title": "Docker Containers",
         "description": "Images, Containers, Dockerfile",
@@ -2560,7 +2560,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=3c-iBn73dDE"
     }
 ],
-  'devops:6': [
+  'devops:5': [
     {
         "title": "Kubernetes Architecture",
         "description": "Nodes, Pods, Services, Deployments",
@@ -2578,7 +2578,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=X48VuDVv0do"
     }
 ],
-  'devops:7': [
+  'devops:6': [
     {
         "title": "CI/CD Concepts",
         "description": "Continuous Integration & Deployment",
@@ -2596,7 +2596,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=RGOj5yH7evk"
     }
 ],
-  'devops:8': [
+  'devops:7': [
     {
         "title": "Infrastructure as Code",
         "description": "Introduction to IaC",
@@ -2614,7 +2614,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=l5k1aiIGfSc"
     }
 ],
-  'devops:9': [
+  'devops:8': [
     {
         "title": "Configuration Management",
         "description": "Ansible architecture, playbooks",
@@ -2624,7 +2624,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=1id6IGB4nPU"
     }
 ],
-  'devops:10': [
+  'devops:9': [
     {
         "title": "Monitoring with Prometheus",
         "description": "Metrics, scraping, alerts",
@@ -2642,7 +2642,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=h4Sl21AKiDg"
     }
 ],
-  'devops:11': [
+  'devops:10': [
     {
         "title": "AWS Cloud Basics",
         "description": "EC2, S3, IAM, VPC",
@@ -2652,7 +2652,7 @@ const topicData = {
         "youtubeLink": "https://www.youtube.com/watch?v=k1RI5locZE4"
     }
 ],
-  'devops:12': [
+  'devops:11': [
     {
         "title": "Full CI/CD Pipeline Project",
         "description": "Deploy a microservices app using Docker, K8s, and Terraform",

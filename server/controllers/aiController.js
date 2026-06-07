@@ -579,6 +579,7 @@ exports.generateRoadmap = async (req, res) => {
       'profile.isProfileComplete': true
     };
     updateObj[`domainsProgress.${key}.currentPhase`] = startingLevel;
+    updateObj[`domainsProgress.${key}.hasCompletedOnboarding`] = true;
 
     const updatedUser = await User.findByIdAndUpdate(userId, {
       $set: updateObj

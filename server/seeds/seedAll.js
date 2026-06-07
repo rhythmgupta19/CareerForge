@@ -16,10 +16,89 @@ const CloudCredit = require('../models/CloudCredit');
 const Problem = require('../models/Problem');
 const Submission = require('../models/Submission');
 const UserProgress = require('../models/UserProgress');
+const Blog = require('../models/Blog');
+const Project = require('../models/Project');
+const Internship = require('../models/Internship');
 
 const domainData = require('./domainData');
 const phaseData = require('./phaseData');
 const topicData = require('./topicData');
+
+const blogs = [
+  {
+    title: 'Demystifying the Event Loop in JavaScript',
+    content: 'JavaScript is single-threaded, but how does it handle asynchronous operations without locking up the UI? In this article, we deep-dive into execution contexts, the call stack, Web APIs, microtask queue, and how the event loop orchestrates them all to keep your React applications running smooth.',
+    author: 'Siddharth Gupta',
+    category: 'Web Development',
+    tags: ['JavaScript', 'Async', 'Event Loop', 'WebDev'],
+    imageUrl: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?auto=format&fit=crop&w=600&q=80'
+  },
+  {
+    title: 'Top 10 Kubernetes Best Practices for 2026',
+    content: 'Scaling applications in production can be challenging. We cover essential best practices for Kubernetes deployments: resource limits, readiness/liveness probes, node selectors, secret management, Helm charts, and building lightweight containers to optimize cluster costs.',
+    author: 'Rohan Sharma',
+    category: 'DevOps',
+    tags: ['Kubernetes', 'Docker', 'DevOps', 'Scaling'],
+    imageUrl: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&w=600&q=80'
+  }
+];
+
+const internships = [
+  {
+    title: 'Frontend Engineer Intern',
+    company: 'Vercel Inc.',
+    location: 'Remote',
+    stipend: '$2,500 / Month',
+    description: 'Join the Next.js framework core team to build next-generation visual styling capabilities, improve compiler performance, and contribute to standard component libraries.',
+    applyLink: 'https://vercel.com/careers',
+    domain: 'webdev',
+    requirements: ['Proficient in React & TypeScript', 'Good understanding of SSR & routing', 'Familiarity with TailwindCSS and UI design principles']
+  },
+  {
+    title: 'DevOps Cloud Intern',
+    company: 'HashiCorp',
+    location: 'San Francisco, CA (Hybrid)',
+    stipend: '$3,000 / Month',
+    description: 'Work with the Terraform team to improve infrastructure-as-code providers, build GitHub Action workflow integrations, and monitor multi-region AWS environments.',
+    applyLink: 'https://hashicorp.com/careers',
+    domain: 'devops',
+    requirements: ['Familiarity with AWS, GCP or Azure', 'Basic knowledge of Terraform & IaC', 'Scripting experience in Python or Go']
+  }
+];
+
+const projects = [
+  {
+    title: 'E-Commerce Microservices Orchestration',
+    description: 'Build and deploy a secure, high-availability e-commerce microservices cluster orchestrating web gateways, product catalogs, and payment services.',
+    domain: 'devops',
+    difficulty: 'advanced',
+    steps: [
+      { stepNumber: 1, title: 'Containerize Services', guidance: 'Write multi-stage Dockerfiles for the Gateway, Catalog, and Payment services using alpine base images.' },
+      { stepNumber: 2, title: 'Local Orchestration', guidance: 'Create a docker-compose.yml defining environment configurations, persistent volume attachments, and networks.' },
+      { stepNumber: 3, title: 'Kubernetes Pod Deployment', guidance: 'Configure K8s Deployments, ClusterIP Services, and set up CPU/Memory resource constraints for stability.' },
+      { stepNumber: 4, title: 'Ingress Controller Setup', guidance: 'Install and configure NGINX Ingress Controller to route public traffic to internal cluster nodes.' }
+    ],
+    roadmap: [
+      { phaseName: 'Phase 1: Local Containerization', tasks: ['Multi-stage Dockerfiles', 'Docker Compose definitions', 'Environment secrets configuration'] },
+      { phaseName: 'Phase 2: Kubernetes Migration', tasks: ['Deployment manifests', 'Cluster routing policies', 'ConfigMaps & Secrets management'] }
+    ]
+  },
+  {
+    title: 'Full-Stack Responsive Collaborative Dashboard',
+    description: 'Develop a highly interactive, responsive collaborative Kanban dashboard supporting real-time WebSockets state updates, drag-and-drop cards, and user authentication.',
+    domain: 'webdev',
+    difficulty: 'intermediate',
+    steps: [
+      { stepNumber: 1, title: 'Backend REST API & DB Setup', guidance: 'Create Express.js routes for users and boards. Implement JWT auth and connect to MongoDB.' },
+      { stepNumber: 2, title: 'WebSocket Integration', guidance: 'Integrate Socket.io on the Node server to broadcast card drag-drop modifications to active client sessions.' },
+      { stepNumber: 3, title: 'React Kanban UI Board', guidance: 'Build React boards using CSS Grid or Flexbox, styling it with harmonious GFG-theme colors.' }
+    ],
+    roadmap: [
+      { phaseName: 'Phase 1: Server and DB Structure', tasks: ['JWT Middleware', 'Mongoose Board schemas', 'Board CRUD routes'] },
+      { phaseName: 'Phase 2: Live React Client', tasks: ['Vite app layout', 'Socket.io client event hookups', 'Drag & drop state updates'] }
+    ]
+  }
+];
 
 const cloudCredits = [
   { title: 'GitHub Student Developer Pack', description: 'Free tools and services for students', link: 'https://education.github.com/pack', platform: 'GitHub', icon: '🐙', category: 'education', eligibility: 'Students with .edu email or proof of enrollment', order: 1 },
@@ -55,13 +134,22 @@ async function seedDB() {
       CloudCredit.deleteMany({}),
       Problem.deleteMany({}),
       Submission.deleteMany({}),
-      UserProgress.deleteMany({})
+      UserProgress.deleteMany({}),
+      Blog.deleteMany({}),
+      Project.deleteMany({}),
+      Internship.deleteMany({})
     ]);
     console.log('🗑️  Cleared existing data');
 
     // Seed cloud credits
     await CloudCredit.insertMany(cloudCredits);
     console.log('☁️  Cloud credits seeded');
+
+    // Seed blogs, projects, internships
+    await Blog.insertMany(blogs);
+    await Project.insertMany(projects);
+    await Internship.insertMany(internships);
+    console.log('📝 Blogs, Projects, and Internships seeded');
 
     // Seed admin user
     const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@123', 12);

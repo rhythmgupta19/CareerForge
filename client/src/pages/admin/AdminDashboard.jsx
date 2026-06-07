@@ -29,6 +29,17 @@ const AdminDashboard = () => {
   const [topics, setTopics] = useState([]);
   const [assessments, setAssessments] = useState([]);
   
+  const [blogs, setBlogs] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [internships, setInternships] = useState([]);
+  const [credits, setCredits] = useState([]);
+
+  // Form creation inputs
+  const [newBlog, setNewBlog] = useState({ title: '', content: '', author: '', category: 'Web Development', tags: '', imageUrl: '' });
+  const [newProject, setNewProject] = useState({ title: '', description: '', domain: 'webdev', difficulty: 'intermediate', steps: '', roadmap: '' });
+  const [newInternship, setNewInternship] = useState({ title: '', company: '', location: 'Remote', stipend: '', description: '', applyLink: '', domain: 'webdev', requirements: '' });
+  const [newCredit, setNewCredit] = useState({ title: '', platform: '', category: 'cloud', link: '', description: '', icon: '☁️', eligibility: '', order: 1 });
+  
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments'
   const [loading, setLoading] = useState(true);
   
@@ -304,6 +315,182 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchBlogs = async () => {
+    try {
+      const res = await api.get('/blogs');
+      setBlogs(res.data.data || []);
+    } catch (err) {
+      toast.error('Failed to load blogs');
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const res = await api.get('/projects');
+      setProjects(res.data.data || []);
+    } catch (err) {
+      toast.error('Failed to load projects');
+    }
+  };
+
+  const fetchInternships = async () => {
+    try {
+      const res = await api.get('/internships');
+      setInternships(res.data.data || []);
+    } catch (err) {
+      toast.error('Failed to load internships');
+    }
+  };
+
+  const fetchCredits = async () => {
+    try {
+      const res = await api.get('/cloud-credits');
+      setCredits(res.data.data || []);
+    } catch (err) {
+      toast.error('Failed to load cloud credits');
+    }
+  };
+
+  const handleCreateBlog = async (e) => {
+    e.preventDefault();
+    const loadingToast = toast.loading("Adding blog post...");
+    try {
+      const tagsArray = newBlog.tags.split(',').map(t => t.trim()).filter(Boolean);
+      const res = await api.post('/blogs', { ...newBlog, tags: tagsArray });
+      if (res.data.success) {
+        toast.success("Blog created!", { id: loadingToast });
+        setBlogs([res.data.data, ...blogs]);
+        setNewBlog({ title: '', content: '', author: '', category: 'Web Development', tags: '', imageUrl: '' });
+      }
+    } catch (err) {
+      toast.error("Failed to create blog", { id: loadingToast });
+    }
+  };
+
+  const handleDeleteBlog = async (id) => {
+    if (!window.confirm("Delete this blog post?")) return;
+    const loadingToast = toast.loading("Deleting blog post...");
+    try {
+      const res = await api.delete(`/blogs/${id}`);
+      if (res.data.success) {
+        toast.success("Blog deleted", { id: loadingToast });
+        setBlogs(blogs.filter(b => b._id !== id));
+      }
+    } catch (err) {
+      toast.error("Failed to delete blog", { id: loadingToast });
+    }
+  };
+
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    const loadingToast = toast.loading("Adding project blueprint...");
+    try {
+      const stepsArray = newProject.steps.split('\n').map((line, idx) => {
+        const parts = line.split(':');
+        return {
+          stepNumber: idx + 1,
+          title: parts[0]?.trim() || `Step ${idx + 1}`,
+          guidance: parts.slice(1).join(':')?.trim() || parts[0]?.trim()
+        };
+      }).filter(s => s.guidance);
+
+      const roadmapArray = newProject.roadmap.split('\n').map(line => {
+        const parts = line.split(':');
+        const tasks = parts.slice(1).join(':')?.split(',').map(t => t.trim()).filter(Boolean) || [];
+        return {
+          phaseName: parts[0]?.trim() || 'Phase Details',
+          tasks
+        };
+      }).filter(r => r.phaseName);
+
+      const res = await api.post('/projects', {
+        ...newProject,
+        steps: stepsArray,
+        roadmap: roadmapArray
+      });
+      if (res.data.success) {
+        toast.success("Project blueprint created!", { id: loadingToast });
+        setProjects([res.data.data, ...projects]);
+        setNewProject({ title: '', description: '', domain: 'webdev', difficulty: 'intermediate', steps: '', roadmap: '' });
+      }
+    } catch (err) {
+      toast.error("Failed to create project blueprint", { id: loadingToast });
+    }
+  };
+
+  const handleDeleteProject = async (id) => {
+    if (!window.confirm("Delete this project blueprint?")) return;
+    const loadingToast = toast.loading("Deleting project...");
+    try {
+      const res = await api.delete(`/projects/${id}`);
+      if (res.data.success) {
+        toast.success("Project deleted", { id: loadingToast });
+        setProjects(projects.filter(p => p._id !== id));
+      }
+    } catch (err) {
+      toast.error("Failed to delete project", { id: loadingToast });
+    }
+  };
+
+  const handleCreateInternship = async (e) => {
+    e.preventDefault();
+    const loadingToast = toast.loading("Adding internship position...");
+    try {
+      const reqsArray = newInternship.requirements.split('\n').map(r => r.trim()).filter(Boolean);
+      const res = await api.post('/internships', { ...newInternship, requirements: reqsArray });
+      if (res.data.success) {
+        toast.success("Internship listed!", { id: loadingToast });
+        setInternships([res.data.data, ...internships]);
+        setNewInternship({ title: '', company: '', location: 'Remote', stipend: '', description: '', applyLink: '', domain: 'webdev', requirements: '' });
+      }
+    } catch (err) {
+      toast.error("Failed to list internship", { id: loadingToast });
+    }
+  };
+
+  const handleDeleteInternship = async (id) => {
+    if (!window.confirm("Delete this internship position?")) return;
+    const loadingToast = toast.loading("Deleting internship...");
+    try {
+      const res = await api.delete(`/internships/${id}`);
+      if (res.data.success) {
+        toast.success("Internship deleted", { id: loadingToast });
+        setInternships(internships.filter(i => i._id !== id));
+      }
+    } catch (err) {
+      toast.error("Failed to delete internship", { id: loadingToast });
+    }
+  };
+
+  const handleCreateCredit = async (e) => {
+    e.preventDefault();
+    const loadingToast = toast.loading("Adding cloud credit tool...");
+    try {
+      const res = await api.post('/cloud-credits', newCredit);
+      if (res.data.success) {
+        toast.success("Cloud Credit added!", { id: loadingToast });
+        setCredits([...credits, res.data.data]);
+        setNewCredit({ title: '', platform: '', category: 'cloud', link: '', description: '', icon: '☁️', eligibility: '', order: 1 });
+      }
+    } catch (err) {
+      toast.error("Failed to add credit benefit", { id: loadingToast });
+    }
+  };
+
+  const handleDeleteCredit = async (id) => {
+    if (!window.confirm("Delete this cloud credit perk?")) return;
+    const loadingToast = toast.loading("Deleting perk...");
+    try {
+      const res = await api.delete(`/cloud-credits/${id}`);
+      if (res.data.success) {
+        toast.success("Perk deleted", { id: loadingToast });
+        setCredits(credits.filter(c => c._id !== id));
+      }
+    } catch (err) {
+      toast.error("Failed to delete perk", { id: loadingToast });
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -340,7 +527,7 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('users')}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'users' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
             >
-              👥 Manage Users
+              👥 Users
             </button>
             <button
               onClick={() => setActiveTab('domains')}
@@ -355,7 +542,7 @@ const AdminDashboard = () => {
               }}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'topics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
             >
-              📚 Topic Video Links
+              📚 Topics
             </button>
             <button
               onClick={() => {
@@ -364,7 +551,43 @@ const AdminDashboard = () => {
               }}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'assessments' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
             >
-              📝 Assign Assessments
+              📝 Assessments
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('blogs');
+                fetchBlogs();
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'blogs' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+            >
+              📝 Blogs
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('projects');
+                fetchProjects();
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'projects' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+            >
+              🛠️ Projects
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('internships');
+                fetchInternships();
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'internships' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+            >
+              💼 Internships
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('credits');
+                fetchCredits();
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'credits' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+            >
+              ☁️ Credits
             </button>
           </div>
         </div>
@@ -758,6 +981,558 @@ const AdminDashboard = () => {
                 No milestone assessments assigned yet. Click "Assign Assessment" to begin!
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'blogs' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Community Blogs</h3>
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Create Form */}
+            <form onSubmit={handleCreateBlog} className="lg:col-span-5 space-y-4 text-xs font-semibold">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Create Blog Post</h4>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newBlog.title}
+                  onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
+                  placeholder="Demystifying JavaScript Event Loop"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Author Name</label>
+                <input 
+                  type="text" 
+                  value={newBlog.author}
+                  onChange={(e) => setNewBlog({ ...newBlog, author: e.target.value })}
+                  placeholder="Jane Doe"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Category</label>
+                  <select 
+                    value={newBlog.category}
+                    onChange={(e) => setNewBlog({ ...newBlog, category: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="Web Development">Web Development</option>
+                    <option value="DevOps">DevOps</option>
+                    <option value="Data Science">Data Science</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Tags (comma-separated)</label>
+                  <input 
+                    type="text" 
+                    value={newBlog.tags}
+                    onChange={(e) => setNewBlog({ ...newBlog, tags: e.target.value })}
+                    placeholder="javascript, event-loop, webdev"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Cover Image URL</label>
+                <input 
+                  type="url" 
+                  value={newBlog.imageUrl}
+                  onChange={(e) => setNewBlog({ ...newBlog, imageUrl: e.target.value })}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Article Content</label>
+                <textarea 
+                  rows="4"
+                  value={newBlog.content}
+                  onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
+                  placeholder="Write full article body content..."
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <button 
+                type="submit"
+                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
+              >
+                Create Blog Post
+              </button>
+            </form>
+
+            {/* List */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Blog Posts</h4>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+                <table className="w-full text-left border-collapse text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Title</th>
+                      <th className="p-3">Category</th>
+                      <th className="p-3">Author</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {blogs.length > 0 ? (
+                      blogs.map(blog => (
+                        <tr key={blog._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3 font-bold text-slate-800 dark:text-white truncate max-w-[200px]">{blog.title}</td>
+                          <td className="p-3 text-[10px] text-indigo-400 uppercase font-black">{blog.category}</td>
+                          <td className="p-3 text-slate-500">{blog.author}</td>
+                          <td className="p-3 text-right">
+                            <button 
+                              onClick={() => handleDeleteBlog(blog._id)}
+                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No blog posts seeded yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'projects' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Guided Capstone Projects</h3>
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Create Form */}
+            <form onSubmit={handleCreateProject} className="lg:col-span-5 space-y-4 text-xs font-semibold">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Create Capstone Project</h4>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                  placeholder="E-Commerce Microservices Orchestration"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Domain Track</label>
+                  <select 
+                    value={newProject.domain}
+                    onChange={(e) => setNewProject({ ...newProject, domain: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="webdev">Web Development (webdev)</option>
+                    <option value="devops">DevOps (devops)</option>
+                    <option value="datascience">Data Science (datascience)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Difficulty</label>
+                  <select 
+                    value={newProject.difficulty}
+                    onChange={(e) => setNewProject({ ...newProject, difficulty: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Description</label>
+                <textarea 
+                  rows="2"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                  placeholder="Brief high-level description of requirements..."
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Checklist Steps (Format: "Title: Guidance" - one per line)</label>
+                <textarea 
+                  rows="3"
+                  value={newProject.steps}
+                  onChange={(e) => setNewProject({ ...newProject, steps: e.target.value })}
+                  placeholder="Local Orchestration: Create a docker-compose definition&#10;Containerize Services: Write multi-stage Dockerfiles"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Phase Roadmap (Format: "Phase Name: Task 1, Task 2" - one per line)</label>
+                <textarea 
+                  rows="3"
+                  value={newProject.roadmap}
+                  onChange={(e) => setNewProject({ ...newProject, roadmap: e.target.value })}
+                  placeholder="Phase 1 - Containerization: Dockerfiles, Secrets management&#10;Phase 2 - Kubernetes: Deployments, Services, ConfigMaps"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <button 
+                type="submit"
+                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
+              >
+                Create Project Blueprint
+              </button>
+            </form>
+
+            {/* List */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Capstone Project Blueprints</h4>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+                <table className="w-full text-left border-collapse text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Project Title</th>
+                      <th className="p-3">Track</th>
+                      <th className="p-3">Difficulty</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {projects.length > 0 ? (
+                      projects.map(p => (
+                        <tr key={p._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3 font-bold text-slate-800 dark:text-white">{p.title}</td>
+                          <td className="p-3 text-[10px] text-emerald-550 uppercase font-black">{p.domain}</td>
+                          <td className="p-3 text-slate-550 capitalize">{p.difficulty}</td>
+                          <td className="p-3 text-right">
+                            <button 
+                              onClick={() => handleDeleteProject(p._id)}
+                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No guided projects found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'internships' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Internship Board</h3>
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Create Form */}
+            <form onSubmit={handleCreateInternship} className="lg:col-span-5 space-y-4 text-xs font-semibold">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">List Internship Position</h4>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newInternship.title}
+                  onChange={(e) => setNewInternship({ ...newInternship, title: e.target.value })}
+                  placeholder="Frontend Engineer Intern"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Company Name</label>
+                  <input 
+                    type="text" 
+                    value={newInternship.company}
+                    onChange={(e) => setNewInternship({ ...newInternship, company: e.target.value })}
+                    placeholder="Vercel Inc."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Location</label>
+                  <input 
+                    type="text" 
+                    value={newInternship.location}
+                    onChange={(e) => setNewInternship({ ...newInternship, location: e.target.value })}
+                    placeholder="Remote / Hybrid"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Stipend / Month</label>
+                  <input 
+                    type="text" 
+                    value={newInternship.stipend}
+                    onChange={(e) => setNewInternship({ ...newInternship, stipend: e.target.value })}
+                    placeholder="$2,500 / Month"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Domain Path</label>
+                  <select 
+                    value={newInternship.domain}
+                    onChange={(e) => setNewInternship({ ...newInternship, domain: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="webdev">Web Development (webdev)</option>
+                    <option value="devops">DevOps (devops)</option>
+                    <option value="datascience">Data Science (datascience)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Application URL</label>
+                <input 
+                  type="url" 
+                  value={newInternship.applyLink}
+                  onChange={(e) => setNewInternship({ ...newInternship, applyLink: e.target.value })}
+                  placeholder="https://vercel.com/careers"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Candidate Requirements (one per line)</label>
+                <textarea 
+                  rows="2"
+                  value={newInternship.requirements}
+                  onChange={(e) => setNewInternship({ ...newInternship, requirements: e.target.value })}
+                  placeholder="Proficient in React & TS&#10;Familiarity with TailwindCSS"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Short Role Description</label>
+                <textarea 
+                  rows="3"
+                  value={newInternship.description}
+                  onChange={(e) => setNewInternship({ ...newInternship, description: e.target.value })}
+                  placeholder="Provide a description of the tasks the intern will perform..."
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <button 
+                type="submit"
+                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
+              >
+                List Position
+              </button>
+            </form>
+
+            {/* List */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Internship Board</h4>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+                <table className="w-full text-left border-collapse text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Role Title</th>
+                      <th className="p-3">Company</th>
+                      <th className="p-3">Location</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {internships.length > 0 ? (
+                      internships.map(i => (
+                        <tr key={i._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3 font-bold text-slate-800 dark:text-white">{i.title}</td>
+                          <td className="p-3 text-emerald-750 dark:text-indigo-400 font-bold">{i.company}</td>
+                          <td className="p-3 text-slate-500">{i.location}</td>
+                          <td className="p-3 text-right">
+                            <button 
+                              onClick={() => handleDeleteInternship(i._id)}
+                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No internship positions active.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'credits' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Cloud Credits & Free Perks</h3>
+          <div className="grid lg:grid-cols-12 gap-8">
+            {/* Create Form */}
+            <form onSubmit={handleCreateCredit} className="lg:col-span-5 space-y-4 text-xs font-semibold">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Add Free Perk</h4>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
+                <input 
+                  type="text" 
+                  value={newCredit.title}
+                  onChange={(e) => setNewCredit({ ...newCredit, title: e.target.value })}
+                  placeholder="GitHub Student Developer Pack"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Platform Name</label>
+                  <input 
+                    type="text" 
+                    value={newCredit.platform}
+                    onChange={(e) => setNewCredit({ ...newCredit, platform: e.target.value })}
+                    placeholder="GitHub / Google Cloud"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Category</label>
+                  <select 
+                    value={newCredit.category}
+                    onChange={(e) => setNewCredit({ ...newCredit, category: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
+                  >
+                    <option value="cloud">Cloud Credits (cloud)</option>
+                    <option value="education">Education Pack (education)</option>
+                    <option value="hosting">Hosting Service (hosting)</option>
+                    <option value="database">Database (database)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Icon Emoji</label>
+                  <input 
+                    type="text" 
+                    value={newCredit.icon}
+                    onChange={(e) => setNewCredit({ ...newCredit, icon: e.target.value })}
+                    placeholder="☁️"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 mb-1">Display Order</label>
+                  <input 
+                    type="number" 
+                    value={newCredit.order}
+                    onChange={(e) => setNewCredit({ ...newCredit, order: Number(e.target.value) })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Claim Link</label>
+                <input 
+                  type="url" 
+                  value={newCredit.link}
+                  onChange={(e) => setNewCredit({ ...newCredit, link: e.target.value })}
+                  placeholder="https://education.github.com/pack"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Candidate Eligibility Requirements</label>
+                <input 
+                  type="text" 
+                  value={newCredit.eligibility}
+                  onChange={(e) => setNewCredit({ ...newCredit, eligibility: e.target.value })}
+                  placeholder="Students with active .edu email address"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-500 mb-1">Short Description</label>
+                <textarea 
+                  rows="2"
+                  value={newCredit.description}
+                  onChange={(e) => setNewCredit({ ...newCredit, description: e.target.value })}
+                  placeholder="Free premium student developer tools pack..."
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
+                  required
+                ></textarea>
+              </div>
+              <button 
+                type="submit"
+                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
+              >
+                Add Credit Perk
+              </button>
+            </form>
+
+            {/* List */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Credits & Perks</h4>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+                <table className="w-full text-left border-collapse text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Perk Title</th>
+                      <th className="p-3">Platform</th>
+                      <th className="p-3">Category</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {credits.length > 0 ? (
+                      credits.map(c => (
+                        <tr key={c._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3 font-bold text-slate-800 dark:text-white">{c.icon} {c.title}</td>
+                          <td className="p-3 text-emerald-700 dark:text-indigo-400 font-bold">{c.platform}</td>
+                          <td className="p-3 text-slate-550 uppercase font-black text-[9px]">{c.category}</td>
+                          <td className="p-3 text-right">
+                            <button 
+                              onClick={() => handleDeleteCredit(c._id)}
+                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No free perks listed yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       )}

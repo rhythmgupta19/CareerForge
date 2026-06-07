@@ -22,6 +22,8 @@ import Resources from './pages/Resources';
 import CareerGuide from './pages/CareerGuide';
 import ZeroToCoding from './pages/ZeroToCoding';
 import Profile from './pages/Profile';
+import Blog from './pages/Blog';
+import PremiumPortal from './pages/PremiumPortal';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -57,6 +59,8 @@ function App() {
               <Route path="/career-guide" element={<CareerGuide />} />
               <Route path="/zero-to-coding" element={<ZeroToCoding />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/premium-portal" element={<PremiumPortal />} />
             </Route>
           </Route>
 

@@ -56,6 +56,9 @@ const Navbar = ({ isAdmin }) => {
     { name: 'Roadmaps', path: '/roadmap', icon: <FiMap /> },
     { name: 'Domains', path: '/domains', icon: <FiList /> },
     { name: 'Code Guru', path: '/code-guru', icon: <FiMessageSquare /> },
+    { name: 'Free Credits', path: '/resources', icon: <FiGift /> },
+    { name: 'Community Blog', path: '/blog', icon: <FiBookOpen /> },
+    { name: 'Premium Portal', path: '/premium-portal', icon: <FiZap className="text-amber-500 animate-pulse font-black" /> },
   ];
 
   const adminLinks = [
