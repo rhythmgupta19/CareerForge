@@ -29,7 +29,7 @@ const getSafeDomainProgress = (user, key) => {
   if (!user.domainsProgress[key]) {
     user.domainsProgress[key] = {
       xp: 0,
-      currentPhase: 1,
+      currentPhase: 0,
       overallProgress: 0,
       completedTopics: [],
       startedTopics: [],
@@ -124,15 +124,14 @@ exports.selectDomain = async (req, res) => {
       const hasOnboarding = (user.domainsProgress && user.domainsProgress[key] && 
         (user.domainsProgress[key].hasCompletedOnboarding === true || 
          user.domainsProgress[key].completedTopics?.length > 0 || 
-         user.domainsProgress[key].currentPhase > 1)) || false;
+         user.domainsProgress[key].currentPhase > 0)) || false;
       user.profile.isProfileComplete = hasOnboarding;
     }
 
     // Initialize domain-specific phase if not set
     if (user.domainsProgress && user.domainsProgress[key]) {
-      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null) {
-        const startsAtZero = ['web-development', 'webdev', 'devops', 'dsa'].includes(domain.slug.toLowerCase());
-        user.domainsProgress[key].currentPhase = startsAtZero ? 0 : 1;
+      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null || user.domainsProgress[key].currentPhase === 1) {
+        user.domainsProgress[key].currentPhase = 0;
         domain.enrolledCount = (domain.enrolledCount || 0) + 1;
         await domain.save();
       }
@@ -414,7 +413,7 @@ exports.getDashboard = async (req, res) => {
     const key = activeDomain ? getProgressKey(activeDomain.slug) : 'dsa';
     const domainProgress = user.domainsProgress[key] || {
       xp: 0,
-      currentPhase: 1,
+      currentPhase: 0,
       overallProgress: 0,
       completedTopics: [],
       startedTopics: [],
@@ -441,7 +440,7 @@ exports.getDashboard = async (req, res) => {
     let upcomingAssessment = null;
 
     if (activeDomain) {
-      const pNum = (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 1;
+      const pNum = (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 0;
       currentPhaseData = await Phase.findOne({ 
         domainId: activeDomain._id, 
         phaseNumber: pNum
@@ -465,7 +464,7 @@ exports.getDashboard = async (req, res) => {
           profile: user.profile,
           selectedDomain: activeDomain,
           activeDomain: activeDomain,
-          currentPhase: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 1,
+          currentPhase: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 0,
           overallProgress: domainProgress.overallProgress || 0,
           dailyStreak: user.dailyStreak,
           totalStudyMinutes: user.totalStudyMinutes,

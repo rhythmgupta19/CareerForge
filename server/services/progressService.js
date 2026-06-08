@@ -227,7 +227,7 @@ const updateAfterSubmission = async ({ userId, problem, status }) => {
       if (!user.domainsProgress[key]) {
         user.domainsProgress[key] = {
           xp: 0,
-          currentPhase: 1,
+          currentPhase: 0,
           overallProgress: 0,
           completedTopics: [],
           startedTopics: [],

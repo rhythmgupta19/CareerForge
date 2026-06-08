@@ -155,7 +155,7 @@ const Domains = () => {
                 {prog && (prog.overallProgress > 0 || prog.xp > 0) && (
                   <div className="mb-6 space-y-2 bg-[var(--land-bg-alt)] p-3.5 rounded-xl border border-[var(--border-light)]">
                     <div className="flex justify-between text-[10px] font-black text-[var(--text-light)] uppercase tracking-widest">
-                      <span>Lvl {prog.currentPhase || 1}</span>
+                      <span>Lvl {prog.currentPhase !== undefined && prog.currentPhase !== null ? prog.currentPhase : 0}</span>
                       <span>{prog.overallProgress || 0}%</span>
                     </div>
                     <div className="w-full bg-[var(--border-light)] h-1.5 rounded-full overflow-hidden">

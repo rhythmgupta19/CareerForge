@@ -139,7 +139,7 @@ exports.updateUserProgress = async (req, res) => {
       if (!user.domainsProgress[key]) {
         user.domainsProgress[key] = {
           xp: 0,
-          currentPhase: 1,
+          currentPhase: 0,
           overallProgress: 0,
           completedTopics: [],
           startedTopics: [],

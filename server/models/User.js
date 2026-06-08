@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const domainProgressSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
   hasCompletedOnboarding: { type: Boolean, default: false },
-  currentPhase: { type: Number, default: 1 },
+  currentPhase: { type: Number, default: 0 },
   overallProgress: { type: Number, default: 0, min: 0, max: 100 },
   currentCheckpoint: { type: String, default: '' },
   lastOpenedTopic: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },

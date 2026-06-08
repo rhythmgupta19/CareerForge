@@ -30,7 +30,7 @@ const calculatePerformanceInsights = async (userId) => {
   const key = getProgressKey(domainSlug);
   const domainProgress = user.domainsProgress[key] || {
     xp: 0,
-    currentPhase: 1,
+    currentPhase: 0,
     overallProgress: 0,
     completedTopics: [],
     weakConcepts: [],

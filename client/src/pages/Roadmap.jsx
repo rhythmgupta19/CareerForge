@@ -52,7 +52,7 @@ const Roadmap = () => {
   const activeDomainKey = getProgressKey(activeDomainSlug);
   const activeDomainProgress = user?.domainsProgress?.[activeDomainKey] || {
     xp: 0,
-    currentPhase: 1,
+    currentPhase: 0,
     overallProgress: 0,
     completedTopics: []
   };
@@ -100,7 +100,7 @@ const Roadmap = () => {
       const res = await api.get(`/domains/${id}`);
       setDomainData(res.data.data);
       if (activeLevel === null) {
-        const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 1;
+        const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 0;
         setActiveLevel(currentPhaseVal);
       }
     } catch (err) {
@@ -129,7 +129,7 @@ const Roadmap = () => {
   const dsaAnswers = user.profile?.onboardingAnswers || {};
   const dsaAnalysis = isDSA ? (dsaAnswers.dsaAnalysis || analyzeDsaProfile(dsaAnswers)) : null;
   const streakRank = getStreakRank(currentStreak);
-  const activePhaseNumber = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 1;
+  const activePhaseNumber = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 0;
   const activeBadge = getDsaBadgeForLevel(activePhaseNumber);
 
   const langNames = DSA_LANGUAGE_LABELS;
@@ -315,7 +315,7 @@ const Roadmap = () => {
           
           {phases.map((phase, index) => {
             const phaseNum = phase.phaseNumber;
-            const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 1;
+            const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 0;
             const isUnlocked = phaseNum <= currentPhaseVal;
             const isCompleted = phaseNum < currentPhaseVal;
             const isCurrent = phaseNum === currentPhaseVal;

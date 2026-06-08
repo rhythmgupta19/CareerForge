@@ -492,7 +492,7 @@ const TopicDetail = () => {
   const activeDomainKey = getProgressKey(activeDomainSlug);
   const activeDomainProgress = user?.domainsProgress?.[activeDomainKey] || {
     xp: 0,
-    currentPhase: 1,
+    currentPhase: 0,
     overallProgress: 0,
     completedTopics: [],
     startedTopics: []
