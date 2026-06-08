@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -8,8 +8,37 @@ import { BsLightningFill } from 'react-icons/bs';
 const Signup = () => {
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '', role: 'student' });
   const [isLoading, setIsLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleResponse = async (response) => {
+    setIsLoading(true);
+    try {
+      const data = await googleLogin(response.credential);
+      toast.success('Account created successfully!');
+      if (data.user.role === 'admin') navigate('/admin');
+      else if (!data.user.activeDomain && !data.user.selectedDomain) navigate('/domains');
+      else navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Google registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    /* global google */
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: "148006859599-24p013pt6j9k1npll45epq8kqq5a108o.apps.googleusercontent.com",
+        callback: handleGoogleResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("google-signup-btn"),
+        { theme: "outline", size: "large", width: "400", shape: "pill", text: "continue_with" }
+      );
+    }
+  }, []);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -138,6 +167,16 @@ const Signup = () => {
               )}
             </button>
           </form>
+
+          <div className="relative flex py-3 items-center justify-center my-4 text-xs font-bold text-gray-400 uppercase">
+            <div className="flex-grow border-t border-gray-100"></div>
+            <span className="flex-shrink mx-4">or</span>
+            <div className="flex-grow border-t border-gray-100"></div>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <div id="google-signup-btn" className="w-full"></div>
+          </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-[var(--land-nav)] font-bold">

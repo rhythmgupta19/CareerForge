@@ -699,7 +699,8 @@ const ZeroToCoding = () => {
             {[
               { id: 'description', label: 'Problem Description', icon: FileCode },
               { id: 'examples', label: 'Constraints & Examples', icon: Trophy },
-              { id: 'clues', label: 'Hints & Accordion', icon: HelpCircle }
+              { id: 'clues', label: 'Hints & Accordion', icon: HelpCircle },
+              ...(activeLevel.youtubeUrl ? [{ id: 'video', label: 'Watch Tutorial', icon: PlayCircle }] : [])
             ].map(tab => (
               <button
                 key={tab.id}
@@ -870,6 +871,26 @@ const ZeroToCoding = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {leftTab === 'video' && activeLevel.youtubeUrl && (
+              <div className="space-y-4 animate-fade-in">
+                <h3 className={`text-sm font-black uppercase tracking-wider ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
+                  Level Tutorial: {activeLevel.tutorialTitle}
+                </h3>
+                <div className="aspect-video rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-800 shadow-xl bg-black">
+                  <iframe
+                    src={activeLevel.youtubeUrl}
+                    title={activeLevel.tutorialTitle}
+                    className="w-full h-full border-none"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <p className={`text-xs ${theme === 'dark' ? 'text-zinc-400' : 'text-slate-600'} leading-relaxed font-medium`}>
+                  Need help? Watch this tutorial video to understand the core concepts.
+                </p>
               </div>
             )}
 

@@ -45,9 +45,7 @@ int main() {
 `
     },
     testCases: [
-      { id: 1,
-    youtubeUrl: 'https://www.youtube.com/embed/FPu9Uld7W-E',
-    tutorialTitle: 'Striver Foundations', input: "", expected: "Hello World!" }
+      { id: 1, input: "", expected: "Hello World!" }
     ],
     validationFn: (code, lang) => {
       const codeWithoutComments = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/#.*$/gm, '');
@@ -78,8 +76,8 @@ int main() {
   },
   {
     id: 2,
-    youtubeUrl: 'https://www.youtube.com/embed/tNm_NNSB3_w',
-    tutorialTitle: 'Variables Deep Dive',
+    youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
+    tutorialTitle: 'C++ Foundations',
     title: "Print Multiple Lines",
     difficulty: "Rookie",
     xpReward: 15,
@@ -119,9 +117,7 @@ int main() {
 `
     },
     testCases: [
-      { id: 1,
-    youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
-    tutorialTitle: 'Input Output Expedition', input: "", expected: "Hello\nWorld" }
+      { id: 1, input: "", expected: "Hello\nWorld" }
     ],
     validationFn: (code, lang) => {
       const codeWithoutComments = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/#.*$/gm, '');
@@ -148,8 +144,8 @@ int main() {
   },
   {
     id: 3,
-    youtubeUrl: 'https://www.youtube.com/embed/FPu9Uld7W-E',
-    tutorialTitle: 'Making Choices',
+    youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
+    tutorialTitle: 'Variables Deep Dive',
     title: "Understanding Variables",
     difficulty: "Explorer",
     xpReward: 20,
@@ -190,9 +186,7 @@ int main() {
 `
     },
     testCases: [
-      { id: 1,
-    youtubeUrl: 'https://www.youtube.com/embed/tNm_NNSB3_w',
-    tutorialTitle: 'Repeating Work', input: "", expected: "20" }
+      { id: 1, input: "", expected: "20" }
     ],
     validationFn: (code, lang) => {
       const codeWithoutComments = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/#.*$/gm, '');
@@ -219,7 +213,7 @@ int main() {
   {
     id: 4,
     youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
-    tutorialTitle: 'Mastering Patterns',
+    tutorialTitle: 'Input Output Expedition',
     title: "Input/Output Expedition",
     difficulty: "Explorer",
     xpReward: 25,
@@ -294,6 +288,8 @@ public class Main {
   },
   {
     id: 5,
+    youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
+    tutorialTitle: 'Making Choices',
     title: "Making Choices (If Else)",
     difficulty: "Builder",
     xpReward: 30,
@@ -360,6 +356,8 @@ let age = 19;
   },
   {
     id: 6,
+    youtubeUrl: 'https://www.youtube.com/embed/EAR7De6Goz4',
+    tutorialTitle: 'Repeating Work',
     title: "Repeating Work (Loops)",
     difficulty: "Coder",
     xpReward: 35,
@@ -424,6 +422,8 @@ int main() {
   },
   {
     id: 7,
+    youtubeUrl: 'https://www.youtube.com/embed/tNm_NNSB3_w',
+    tutorialTitle: 'Mastering Patterns',
     title: "Mastering Patterns",
     difficulty: "Architect",
     xpReward: 50,

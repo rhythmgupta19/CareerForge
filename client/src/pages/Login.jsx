@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -9,8 +9,37 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleResponse = async (response) => {
+    setIsLoading(true);
+    try {
+      const data = await googleLogin(response.credential);
+      toast.success('Welcome back!');
+      if (data.user.role === 'admin') navigate('/admin');
+      else if (!data.user.activeDomain && !data.user.selectedDomain) navigate('/domains');
+      else navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Google login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    /* global google */
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: "148006859599-24p013pt6j9k1npll45epq8kqq5a108o.apps.googleusercontent.com",
+        callback: handleGoogleResponse
+      });
+      google.accounts.id.renderButton(
+        document.getElementById("google-signin-btn"),
+        { theme: "outline", size: "large", width: "360", shape: "pill", text: "continue_with" }
+      );
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,6 +121,16 @@ const Login = () => {
               )}
             </button>
           </form>
+
+          <div className="relative flex py-3 items-center justify-center my-4 text-xs font-bold text-gray-400 uppercase">
+            <div className="flex-grow border-t border-gray-100"></div>
+            <span className="flex-shrink mx-4">or</span>
+            <div className="flex-grow border-t border-gray-100"></div>
+          </div>
+
+          <div className="flex justify-center w-full">
+            <div id="google-signin-btn" className="w-full"></div>
+          </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 text-center">
             <p className="text-[var(--land-nav)] font-bold">

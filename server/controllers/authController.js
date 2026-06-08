@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const axios = require('axios');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -146,3 +147,83 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Google login / signup
+// @route   POST /api/auth/google
+exports.googleLogin = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ success: false, message: 'Google credential is required' });
+    }
+
+    // Verify token with Google API
+    const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    const payload = response.data;
+
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (googleClientId && payload.aud !== googleClientId) {
+      return res.status(400).json({ success: false, message: 'Audience mismatch. Invalid Google token.' });
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email address not provided by Google' });
+    }
+
+    // Try to find user by googleId or email
+    let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
+
+    if (user) {
+      // User exists, link googleId if it wasn't set
+      let modified = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        modified = true;
+      }
+      if (!user.avatar && picture) {
+        user.avatar = picture;
+        modified = true;
+      }
+      if (modified) {
+        await user.save();
+      }
+    } else {
+      // Create new user (password is not required)
+      user = await User.create({
+        fullName: name || 'Google User',
+        email: email.toLowerCase(),
+        googleId,
+        avatar: picture || '',
+        role: 'student'
+      });
+    }
+
+    // Force admin approval for specific email
+    if (user.email === 'omshivhare666@gmail.com' && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+
+    const token = user.generateToken();
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        profile: user.profile,
+        activeDomain: user.activeDomain,
+        selectedDomain: user.activeDomain,
+        domainsProgress: user.domainsProgress,
+        dailyStreak: user.dailyStreak
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.response?.data?.error_description || error.message });
+  }
+};
+

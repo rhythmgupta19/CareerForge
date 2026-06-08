@@ -38,6 +38,14 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const googleLogin = async (credential) => {
+    const { data } = await api.post('/auth/google', { credential });
+    localStorage.setItem('cf_token', data.token);
+    localStorage.setItem('cf_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('cf_token');
     localStorage.removeItem('cf_user');
@@ -52,7 +60,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, register, logout, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, loading, login, register, googleLogin, logout, refreshUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );
