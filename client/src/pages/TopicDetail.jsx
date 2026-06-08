@@ -54,16 +54,22 @@ const playSoundEffect = (type) => {
 // Helper to extract embedded URL supporting both video IDs and playlists dynamically
 const getYouTubeEmbedUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
+  let embedUrl = null;
   if (url.includes('playlist?list=') || url.includes('&list=')) {
     const match = url.match(/[?&]list=([^#\&\?]+)/);
     if (match && match[1]) {
-      return `https://www.youtube.com/embed/videoseries?list=${match[1]}`;
+      embedUrl = `https://www.youtube.com/embed/videoseries?list=${match[1]}`;
+    }
+  } else {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2] && match[2].length === 11) {
+      embedUrl = `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&showinfo=0`;
     }
   }
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  if (match && match[2] && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&showinfo=0`;
+  if (embedUrl) {
+    const separator = embedUrl.includes('?') ? '&' : '?';
+    return `${embedUrl}${separator}enablejsapi=1`;
   }
   return null;
 };
@@ -896,8 +902,19 @@ const TopicDetail = () => {
     return null;
   }, [isDsaDomain, isWebDevDomain, topic, selectedLang, activeDifficulty, useStriverAdvanced]);
 
-  const lessonAssessment = shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
-  const lessonAssessmentComplete = !shouldSplitWorkspace || lessonAssessment.every((_, index) => (lessonAnswers[index] || '').trim().length > 0);
+  const lessonAssessment = useMemo(() => {
+    if (topic && topic.miniAssessment && topic.miniAssessment.questions && topic.miniAssessment.questions.length > 0) {
+      return topic.miniAssessment.questions;
+    }
+    return shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
+  }, [topic, selectedLang, shouldSplitWorkspace]);
+
+  const passingPercentage = useMemo(() => {
+    if (topic && topic.miniAssessment && typeof topic.miniAssessment.passingPercentage === 'number') {
+      return topic.miniAssessment.passingPercentage;
+    }
+    return 60;
+  }, [topic]);
 
   // Active checkpoint content (only relevant when isCheckpointModule)
   const activeCheckpointContent = useMemo(() => {
@@ -915,18 +932,23 @@ const TopicDetail = () => {
   // Each checkpoint has its own pre-built videoEmbedUrl — NEVER the same video twice
   const checkpointVideoEmbedUrl = useMemo(() => {
     if (!isCheckpointModule || !activeCheckpointContent?.videoEmbedUrl) return null;
-    return activeCheckpointContent.videoEmbedUrl;
+    let url = activeCheckpointContent.videoEmbedUrl;
+    if (!url.includes('enablejsapi=1')) {
+      const separator = url.includes('?') ? '&' : '?';
+      url = `${url}${separator}enablejsapi=1`;
+    }
+    return url;
   }, [isCheckpointModule, activeCheckpointContent]);
 
   const activeVideoEmbedUrl = useMemo(() => {
     if (langContent?.youtubeVideoId) {
       if (langContent.youtubeVideoId.length === 11) {
-        return `https://www.youtube.com/embed/${langContent.youtubeVideoId}?rel=0&modestbranding=1&showinfo=0`;
+        return `https://www.youtube.com/embed/${langContent.youtubeVideoId}?rel=0&modestbranding=1&showinfo=0&enablejsapi=1`;
       }
       return getYouTubeEmbedUrl(langContent.youtubeVideoId);
     }
     if (langContent?.youtubePlaylistId) {
-      return `https://www.youtube.com/embed/videoseries?list=${langContent.youtubePlaylistId}`;
+      return `https://www.youtube.com/embed/videoseries?list=${langContent.youtubePlaylistId}&enablejsapi=1`;
     }
     if (topic?.youtubeLink) {
       return getYouTubeEmbedUrl(topic.youtubeLink);
@@ -944,6 +966,9 @@ const TopicDetail = () => {
         
         try {
           if (playerRef.current) {
+            if (playerRef.current.progressInterval) {
+              clearInterval(playerRef.current.progressInterval);
+            }
             playerRef.current.destroy();
             playerRef.current = null;
           }
@@ -955,21 +980,58 @@ const TopicDetail = () => {
           playerRef.current = new window.YT.Player('tutorial-video-iframe', {
             events: {
               onStateChange: (event) => {
-                // 0 is YT.PlayerState.ENDED
                 if (event.data === 0) {
                   setIsVideoFinished(true);
                   toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
                 }
                 
-                // Periodically save video progress
-                if (event.data === 1 || event.data === 2) {
-                  const currentTime = Math.round(event.target.getCurrentTime());
-                  api.post('/progress/video-progress', {
-                    checkpointId: `tutorial_${id}`,
-                    timestamp: currentTime,
-                    currentCheckpoint: `tutorial_${id}`,
-                    lastOpenedTopic: id
-                  }).catch(e => console.warn("Failed to persist video progress", e));
+                if (event.data === 1) { // PLAYING
+                  if (!playerRef.current.progressInterval) {
+                    playerRef.current.progressInterval = setInterval(() => {
+                      try {
+                        const player = playerRef.current;
+                        if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+                          const currentTime = player.getCurrentTime();
+                          const duration = player.getDuration();
+                          if (duration > 0) {
+                            const progressRatio = currentTime / duration;
+                            if (progressRatio >= 0.90 && !isVideoFinished) {
+                              setIsVideoFinished(true);
+                              toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
+                              clearInterval(player.progressInterval);
+                              player.progressInterval = null;
+                            }
+                            
+                            api.post('/progress/video-progress', {
+                              checkpointId: `tutorial_${id}`,
+                              timestamp: Math.round(currentTime),
+                              currentCheckpoint: `tutorial_${id}`,
+                              lastOpenedTopic: id
+                            }).catch(e => console.warn("Failed to persist video progress", e));
+                          }
+                        }
+                      } catch (e) {
+                        console.warn("Error checking playback progress", e);
+                      }
+                    }, 2000);
+                  }
+                } else {
+                  if (playerRef.current && playerRef.current.progressInterval) {
+                    clearInterval(playerRef.current.progressInterval);
+                    playerRef.current.progressInterval = null;
+                  }
+                  
+                  if (event.data === 2) { // PAUSED
+                    try {
+                      const currentTime = Math.round(event.target.getCurrentTime());
+                      api.post('/progress/video-progress', {
+                        checkpointId: `tutorial_${id}`,
+                        timestamp: currentTime,
+                        currentCheckpoint: `tutorial_${id}`,
+                        lastOpenedTopic: id
+                      }).catch(e => console.warn("Failed to persist video progress", e));
+                    } catch (err) {}
+                  }
                 }
               },
               onReady: (event) => {
@@ -991,13 +1053,16 @@ const TopicDetail = () => {
     return () => {
       clearInterval(checkYTInterval);
       if (playerRef.current) {
+        if (playerRef.current.progressInterval) {
+          clearInterval(playerRef.current.progressInterval);
+        }
         try {
           playerRef.current.destroy();
           playerRef.current = null;
         } catch (e) {}
       }
     };
-  }, [activeVideoEmbedUrl, learningStep, user, id]);
+  }, [activeVideoEmbedUrl, learningStep, user, id, isVideoFinished]);
 
   // Hook up YouTube Player state listener for checkpoint videos
   useEffect(() => {
@@ -1009,6 +1074,9 @@ const TopicDetail = () => {
         
         try {
           if (checkpointPlayerRef.current) {
+            if (checkpointPlayerRef.current.progressInterval) {
+              clearInterval(checkpointPlayerRef.current.progressInterval);
+            }
             checkpointPlayerRef.current.destroy();
             checkpointPlayerRef.current = null;
           }
@@ -1029,15 +1097,53 @@ const TopicDetail = () => {
                   toast.success("Checkpoint tutorial video completed! challenge unlocked! 🔓");
                 }
                 
-                // Periodically save video progress
-                if (event.data === 1 || event.data === 2) {
-                  const currentTime = Math.round(event.target.getCurrentTime());
-                  api.post('/progress/video-progress', {
-                    checkpointId: activeCheckpoint,
-                    timestamp: currentTime,
-                    currentCheckpoint: activeCheckpoint,
-                    lastOpenedTopic: id
-                  }).catch(e => console.warn("Failed to persist video progress", e));
+                if (event.data === 1) { // PLAYING
+                  if (!checkpointPlayerRef.current.progressInterval) {
+                    checkpointPlayerRef.current.progressInterval = setInterval(() => {
+                      try {
+                        const player = checkpointPlayerRef.current;
+                        if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+                          const currentTime = player.getCurrentTime();
+                          const duration = player.getDuration();
+                          if (duration > 0) {
+                            const progressRatio = currentTime / duration;
+                            if (progressRatio >= 0.90 && !checkpointVideoFinished) {
+                              setCheckpointVideoFinished(true);
+                              toast.success("Checkpoint tutorial video completed! challenge unlocked! 🔓");
+                              clearInterval(player.progressInterval);
+                              player.progressInterval = null;
+                            }
+                            
+                            api.post('/progress/video-progress', {
+                              checkpointId: activeCheckpoint,
+                              timestamp: Math.round(currentTime),
+                              currentCheckpoint: activeCheckpoint,
+                              lastOpenedTopic: id
+                            }).catch(e => console.warn("Failed to persist video progress", e));
+                          }
+                        }
+                      } catch (e) {
+                        console.warn("Error checking checkpoint video progress", e);
+                      }
+                    }, 2000);
+                  }
+                } else {
+                  if (checkpointPlayerRef.current && checkpointPlayerRef.current.progressInterval) {
+                    clearInterval(checkpointPlayerRef.current.progressInterval);
+                    checkpointPlayerRef.current.progressInterval = null;
+                  }
+
+                  if (event.data === 2) { // PAUSED
+                    try {
+                      const currentTime = Math.round(event.target.getCurrentTime());
+                      api.post('/progress/video-progress', {
+                        checkpointId: activeCheckpoint,
+                        timestamp: currentTime,
+                        currentCheckpoint: activeCheckpoint,
+                        lastOpenedTopic: id
+                      }).catch(e => console.warn("Failed to persist video progress", e));
+                    } catch (err) {}
+                  }
                 }
               },
               onReady: (event) => {
@@ -1059,13 +1165,16 @@ const TopicDetail = () => {
     return () => {
       clearInterval(checkYTInterval);
       if (checkpointPlayerRef.current) {
+        if (checkpointPlayerRef.current.progressInterval) {
+          clearInterval(checkpointPlayerRef.current.progressInterval);
+        }
         try {
           checkpointPlayerRef.current.destroy();
           checkpointPlayerRef.current = null;
         } catch (e) {}
       }
     };
-  }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id]);
+  }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id, checkpointVideoFinished]);
 
   // Reset boilerplate when topic, language, or difficulty changes
   useEffect(() => {
@@ -1825,6 +1934,10 @@ const TopicDetail = () => {
   // Submit topic complete manually
   const handleComplete = async (e) => {
     if (e) e.preventDefault();
+    if (topic.youtubeLink && !isVideoFinished && !isCompleted) {
+      toast.error('You must watch at least 90% of the video before completing this topic!');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await api.post('/progress/complete-topic', { 
@@ -2882,15 +2995,15 @@ const TopicDetail = () => {
                 {shouldSplitWorkspace ? (
                   <button 
                     onClick={() => {
-                      if (isDsaDomain && !isCompleted && !isVideoFinished) {
+                      if (topic.youtubeLink && !isCompleted && !isVideoFinished) {
                         toast.error("Please watch the video tutorial to unlock the assessment!");
                         return;
                       }
                       setLearningStep('transition');
                     }}
                     className={`font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 ${
-                      isDsaDomain && !isCompleted && !isVideoFinished
-                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                      topic.youtubeLink && !isCompleted && !isVideoFinished
+                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-none'
                         : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
                     }`}
                   >
@@ -2900,9 +3013,17 @@ const TopicDetail = () => {
                 ) : (
                   <button 
                     onClick={() => {
+                      if (topic.youtubeLink && !isCompleted && !isVideoFinished) {
+                        toast.error("Please watch the video tutorial to unlock completion!");
+                        return;
+                      }
                       setLearningStep('transition');
                     }}
-                    className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20"
+                    className={`font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 ${
+                      topic.youtubeLink && !isCompleted && !isVideoFinished
+                        ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-none'
+                        : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
+                    }`}
                   >
                     <FiCheckCircle size={16} />
                     Complete &amp; Log Notes
@@ -3446,25 +3567,39 @@ const TopicDetail = () => {
 
                 <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-[10px] text-zinc-500 font-semibold italic">
-                    Answer all questions correctly to unlock the workspace.
+                    Achieve at least {passingPercentage}% to unlock the workspace.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setQuizSubmitted(true);
                       const allAnswers = lessonAssessment.map((q, qIdx) => selectedQuizAnswers[qIdx] === q.answer);
-                      const passedAll = allAnswers.every(Boolean);
+                      const correctCount = allAnswers.filter(Boolean).length;
+                      const totalQuestions = lessonAssessment.length;
+                      const scorePercent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 100;
+                      const isPassed = scorePercent >= passingPercentage;
 
-                      if (passedAll) {
+                      if (isPassed) {
                         setIsAssessmentPassed(true);
                         localStorage.setItem(`assessment_passed_${id}`, 'true');
                         playSoundEffect('success');
                         triggerConfettiExplosion();
-                        toast.success('🎉 Mini Assessment Passed! Coding workspace is now unlocked!', { duration: 4000 });
+                        toast.success(`🎉 Mini Assessment Passed with ${scorePercent}%! Coding workspace is now unlocked!`, { duration: 4000 });
                       } else {
                         playSoundEffect('error');
-                        toast.error('Some answers are incorrect. Review your choices and try again!');
+                        toast.error(`You scored ${scorePercent}%, which is below the passing score of ${passingPercentage}%. Review your choices and try again!`);
                       }
+
+                      // Post progress to backend
+                      api.post('/progress/submit-mini-assessment', {
+                        topicId: id,
+                        score: scorePercent,
+                        passed: isPassed
+                      }).then(() => {
+                        refreshUser();
+                      }).catch(err => {
+                        console.error('Failed to submit mini assessment results:', err);
+                      });
                     }}
                     className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer text-xs"
                   >

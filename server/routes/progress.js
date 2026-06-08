@@ -7,6 +7,7 @@ router.post('/select-domain', protect, c.selectDomain);
 router.post('/start-topic', protect, c.startTopic);
 router.post('/complete-topic', protect, c.completeTopic);
 router.post('/submit-assessment', protect, c.submitAssessment);
+router.post('/submit-mini-assessment', protect, c.submitMiniAssessment);
 router.post('/study-time', protect, c.addStudyTime);
 router.post('/submit-code', protect, c.submitCode);
 router.get('/submissions/:topicId', protect, c.getSubmissions);

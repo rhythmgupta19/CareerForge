@@ -53,6 +53,9 @@ const getSafeDomainProgress = (user, key) => {
   if (!user.domainsProgress[key].testResults) {
     user.domainsProgress[key].testResults = [];
   }
+  if (!user.domainsProgress[key].miniAssessmentResults) {
+    user.domainsProgress[key].miniAssessmentResults = [];
+  }
   if (!user.domainsProgress[key].codeSubmissions) {
     user.domainsProgress[key].codeSubmissions = [];
   }
@@ -106,6 +109,48 @@ const updateDSAStats = (user) => {
   dsaProgress.dsaStats.strongestTopic = strongest.name || 'Foundations';
   dsaProgress.dsaStats.weakestTopic = weakest.name || 'Recursion';
   dsaProgress.dsaStats.totalProblemsSolved = dsaTopics.length;
+};
+
+const checkAndAdvancePhase = async (user, domainId, key) => {
+  const domainProgress = getSafeDomainProgress(user, key);
+  const currentPhaseNum = domainProgress.currentPhase || 0;
+  
+  const currentPhase = await Phase.findOne({ domainId, phaseNumber: currentPhaseNum });
+  if (!currentPhase) return null;
+
+  const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true });
+  if (topicsInPhase.length === 0) return null;
+
+  const completedTopicIds = domainProgress.completedTopics.map(ct => ct.topicId.toString());
+  const allTopicsCompleted = topicsInPhase.every(tp => completedTopicIds.includes(tp._id.toString()));
+
+  if (!allTopicsCompleted) return null;
+
+  const Assessment = require('../models/Assessment');
+  const assessment = await Assessment.findOne({ phaseId: currentPhase._id, isActive: true });
+  if (assessment) {
+    const passedAssessment = domainProgress.testResults.some(t => t.assessmentId.toString() === assessment._id.toString() && t.passed);
+    if (!passedAssessment) return null;
+  }
+
+  domainProgress.currentPhase = currentPhaseNum + 1;
+  domainProgress.xp = (domainProgress.xp || 0) + 500;
+
+  const newlyEarnedBadges = [];
+  const badge = await Badge.findOne({ phaseId: currentPhase._id });
+  if (badge) {
+    const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
+    if (!alreadyEarned) {
+      user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
+      newlyEarnedBadges.push(badge);
+    }
+  }
+
+  return {
+    advanced: true,
+    newPhase: domainProgress.currentPhase,
+    newlyEarnedBadges
+  };
 };
 
 // @desc    Select domain for student
@@ -299,23 +344,15 @@ exports.completeTopic = async (req, res) => {
         ? completedInPhase.reduce((acc, curr) => acc + (curr.confidenceLevel || 3), 0) / completedInPhase.length 
         : 0;
 
-      if (completedInPhase.length === topicsInPhase.length && topicsInPhase.length > 0) {
-        // Phase complete! Advance to next phase
-        domainProgress.currentPhase += 1;
-        domainProgress.xp = (domainProgress.xp || 0) + 500; // Bonus XP for phase completion
-        
-        // Award phase badge if exists
-        const badge = await Badge.findOne({ phaseId: currentPhase._id });
-        if (badge) {
-          const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
-          if (!alreadyEarned) {
-            user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
-            newlyEarnedBadges.push(badge);
-          }
-        }
-      } else if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
+      if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
         domainProgress.xp = (domainProgress.xp || 0) + 100; // Fast-track bonus
       }
+    }
+
+    // Call checkAndAdvancePhase to see if user has passed assessment AND completed all topics
+    const advanceResult = await checkAndAdvancePhase(user, user.activeDomain._id, key);
+    if (advanceResult && advanceResult.newlyEarnedBadges) {
+      newlyEarnedBadges.push(...advanceResult.newlyEarnedBadges);
     }
 
     // Check if domain is fully completed (overallProgress === 100)
@@ -391,10 +428,35 @@ exports.submitAssessment = async (req, res) => {
       user.activityLog.push({ date: today, minutes: 0, topicsCompleted: 0, assessmentsPassed: 1 });
     }
 
+    let newlyEarnedBadges = [];
+    let advanced = false;
+    let newPhase = domainProgress.currentPhase;
+
+    if (passed) {
+      const advanceResult = await checkAndAdvancePhase(user, user.activeDomain._id, key);
+      if (advanceResult) {
+        advanced = advanceResult.advanced;
+        newPhase = advanceResult.newPhase;
+        if (advanceResult.newlyEarnedBadges) {
+          newlyEarnedBadges = advanceResult.newlyEarnedBadges;
+        }
+      }
+    }
+
     user.markModified(`domainsProgress.${key}`);
     await user.save();
 
-    res.json({ success: true, message: passed ? 'Assessment passed!' : 'Keep trying!', data: { passed, score } });
+    res.json({ 
+      success: true, 
+      message: passed ? 'Assessment passed!' : 'Keep trying!', 
+      data: { 
+        passed, 
+        score,
+        advanced,
+        newPhase,
+        newlyEarnedBadges
+      } 
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -794,6 +856,49 @@ exports.getWebDevProject = async (req, res) => {
     });
     
     res.json({ success: true, data: project || null });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Submit topic mini-assessment results
+// @route   POST /api/progress/submit-mini-assessment
+exports.submitMiniAssessment = async (req, res) => {
+  try {
+    const { topicId, score, passed } = req.body;
+    const user = await User.findById(req.user._id).populate('activeDomain');
+    if (!user.activeDomain) {
+      return res.status(400).json({ success: false, message: 'No active domain selected' });
+    }
+
+    const key = getProgressKey(user.activeDomain.slug);
+    const domainProgress = getSafeDomainProgress(user, key);
+
+    if (!domainProgress.miniAssessmentResults) {
+      domainProgress.miniAssessmentResults = [];
+    }
+
+    const existingIndex = domainProgress.miniAssessmentResults.findIndex(r => r.topicId.toString() === topicId);
+    if (existingIndex > -1) {
+      domainProgress.miniAssessmentResults[existingIndex] = {
+        topicId,
+        score,
+        passed,
+        attemptedAt: new Date()
+      };
+    } else {
+      domainProgress.miniAssessmentResults.push({
+        topicId,
+        score,
+        passed,
+        attemptedAt: new Date()
+      });
+    }
+
+    user.markModified(`domainsProgress.${key}`);
+    await user.save();
+
+    res.json({ success: true, message: 'Mini assessment results stored' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

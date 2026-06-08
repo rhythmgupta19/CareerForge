@@ -50,18 +50,18 @@ const Domains = () => {
 
   if (loading) return <div className="flex justify-center py-24"><div className="spinner"></div></div>;
 
-  const activeKeys = ['dsa', 'web-development', 'web development', 'devops', 'open-source', 'open source'];
+  const activeKeys = ['dsa', 'web-development', 'web development', 'devops'];
 
   const activeDomains = domains.filter(d => {
     const name = d.name.toLowerCase();
     const slug = (d.slug || '').toLowerCase();
-    return activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops') || name.includes('open source');
+    return activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops');
   });
 
   const comingSoonDomains = domains.filter(d => {
     const name = d.name.toLowerCase();
     const slug = (d.slug || '').toLowerCase();
-    return !(activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops') || name.includes('open source'));
+    return !(activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops'));
   });
 
   return (

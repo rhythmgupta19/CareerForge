@@ -88,7 +88,7 @@ const Assessments = () => {
         {assessments.map((assessment) => {
           const phaseNum = assessment.phaseId?.phaseNumber || assessment.order;
           // Unlocked if user has completed the level OR is on a higher level
-          const isUnlocked = activeDomainProgress.currentPhase > phaseNum || assessment.isLevelCompleted;
+          const isUnlocked = activeDomainProgress.currentPhase >= phaseNum || assessment.isLevelCompleted;
           const result = activeDomainProgress.testResults?.find(t => t.assessmentId === assessment._id || t.assessmentId?._id === assessment._id);
           const isPassed = result?.passed;
 

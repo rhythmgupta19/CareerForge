@@ -84,6 +84,66 @@ const AdminDashboard = () => {
   });
   const [editingAssessment, setEditingAssessment] = useState(null);
 
+  const handleAddQuestion = () => {
+    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
+    const questions = [...(miniAssessment.questions || [])];
+    questions.push({ prompt: '', options: ['', '', '', ''], answer: '' });
+    setEditingTopic({
+      ...editingTopic,
+      miniAssessment: {
+        ...miniAssessment,
+        questions
+      }
+    });
+  };
+
+  const handleUpdateQuestion = (qIdx, field, value) => {
+    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
+    const questions = [...(miniAssessment.questions || [])];
+    questions[qIdx] = { ...questions[qIdx], [field]: value };
+    setEditingTopic({
+      ...editingTopic,
+      miniAssessment: {
+        ...miniAssessment,
+        questions
+      }
+    });
+  };
+
+  const handleUpdateOption = (qIdx, optIdx, value) => {
+    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
+    const questions = [...(miniAssessment.questions || [])];
+    const options = [...(questions[qIdx].options || ['', '', '', ''])];
+    options[optIdx] = value;
+    
+    let answer = questions[qIdx].answer;
+    if (questions[qIdx].answer && !options.includes(questions[qIdx].answer)) {
+      answer = '';
+    }
+
+    questions[qIdx] = { ...questions[qIdx], options, answer };
+
+    setEditingTopic({
+      ...editingTopic,
+      miniAssessment: {
+        ...miniAssessment,
+        questions
+      }
+    });
+  };
+
+  const handleDeleteQuestion = (qIdx) => {
+    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
+    const questions = (miniAssessment.questions || []).filter((_, idx) => idx !== qIdx);
+    setEditingTopic({
+      ...editingTopic,
+      miniAssessment: {
+        ...miniAssessment,
+        questions
+      }
+    });
+  };
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -247,10 +307,11 @@ const AdminDashboard = () => {
     try {
       const res = await api.put(`/topics/${editingTopic._id}`, {
         youtubeLink: editingTopic.youtubeLink?.trim() || '',
-        gfgLink: editingTopic.gfgLink?.trim() || ''
+        gfgLink: editingTopic.gfgLink?.trim() || '',
+        miniAssessment: editingTopic.miniAssessment
       });
       if (res.data.success) {
-        toast.success("Topic video & doc links updated!", { id: loadingToast });
+        toast.success("Topic video, doc links & assessment updated!", { id: loadingToast });
         setTopics(topics.map(t => t._id === editingTopic._id ? res.data.data : t));
         setEditingTopic(null);
       }
@@ -1875,13 +1936,11 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
-
-      {/* Edit Topic Links Modal */}
       {editingTopic && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-6">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit Topic Resource Links</h3>
+              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit Topic Resource Links & Assessment</h3>
               <button
                 onClick={() => setEditingTopic(null)}
                 className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
@@ -1891,31 +1950,135 @@ const AdminDashboard = () => {
             </div>
 
             <form onSubmit={handleUpdateTopicLinks} className="space-y-4">
-              <div>
-                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TOPIC TITLE:</span>
-                <span className="text-sm font-bold text-slate-800 dark:text-white block mt-1">{editingTopic.title}</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-black text-slate-550 dark:text-slate-400 block">TOPIC TITLE:</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-white block mt-1">{editingTopic.title}</span>
+                </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">YouTube Video Link:</label>
-                <input
-                  type="text"
-                  placeholder="https://youtube.com/watch?v=... or video ID"
-                  value={editingTopic.youtubeLink || ''}
-                  onChange={(e) => setEditingTopic({ ...editingTopic, youtubeLink: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">YouTube Video Link:</label>
+                  <input
+                    type="text"
+                    placeholder="https://youtube.com/watch?v=... or video ID"
+                    value={editingTopic.youtubeLink || ''}
+                    onChange={(e) => setEditingTopic({ ...editingTopic, youtubeLink: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Documentation (GFG/Other) Link:</label>
+                  <input
+                    type="url"
+                    placeholder="https://geeksforgeeks.org/..."
+                    value={editingTopic.gfgLink || ''}
+                    onChange={(e) => setEditingTopic({ ...editingTopic, gfgLink: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Documentation (GFG/Other) Link:</label>
-                <input
-                  type="url"
-                  placeholder="https://geeksforgeeks.org/..."
-                  value={editingTopic.gfgLink || ''}
-                  onChange={(e) => setEditingTopic({ ...editingTopic, gfgLink: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                />
+              <hr className="border-slate-100 dark:border-white/5" />
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">Mini Assessment (MCQ)</h4>
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 border border-emerald-200 dark:border-indigo-800 text-emerald-700 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
+                  >
+                    + Add Question
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Passing Percentage (%):</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editingTopic.miniAssessment?.passingPercentage ?? 60}
+                      onChange={(e) => setEditingTopic({
+                        ...editingTopic,
+                        miniAssessment: {
+                          ...(editingTopic.miniAssessment || { questions: [] }),
+                          passingPercentage: Number(e.target.value)
+                        }
+                      })}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                  {(!editingTopic.miniAssessment?.questions || editingTopic.miniAssessment.questions.length === 0) ? (
+                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl">
+                      <p className="text-[10px] text-slate-400 font-bold">No custom assessment questions defined.</p>
+                      <p className="text-[9px] text-slate-400/80 font-medium mt-0.5">(Will fallback to default keyword-matching MCQ quiz)</p>
+                    </div>
+                  ) : (
+                    editingTopic.miniAssessment.questions.map((q, qIdx) => (
+                      <div key={qIdx} className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl space-y-3 relative">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteQuestion(qIdx)}
+                          className="absolute top-3 right-3 text-rose-500 hover:text-rose-700 text-xs font-bold"
+                          title="Delete Question"
+                        >
+                          ✕ Delete
+                        </button>
+                        
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Question {qIdx + 1} Prompt:</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. What is the time complexity of reading arr[i]?"
+                            value={q.prompt || ''}
+                            onChange={(e) => handleUpdateQuestion(qIdx, 'prompt', e.target.value)}
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          {[0, 1, 2, 3].map((optIdx) => (
+                            <div key={optIdx}>
+                              <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">Option {optIdx + 1}:</label>
+                              <input
+                                type="text"
+                                required
+                                placeholder={`Option ${optIdx + 1}`}
+                                value={q.options?.[optIdx] || ''}
+                                onChange={(e) => handleUpdateOption(qIdx, optIdx, e.target.value)}
+                                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1 text-[11px] text-slate-800 dark:text-white focus:outline-none"
+                              />
+                            </div>
+                          ))}
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Correct Answer:</label>
+                          <select
+                            required
+                            value={q.answer || ''}
+                            onChange={(e) => handleUpdateQuestion(qIdx, 'answer', e.target.value)}
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
+                          >
+                            <option value="">-- Select Correct Option --</option>
+                            {(q.options || []).map((opt, oIdx) => (
+                              <option key={oIdx} value={opt} disabled={!opt}>{opt || `Option ${oIdx + 1} (Empty)`}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -1930,7 +2093,7 @@ const AdminDashboard = () => {
                   type="submit"
                   className="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-colors"
                 >
-                  Save Links
+                  Save Links & Assessment
                 </button>
               </div>
             </form>

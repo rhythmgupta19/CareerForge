@@ -36,6 +36,12 @@ const domainProgressSchema = new mongoose.Schema({
     attemptedAt: { type: Date, default: Date.now },
     attemptNumber: { type: Number, default: 1 }
   }],
+  miniAssessmentResults: [{
+    topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
+    score: { type: Number },
+    passed: { type: Boolean },
+    attemptedAt: { type: Date, default: Date.now }
+  }],
   codeSubmissions: [{
     topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
     code: { type: String },

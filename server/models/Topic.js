@@ -33,7 +33,15 @@ const topicSchema = new mongoose.Schema({
     label: { type: String },
     description: { type: String },
     youtubeLink: { type: String, default: null }
-  }]
+  }],
+  miniAssessment: {
+    passingPercentage: { type: Number, default: 60 },
+    questions: [{
+      prompt: { type: String, required: true },
+      options: [{ type: String, required: true }],
+      answer: { type: String, required: true }
+    }]
+  }
 }, { timestamps: true });
 
 topicSchema.index({ phaseId: 1, order: 1 });
