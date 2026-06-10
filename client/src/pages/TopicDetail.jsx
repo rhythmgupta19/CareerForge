@@ -602,7 +602,13 @@ const TopicDetail = () => {
   const [isAssessmentPassed, setIsAssessmentPassed] = useState(false);
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
-  
+  // Dynamic domain checks
+  const isDsaDomain = topic?.domainId?.slug === 'dsa' || topic?.domainId === 'dsa' || 
+                      (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
+  const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
+                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
+  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain;
+
   useEffect(() => {
     if (id) {
       setActiveDifficulty(localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
@@ -874,11 +880,6 @@ const TopicDetail = () => {
   };
 
   // Dynamic boilerplate loaders
-  const isDsaDomain = topic?.domainId?.slug === 'dsa' || topic?.domainId === 'dsa' || 
-                      (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
-  const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
-                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
-  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain;
 
   const availableLanguages = useMemo(() => {
     if (isWebDevDomain) {
