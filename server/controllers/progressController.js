@@ -231,7 +231,7 @@ exports.completeTopic = async (req, res) => {
     const key = getProgressKey(user.activeDomain.slug);
     const domainProgress = getSafeDomainProgress(user, key);
 
-    if (key === 'devops') {
+    if (user.activeDomain?.roadmapType === 'devops') {
       const UserAssessmentProgress = require('../models/UserAssessmentProgress');
       const passedAssessment = await UserAssessmentProgress.findOne({ userId: req.user._id, moduleId: topicId, passed: true });
       if (!passedAssessment) {
@@ -500,7 +500,7 @@ exports.getDashboard = async (req, res) => {
     const activeDomain = user.activeDomain;
     
     // Auto-sync DevOps assessment progress for existing completed topics
-    if (activeDomain && activeDomain.slug === 'devops') {
+    if (activeDomain && activeDomain.roadmapType === 'devops') {
       try {
         const UserAssessmentProgress = require('../models/UserAssessmentProgress');
         const Topic = require('../models/Topic');
@@ -755,7 +755,7 @@ exports.skipPhase = async (req, res) => {
     }
 
     const key = getProgressKey(user.activeDomain.slug);
-    if (key === 'devops') {
+    if (user.activeDomain?.roadmapType === 'devops') {
       return res.status(400).json({
         success: false,
         message: 'Skipping levels is not allowed for the DevOps roadmap. You must complete the topic mini assessments.'

@@ -91,6 +91,29 @@ const startServer = async () => {
       console.log(`📡 Environment: ${process.env.NODE_ENV}`);
       console.log(`🌐 Client URL: ${process.env.CLIENT_URL}\n`);
 
+      // Migrate existing domains to include roadmapType
+      try {
+        const Domain = require('./models/Domain');
+        const domainsToMigrate = await Domain.find({ roadmapType: { $exists: false } });
+        if (domainsToMigrate.length > 0) {
+          console.log(`🔄 Migrating ${domainsToMigrate.length} domains to set roadmapType...`);
+          for (const d of domainsToMigrate) {
+            let type = 'theory';
+            const slug = d.slug.toLowerCase();
+            if (slug === 'devops') {
+              type = 'devops';
+            } else if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(slug)) {
+              type = 'coding';
+            }
+            d.roadmapType = type;
+            await d.save();
+          }
+          console.log('✅ Domains migration completed successfully!');
+        }
+      } catch (migrateErr) {
+        console.error('❌ Domain migration failed:', migrateErr.message);
+      }
+
       // Auto-seed if empty (useful for In-Memory DB)
       try {
         const Domain = require('./models/Domain');

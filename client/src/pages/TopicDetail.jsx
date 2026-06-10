@@ -506,7 +506,41 @@ const TopicDetail = () => {
   
   // Topic state variables
   const [topic, setTopic] = useState(null);
-  // Learning flow step state: 1=Video,2=Concept,3=Guided Practice,4=Challenge,5=Completed
+
+  // Roadmap Type & Workspace Configuration
+  const roadmapType = useMemo(() => {
+    if (!topic || !topic.domainId) return 'coding';
+    if (typeof topic.domainId === 'object') {
+      if (topic.domainId.roadmapType) return topic.domainId.roadmapType;
+      const slug = (topic.domainId.slug || '').toLowerCase();
+      if (slug === 'devops') return 'devops';
+      if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(slug)) return 'coding';
+    }
+    const rawDomain = String(topic.domainId).toLowerCase();
+    if (rawDomain === 'devops') return 'devops';
+    if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(rawDomain)) return 'coding';
+    return 'theory';
+  }, [topic]);
+
+  const isDsaDomain = useMemo(() => {
+    const slug = typeof topic?.domainId === 'object' ? topic?.domainId?.slug : topic?.domainId;
+    return slug === 'dsa';
+  }, [topic]);
+
+  const isWebDevDomain = useMemo(() => {
+    const slug = typeof topic?.domainId === 'object' ? topic?.domainId?.slug : topic?.domainId;
+    return slug === 'web-development' || slug === 'webdev';
+  }, [topic]);
+
+  const isDevOpsDomain = useMemo(() => {
+    return roadmapType === 'devops';
+  }, [roadmapType]);
+
+  const shouldSplitWorkspace = useMemo(() => {
+    return roadmapType === 'coding' || roadmapType === 'devops';
+  }, [roadmapType]);
+
+  // Learning flow step state: 1=Video, 2=Concept/Practice, 3=Mini Assessment (for devops)
   const [learningStep, setLearningStep] = useState(1);
   const [isVideoFinished, setIsVideoFinished] = useState(false);
   const playerRef = useRef(null);
@@ -553,12 +587,12 @@ const TopicDetail = () => {
     if (!id) return;
     setIsVideoFinished(false);
     if (isCompleted) {
-      setLearningStep(2);
+      setLearningStep(roadmapType === 'devops' ? 3 : 2);
     } else {
       const savedStep = localStorage.getItem(`dsa_learning_step_${id}`);
       setLearningStep(savedStep ? parseInt(savedStep, 10) : 1);
     }
-  }, [id, isCompleted]);
+  }, [id, isCompleted, roadmapType]);
 
   // Save learning step when it changes
   useEffect(() => {
@@ -608,25 +642,272 @@ const TopicDetail = () => {
   const [quizExplanations, setQuizExplanations] = useState(null);
   const [quizSubmissionResults, setQuizSubmissionResults] = useState(null);
 
-  // Dynamic domain checks
-  const isDsaDomain = topic?.domainId?.slug === 'dsa' || topic?.domainId === 'dsa' || 
-                      (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
-  const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
-                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
-  const isDevOpsDomain = topic?.domainId?.slug === 'devops' || topic?.domainId === 'devops' ||
-                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'devops');
-  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain || isDevOpsDomain;
+  // DevOps Practice Terminal States
+  const [isTerminalPracticeDone, setIsTerminalPracticeDone] = useState(isCompleted);
+  const [terminalHistory, setTerminalHistory] = useState([
+    { type: 'system', text: 'Welcome to CareerForge Interactive Terminal!' },
+    { type: 'system', text: 'Type "help" for a list of available commands.' },
+    { type: 'system', text: '---' }
+  ]);
+  const [currentTerminalInput, setCurrentTerminalInput] = useState('');
+  const [activeTaskIndex, setActiveTaskIndex] = useState(0);
+  const terminalBottomRef = useRef(null);
+
+  const terminalTasks = useMemo(() => {
+    const titleLower = (topic?.title || '').toLowerCase();
+    if (titleLower.includes('linux') || titleLower.includes('bash') || titleLower.includes('shell') || titleLower.includes('cli')) {
+      return [
+        {
+          id: 1,
+          description: 'Print the current working directory path to understand where you are.',
+          expectedCommand: 'pwd',
+          hint: 'Type "pwd" and press Enter.',
+          successMessage: 'Correct! You are currently in /home/workspace/project.'
+        },
+        {
+          id: 2,
+          description: 'List all files (including hidden ones) in the current directory in long listing format.',
+          expectedCommand: 'ls -la',
+          hint: 'Use "ls" with flags "-la" (long listing, all files).',
+          successMessage: 'Great! You can see the files: .git, .dockerignore, src, package.json...'
+        },
+        {
+          id: 3,
+          description: 'Create a new directory named "configs" to store configuration files.',
+          expectedCommand: 'mkdir configs',
+          hint: 'Use the "mkdir" command followed by the directory name "configs".',
+          successMessage: 'Excellent! Directory "configs" has been created successfully.'
+        }
+      ];
+    }
+    if (titleLower.includes('git') || titleLower.includes('github') || titleLower.includes('version control')) {
+      return [
+        {
+          id: 1,
+          description: 'Check the status of the local Git repository to see untracked or modified files.',
+          expectedCommand: 'git status',
+          hint: 'Type "git status" and press Enter.',
+          successMessage: 'Nice! There are 3 untracked files in the working directory.'
+        },
+        {
+          id: 2,
+          description: 'Stage all modified and untracked files for the next commit.',
+          expectedCommand: 'git add .',
+          hint: 'Use "git add" followed by a dot "." to stage all files.',
+          successMessage: 'Correct! All changes have been staged.'
+        },
+        {
+          id: 3,
+          description: 'Commit the staged changes with a commit message: "Initial commit".',
+          expectedCommand: 'git commit -m "Initial commit"',
+          hint: 'Use "git commit" with the "-m" flag and message in quotes.',
+          successMessage: 'Fantastic! Changes successfully committed to the main branch.'
+        }
+      ];
+    }
+    if (titleLower.includes('docker') || titleLower.includes('container')) {
+      return [
+        {
+          id: 1,
+          description: 'List all currently active / running Docker containers on the host.',
+          expectedCommand: 'docker ps',
+          hint: 'Type "docker ps" to show running containers.',
+          successMessage: 'Correct! There are no containers currently running.'
+        },
+        {
+          id: 2,
+          description: 'Pull the official "nginx" image from Docker Hub.',
+          expectedCommand: 'docker pull nginx',
+          hint: 'Use "docker pull" followed by "nginx".',
+          successMessage: 'Great! Successfully pulled the latest nginx image.'
+        },
+        {
+          id: 3,
+          description: 'Run the nginx container in detached mode (-d) mapping port 80:80.',
+          expectedCommand: 'docker run -d -p 80:80 nginx',
+          hint: 'Use "docker run" with flags "-d" and "-p 80:80" followed by "nginx".',
+          successMessage: 'Excellent! Nginx web server is now running in the background.'
+        }
+      ];
+    }
+    if (titleLower.includes('kubernetes') || titleLower.includes('k8s') || titleLower.includes('pod') || titleLower.includes('deployment')) {
+      return [
+        {
+          id: 1,
+          description: 'Retrieve a list of all active Pods in the default namespace.',
+          expectedCommand: 'kubectl get pods',
+          hint: 'Use "kubectl get pods" and press Enter.',
+          successMessage: 'Correct! No pods are currently active.'
+        },
+        {
+          id: 2,
+          description: 'Create a deployment named "nginx-app" using the "nginx" image.',
+          expectedCommand: 'kubectl create deployment nginx-app --image=nginx',
+          hint: 'Use "kubectl create deployment" with deployment name and "--image=nginx".',
+          successMessage: 'Nice! Deployment "nginx-app" created successfully.'
+        },
+        {
+          id: 3,
+          description: 'Expose the "nginx-app" deployment as a ClusterIP service on port 80.',
+          expectedCommand: 'kubectl expose deployment nginx-app --port=80',
+          hint: 'Use "kubectl expose deployment" with deployment name and "--port=80".',
+          successMessage: 'Fantastic! Service "nginx-app" exposed successfully.'
+        }
+      ];
+    }
+    return [
+      {
+        id: 1,
+        description: 'Initialize the DevOps local setup/workspace files.',
+        expectedCommand: 'devops init',
+        hint: 'Type "devops init" and press Enter.',
+        successMessage: 'Initialization successful! Workspace loaded.'
+      },
+      {
+        id: 2,
+        description: 'Validate configuration files for syntactical correctness.',
+        expectedCommand: 'devops validate',
+        hint: 'Type "devops validate" and press Enter.',
+        successMessage: 'Validation passed! Configurations are correct.'
+      },
+      {
+        id: 3,
+        description: 'Deploy the configuration stack to the virtual environment.',
+        expectedCommand: 'devops deploy',
+        hint: 'Type "devops deploy" and press Enter.',
+        successMessage: 'Deploy complete! Stack is live.'
+      }
+    ];
+  }, [topic]);
+
+  const handleTerminalSubmit = (e) => {
+    e.preventDefault();
+    const cmd = currentTerminalInput.trim();
+    if (!cmd) return;
+
+    const newHistory = [...terminalHistory, { type: 'input', text: `$ ${cmd}` }];
+    setCurrentTerminalInput('');
+
+    const cmdLower = cmd.toLowerCase();
+    if (cmdLower === 'help') {
+      newHistory.push(
+        { type: 'output', text: 'Available commands:' },
+        { type: 'output', text: '  clear  - Clear terminal screen' },
+        { type: 'output', text: '  help   - Show this help screen' },
+        { type: 'output', text: '  hint   - Get a hint for the current task' },
+        { type: 'output', text: '  tasks  - List task progress' },
+        { type: 'output', text: '  reset  - Reset current practice tasks' }
+      );
+      setTerminalHistory(newHistory);
+      return;
+    }
+
+    if (cmdLower === 'clear') {
+      setTerminalHistory([]);
+      return;
+    }
+
+    if (cmdLower === 'hint') {
+      const currentTask = terminalTasks[activeTaskIndex];
+      if (currentTask) {
+        newHistory.push({ type: 'output', text: `💡 Hint: ${currentTask.hint}` });
+      } else {
+        newHistory.push({ type: 'output', text: '🎉 All tasks completed!' });
+      }
+      setTerminalHistory(newHistory);
+      return;
+    }
+
+    if (cmdLower === 'tasks') {
+      newHistory.push({ type: 'output', text: '📝 DevOps Exercises Progress:' });
+      terminalTasks.forEach((t, idx) => {
+        const status = idx < activeTaskIndex ? '✅ Completed' : idx === activeTaskIndex ? '⏳ Active' : '🔒 Locked';
+        newHistory.push({ type: 'output', text: `  [Task ${idx + 1}] ${t.description} -- ${status}` });
+      });
+      setTerminalHistory(newHistory);
+      return;
+    }
+
+    if (cmdLower === 'reset') {
+      setActiveTaskIndex(0);
+      setIsTerminalPracticeDone(false);
+      newHistory.push({ type: 'system', text: 'Exercises reset. Start from Task 1!' });
+      setTerminalHistory(newHistory);
+      return;
+    }
+
+    const currentTask = terminalTasks[activeTaskIndex];
+    if (currentTask) {
+      const expected = currentTask.expectedCommand;
+      let isMatch = false;
+      
+      if (expected.includes('.*')) {
+        const regex = new RegExp(`^${expected}$`, 'i');
+        isMatch = regex.test(cmd);
+      } else {
+        isMatch = cmd.replace(/\s+/g, ' ').toLowerCase() === expected.replace(/\s+/g, ' ').toLowerCase();
+      }
+
+      if (isMatch) {
+        newHistory.push({ type: 'success', text: `🎉 ${currentTask.successMessage}` });
+        playSoundEffect('success');
+        
+        const nextIndex = activeTaskIndex + 1;
+        if (nextIndex < terminalTasks.length) {
+          setActiveTaskIndex(nextIndex);
+          newHistory.push(
+            { type: 'system', text: `--- Task ${nextIndex + 1} Unlocked ---` },
+            { type: 'output', text: terminalTasks[nextIndex].description }
+          );
+        } else {
+          setIsTerminalPracticeDone(true);
+          newHistory.push(
+            { type: 'system', text: '--- All Exercises Completed! ---' },
+            { type: 'success', text: '✅ Practice Terminal finished! You can now proceed to Step 3: Mini Assessment.' }
+          );
+          toast.success('Practice complete! Step 3 (Mini Assessment) is now unlocked! 🔓');
+        }
+      } else {
+        newHistory.push({ type: 'error', text: `❌ Command failed or incorrect. Type "hint" if you get stuck.` });
+        playSoundEffect('error');
+      }
+    } else {
+      newHistory.push({ type: 'output', text: 'bash: command not recognized. All tasks are already completed.' });
+    }
+
+    setTerminalHistory(newHistory);
+  };
+
+  useEffect(() => {
+    if (terminalBottomRef.current) {
+      terminalBottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [terminalHistory]);
+
+  useEffect(() => {
+    if (id) {
+      setActiveTaskIndex(0);
+      setIsTerminalPracticeDone(isCompleted);
+      setTerminalHistory([
+        { type: 'system', text: 'Welcome to CareerForge Interactive Terminal!' },
+        { type: 'system', text: `Topic: ${topic?.title || 'DevOps Practice'}` },
+        { type: 'system', text: 'Type "help" or look at the instructions on the left to begin.' },
+        { type: 'system', text: '---' }
+      ]);
+      setCurrentTerminalInput('');
+    }
+  }, [id, topic, isCompleted]);
 
   useEffect(() => {
     if (id) {
       setActiveDifficulty(localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
       setLessonAnswers({});
-      const passed = !shouldSplitWorkspace || localStorage.getItem(`assessment_passed_${id}`) === 'true' || isCompleted;
+      const passed = (roadmapType !== 'devops') || localStorage.getItem(`assessment_passed_${id}`) === 'true' || isCompleted;
       setIsAssessmentPassed(passed);
       setSelectedQuizAnswers({});
       setQuizSubmitted(false);
     }
-  }, [id, isCompleted, topic, shouldSplitWorkspace]);
+  }, [id, isCompleted, topic, roadmapType]);
 
   // Fetch DevOps assessment dynamically from the backend
   useEffect(() => {

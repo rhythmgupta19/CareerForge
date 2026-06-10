@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { FiAward, FiExternalLink, FiLock, FiCheckCircle, FiXCircle, FiChevronRight } from 'react-icons/fi';
@@ -6,6 +7,7 @@ import toast from 'react-hot-toast';
 
 const Assessments = () => {
   const { user, refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submittingScore, setSubmittingScore] = useState(null);
@@ -71,6 +73,26 @@ const Assessments = () => {
 
   if (loading) return <div className="flex justify-center py-24"><div className="spinner"></div></div>;
   if (!user.selectedDomain) return <div className="text-center py-24 text-[#667085] font-medium">Please select a domain to view assessments.</div>;
+
+  const activeDomain = user?.activeDomain || user?.selectedDomain;
+  const isDevOps = activeDomain?.roadmapType === 'devops' || activeDomain?.slug === 'devops';
+
+  if (!isDevOps) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 px-6 text-center max-w-md mx-auto">
+        <div className="w-16 h-16 bg-zinc-100 dark:bg-zinc-850 rounded-full flex items-center justify-center text-2xl mb-4 text-zinc-400 border border-zinc-200 dark:border-zinc-800">
+          🔒
+        </div>
+        <h2 className="text-xl font-bold text-[var(--text-main)] mb-2">Milestone Assessments Disabled</h2>
+        <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-6">
+          Milestone assessments and certifications are only required and available for the DevOps roadmap.
+        </p>
+        <button onClick={() => navigate('/roadmap')} className="w-full sm:w-auto px-6 py-2.5 bg-[var(--primary)] hover:opacity-95 text-white font-black uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer text-xs">
+          Go to Roadmap
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in max-w-7xl mx-auto py-10 px-6 lg:px-8">

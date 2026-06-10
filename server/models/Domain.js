@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const domainSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true, trim: true },
   slug: { type: String, required: true, unique: true, lowercase: true },
+  roadmapType: { type: String, enum: ['devops', 'coding', 'theory'], default: 'coding' },
   shortDescription: { type: String, required: true },
   longDescription: { type: String, default: '' },
   icon: { type: String, default: '🚀' },
