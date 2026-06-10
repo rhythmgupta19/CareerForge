@@ -31,7 +31,7 @@ const Login = () => {
     /* global google */
     if (typeof google !== 'undefined') {
       google.accounts.id.initialize({
-        client_id: "148006859599-24p013pt6j9k1npll45epq8kqq5a108o.apps.googleusercontent.com",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "969418417808-pevrer7dril1g3gps8pml1h0vnf7qj7n.apps.googleusercontent.com",
         callback: handleGoogleResponse
       });
       google.accounts.id.renderButton(

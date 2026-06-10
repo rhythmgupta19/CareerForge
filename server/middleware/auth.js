@@ -44,27 +44,57 @@ const checkPhaseAccess = async (req, res, next) => {
     const Topic = require('../models/Topic');
     const Domain = require('../models/Domain');
 
-    let phaseId = req.params.phaseId || req.query.phaseId;
-    let topicId = req.params.id || req.params.topicId || req.query.topicId;
+    let phaseId = req.params.phaseId || req.query.phaseId || req.body.phaseId;
+    let topicId = req.params.topicId || req.query.topicId || req.body.topicId || req.body.lastOpenedTopic;
+    let assessmentId = req.params.assessmentId || req.query.assessmentId || req.body.assessmentId;
+    let genericId = req.params.id;
 
     let phase;
-    if (phaseId) {
-      if (phaseId.match(/^[0-9a-fA-F]{24}$/)) {
-        phase = await Phase.findById(phaseId).populate('domainId');
+
+    if (phaseId && phaseId.match(/^[0-9a-fA-F]{24}$/)) {
+      phase = await Phase.findById(phaseId).populate('domainId');
+    }
+
+    if (!phase && topicId && topicId.match(/^[0-9a-fA-F]{24}$/)) {
+      const topic = await Topic.findById(topicId).populate({
+        path: 'phaseId',
+        populate: { path: 'domainId' }
+      });
+      if (topic) {
+        phase = topic.phaseId;
       }
-    } else if (topicId) {
-      if (topicId.match(/^[0-9a-fA-F]{24}$/)) {
-        const topic = await Topic.findById(topicId).populate({
-          path: 'phaseId',
-          populate: { path: 'domainId' }
-        });
-        if (topic) {
-          phase = topic.phaseId;
+    }
+
+    if (!phase && assessmentId && assessmentId.match(/^[0-9a-fA-F]{24}$/)) {
+      const Assessment = require('../models/Assessment');
+      const assessment = await Assessment.findById(assessmentId).populate({
+        path: 'phaseId',
+        populate: { path: 'domainId' }
+      });
+      if (assessment) {
+        phase = assessment.phaseId;
+      }
+    }
+
+    if (!phase && genericId && genericId.match(/^[0-9a-fA-F]{24}$/)) {
+      const topic = await Topic.findById(genericId).populate({
+        path: 'phaseId',
+        populate: { path: 'domainId' }
+      });
+      if (topic) {
+        phase = topic.phaseId;
+      } else {
+        phase = await Phase.findById(genericId).populate('domainId');
+        if (!phase) {
+          const Assessment = require('../models/Assessment');
+          const assessment = await Assessment.findById(genericId).populate({
+            path: 'phaseId',
+            populate: { path: 'domainId' }
+          });
+          if (assessment) {
+            phase = assessment.phaseId;
+          }
         }
-      }
-    } else if (req.params.id) {
-      if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-        phase = await Phase.findById(req.params.id).populate('domainId');
       }
     }
 
@@ -96,7 +126,7 @@ const checkPhaseAccess = async (req, res, next) => {
     if (phase.phaseNumber > userProgress.currentPhase) {
       return res.status(403).json({
         success: false,
-        message: `Level ${phase.phaseNumber} is locked. You must complete previous levels and pass their assessments to unlock it.`
+        message: `Level ${phase.phaseNumber} is locked. You must complete previous levels to unlock it.`
       });
     }
 
