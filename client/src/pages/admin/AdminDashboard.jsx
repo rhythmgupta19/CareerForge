@@ -42,6 +42,120 @@ const AdminDashboard = () => {
   
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments'
   const [loading, setLoading] = useState(true);
+
+  // DevOps MCQ admin panel states
+  const [assessmentsSubTab, setAssessmentsSubTab] = useState('milestones'); // 'milestones' | 'devops'
+  const [editingDevopsAssessment, setEditingDevopsAssessment] = useState(null);
+  const [showDevopsEditModal, setShowDevopsEditModal] = useState(false);
+  const [devopsStats, setDevopsStats] = useState(null);
+  const [devopsScores, setDevopsScores] = useState([]);
+  const [showDevopsStatsModal, setShowDevopsStatsModal] = useState(false);
+
+  const fetchDevopsStatsAndScores = async (moduleId) => {
+    const loadingToast = toast.loading("Loading statistics and user score records...");
+    try {
+      const [statsRes, scoresRes] = await Promise.all([
+        api.get(`/assessments/admin/stats/${moduleId}`),
+        api.get(`/assessments/admin/scores/${moduleId}`)
+      ]);
+      setDevopsStats(statsRes.data.data);
+      setDevopsScores(scoresRes.data.data || []);
+      setShowDevopsStatsModal(true);
+      toast.success("DevOps metrics loaded!", { id: loadingToast });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load statistics/scores.", { id: loadingToast });
+    }
+  };
+
+  const handleEditDevopsAssessment = async (topic) => {
+    const loadingToast = toast.loading("Loading DevOps assessment details...");
+    try {
+      const res = await api.get(`/assessments/module/${topic._id}`);
+      if (res.data.success && res.data.data) {
+        const fullAssessment = res.data.data;
+        let questions = fullAssessment.questions || [];
+        if (questions.length < 10) {
+          const defaultQs = Array.from({ length: 10 - questions.length }, () => ({
+            question: '',
+            options: ['', '', '', ''],
+            correctAnswer: '',
+            explanation: ''
+          }));
+          questions = [...questions, ...defaultQs];
+        }
+        setEditingDevopsAssessment({
+          roadmapId: topic.domainId?._id || topic.domainId,
+          levelId: topic.phaseId?._id || topic.phaseId,
+          moduleId: topic._id,
+          title: fullAssessment.title || `${topic.title} Assessment`,
+          questions: questions.map(q => ({
+            question: q.question || '',
+            options: q.options || ['', '', '', ''],
+            correctAnswer: q.correctAnswer || '',
+            explanation: q.explanation || ''
+          }))
+        });
+        setShowDevopsEditModal(true);
+        toast.success("DevOps assessment loaded for editing!", { id: loadingToast });
+      }
+    } catch (err) {
+      if (err.response?.status === 404) {
+        const questionsTemplate = Array.from({ length: 10 }, () => ({
+          question: '',
+          options: ['', '', '', ''],
+          correctAnswer: '',
+          explanation: ''
+        }));
+        setEditingDevopsAssessment({
+          roadmapId: topic.domainId?._id || topic.domainId,
+          levelId: topic.phaseId?._id || topic.phaseId,
+          moduleId: topic._id,
+          title: `${topic.title} MCQ Assessment`,
+          questions: questionsTemplate
+        });
+        setShowDevopsEditModal(true);
+        toast.success("Initialized a fresh DevOps assessment template!", { id: loadingToast });
+      } else {
+        toast.error(err.response?.data?.message || "Failed to load assessment.", { id: loadingToast });
+      }
+    }
+  };
+
+  const handleSaveDevopsAssessment = async (e) => {
+    e.preventDefault();
+    if (!editingDevopsAssessment.title || !editingDevopsAssessment.questions || editingDevopsAssessment.questions.length !== 10) {
+      toast.error("An assessment requires a title and exactly 10 questions.");
+      return;
+    }
+    
+    for (let i = 0; i < 10; i++) {
+      const q = editingDevopsAssessment.questions[i];
+      if (!q.question || !q.correctAnswer || !q.explanation) {
+        toast.error(`Question ${i + 1} is missing a prompt, correct answer, or explanation.`);
+        return;
+      }
+      if (!q.options || q.options.length !== 4 || q.options.some(opt => !opt)) {
+        toast.error(`Question ${i + 1} must contain exactly 4 non-empty options.`);
+        return;
+      }
+      if (!q.options.includes(q.correctAnswer)) {
+        toast.error(`Question ${i + 1}'s correct answer must match one of its options exactly.`);
+        return;
+      }
+    }
+    
+    const loadingToast = toast.loading("Saving DevOps Assessment...");
+    try {
+      const res = await api.post('/assessments/admin/save', editingDevopsAssessment);
+      if (res.data.success) {
+        toast.success("DevOps assessment updated successfully!", { id: loadingToast });
+        setShowDevopsEditModal(false);
+        setEditingDevopsAssessment(null);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to save DevOps assessment.", { id: loadingToast });
+    }
+  };
   
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -609,6 +723,7 @@ const AdminDashboard = () => {
               onClick={() => {
                 setActiveTab('assessments');
                 fetchAssessments();
+                fetchTopics();
               }}
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'assessments' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
             >
@@ -971,78 +1086,156 @@ const AdminDashboard = () => {
 
       {activeTab === 'assessments' && (
         <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-black text-slate-800 dark:text-white">Milestone Assessments</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage and assign diagnostic tests / validation assessments to specific domains</p>
-            </div>
+          <div className="flex gap-2 border-b border-slate-100 dark:border-white/5 pb-4">
             <button
-              onClick={() => {
-                if (domains.length === 0) {
-                  toast.error("Please add a domain specialization path first!");
-                  return;
-                }
-                setNewAssessment({
-                  ...newAssessment,
-                  domainId: domains[0]._id
-                });
-                setShowAssessmentModal(true);
-              }}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
+              onClick={() => setAssessmentsSubTab('milestones')}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+                assessmentsSubTab === 'milestones'
+                  ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
             >
-              <FiPlus /> Assign Assessment
+              Milestone External Tests
+            </button>
+            <button
+              onClick={() => setAssessmentsSubTab('devops')}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+                assessmentsSubTab === 'devops'
+                  ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              DevOps MCQ Assessments
             </button>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assessments.map((a) => {
-              const domain = domains.find(d => d._id === (a.domainId?._id || a.domainId));
-              return (
-                <div key={a._id} className="bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-emerald-500/30 dark:hover:border-indigo-500/30 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex justify-between items-start gap-2">
-                      <h4 className="font-black text-slate-800 dark:text-white text-sm">{a.title}</h4>
-                      <span className="text-[8px] font-black text-emerald-700 dark:text-indigo-400 uppercase tracking-widest bg-emerald-50 dark:bg-indigo-950 border border-emerald-200 dark:border-indigo-900 px-2 py-0.5 rounded-full">{a.platform}</span>
-                    </div>
-                    <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed mt-2 line-clamp-3">{a.description || "No description provided."}</p>
-                    <div className="mt-3">
-                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TARGET DOMAIN:</span>
-                      <span className="text-xs font-bold text-emerald-700 dark:text-indigo-300">{domain ? domain.name : 'All Specializations'}</span>
-                    </div>
-                    <div className="mt-3 truncate">
-                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TEST URL:</span>
-                      <a href={a.assessmentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-600 dark:text-indigo-400 hover:underline">
-                        {a.assessmentLink}
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-100 dark:border-white/5 pt-4 flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-400 font-bold">
-                    <span className="text-slate-700 dark:text-slate-300">🎯 Pass: {a.passingScore}%</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingAssessment(a)}
-                        className="px-2.5 py-1 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAssessment(a._id)}
-                        className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-550/10 dark:border-rose-500/10 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+          {assessmentsSubTab === 'milestones' ? (
+            <>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 dark:text-white">Milestone Assessments</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage and assign diagnostic tests / validation assessments to specific domains</p>
                 </div>
-              );
-            })}
-            {assessments.length === 0 && (
-              <div className="col-span-3 p-12 text-center text-slate-500 dark:text-slate-550 text-xs font-black bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
-                No milestone assessments assigned yet. Click "Assign Assessment" to begin!
+                <button
+                  onClick={() => {
+                    if (domains.length === 0) {
+                      toast.error("Please add a domain specialization path first!");
+                      return;
+                    }
+                    setNewAssessment({
+                      ...newAssessment,
+                      domainId: domains[0]._id
+                    });
+                    setShowAssessmentModal(true);
+                  }}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
+                >
+                  <FiPlus /> Assign Assessment
+                </button>
               </div>
-            )}
-          </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {assessments.map((a) => {
+                  const domain = domains.find(d => d._id === (a.domainId?._id || a.domainId));
+                  return (
+                    <div key={a._id} className="bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-emerald-500/30 dark:hover:border-indigo-500/30 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <h4 className="font-black text-slate-800 dark:text-white text-sm">{a.title}</h4>
+                          <span className="text-[8px] font-black text-emerald-700 dark:text-indigo-400 uppercase tracking-widest bg-emerald-50 dark:bg-indigo-950 border border-emerald-200 dark:border-indigo-900 px-2 py-0.5 rounded-full">{a.platform}</span>
+                        </div>
+                        <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed mt-2 line-clamp-3">{a.description || "No description provided."}</p>
+                        <div className="mt-3">
+                          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TARGET DOMAIN:</span>
+                          <span className="text-xs font-bold text-emerald-700 dark:text-indigo-300">{domain ? domain.name : 'All Specializations'}</span>
+                        </div>
+                        <div className="mt-3 truncate">
+                          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TEST URL:</span>
+                          <a href={a.assessmentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-600 dark:text-indigo-400 hover:underline">
+                            {a.assessmentLink}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-100 dark:border-white/5 pt-4 flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                        <span className="text-slate-700 dark:text-slate-300">🎯 Pass: {a.passingScore}%</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setEditingAssessment(a)}
+                            className="px-2.5 py-1 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAssessment(a._id)}
+                            className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-550/10 dark:border-rose-500/10 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {assessments.length === 0 && (
+                  <div className="col-span-3 p-12 text-center text-slate-500 dark:text-slate-550 text-xs font-black bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+                    No milestone assessments assigned yet. Click "Assign Assessment" to begin!
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-black text-slate-800 dark:text-white">DevOps Topic MCQs</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage the 10-question MCQ quizzes for all DevOps roadmap tracks.</p>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+                <table className="w-full text-left border-collapse text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Topic Title</th>
+                      <th className="p-3">Phase / Level</th>
+                      <th className="p-3">Questions</th>
+                      <th className="p-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {topics.filter(t => (t.domainId?.slug === 'devops' || t.domainId === 'devops' || (typeof t.domainId === 'object' && t.domainId?.slug === 'devops'))).length > 0 ? (
+                      topics.filter(t => (t.domainId?.slug === 'devops' || t.domainId === 'devops' || (typeof t.domainId === 'object' && t.domainId?.slug === 'devops'))).map((t) => (
+                        <tr key={t._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3 font-bold text-slate-800 dark:text-white">{t.title}</td>
+                          <td className="p-3 text-slate-500 font-bold uppercase">Level {t.phaseId?.phaseNumber ?? 0}</td>
+                          <td className="p-3 font-black text-emerald-600 dark:text-emerald-400">10 Questions (Pass &ge; 70%)</td>
+                          <td className="p-3 text-right">
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => handleEditDevopsAssessment(t)}
+                                className="px-3 py-1.5 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-1 font-black uppercase tracking-wider text-[10px]"
+                              >
+                                <FiEdit size={10} /> Edit Questions
+                              </button>
+                              <button
+                                onClick={() => fetchDevopsStatsAndScores(t._id)}
+                                className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-600/10 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/10 rounded-lg hover:bg-indigo-650 hover:text-white transition-all flex items-center gap-1 font-black uppercase tracking-wider text-[10px]"
+                              >
+                                <FiActivity size={10} /> Performance Scores
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No DevOps topics loaded yet. Make sure to seed or select DevOps domain first.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2322,6 +2515,253 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DevOps Assessment MCQ Edit Modal */}
+      {showDevopsEditModal && editingDevopsAssessment && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-4xl w-full shadow-2xl space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit DevOps MCQ Mini Assessment</h3>
+              <button
+                onClick={() => {
+                  setShowDevopsEditModal(false);
+                  setEditingDevopsAssessment(null);
+                }}
+                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDevopsAssessment} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Assessment Title:</label>
+                <input
+                  type="text"
+                  required
+                  value={editingDevopsAssessment.title}
+                  onChange={(e) => setEditingDevopsAssessment({ ...editingDevopsAssessment, title: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-6 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
+                {editingDevopsAssessment.questions.map((q, qIdx) => (
+                  <div key={qIdx} className="p-5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl space-y-4 relative">
+                    <div className="text-xs font-black text-slate-800 dark:text-white border-b border-slate-100 dark:border-white/5 pb-2">
+                      Question {qIdx + 1} of 10
+                    </div>
+                    
+                    <div>
+                      <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Prompt / Question Text:</label>
+                      <textarea
+                        required
+                        rows="2"
+                        placeholder="e.g. Which tool is standard for container orchestration?"
+                        value={q.question || ''}
+                        onChange={(e) => {
+                          const updatedQs = [...editingDevopsAssessment.questions];
+                          updatedQs[qIdx] = { ...q, question: e.target.value };
+                          setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
+                        }}
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {[0, 1, 2, 3].map((optIdx) => (
+                        <div key={optIdx}>
+                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Option {optIdx + 1}:</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder={`Option ${optIdx + 1}`}
+                            value={q.options?.[optIdx] || ''}
+                            onChange={(e) => {
+                              const updatedQs = [...editingDevopsAssessment.questions];
+                              const newOpts = [...(q.options || ['', '', '', ''])];
+                              newOpts[optIdx] = e.target.value;
+                              
+                              let correctAns = q.correctAnswer;
+                              if (correctAns && !newOpts.includes(correctAns)) {
+                                correctAns = '';
+                              }
+                              
+                              updatedQs[qIdx] = { ...q, options: newOpts, correctAnswer: correctAns };
+                              setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
+                            }}
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Correct Answer Match:</label>
+                        <select
+                          required
+                          value={q.correctAnswer || ''}
+                          onChange={(e) => {
+                            const updatedQs = [...editingDevopsAssessment.questions];
+                            updatedQs[qIdx] = { ...q, correctAnswer: e.target.value };
+                            setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
+                          }}
+                          className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none font-bold"
+                        >
+                          <option value="">-- Select Correct Answer Option --</option>
+                          {q.options.map((opt, oIdx) => (
+                            <option key={oIdx} value={opt} disabled={!opt}>{opt || `Option ${oIdx + 1} (Empty)`}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Explanation Hint:</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Kubernetes orchestrates containers, Docker builds them."
+                          value={q.explanation || ''}
+                          onChange={(e) => {
+                            const updatedQs = [...editingDevopsAssessment.questions];
+                            updatedQs[qIdx] = { ...q, explanation: e.target.value };
+                            setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
+                          }}
+                          className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDevopsEditModal(false);
+                    setEditingDevopsAssessment(null);
+                  }}
+                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-black hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-colors"
+                >
+                  Save DevOps Assessment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* DevOps Assessment Statistics & Scores Modal */}
+      {showDevopsStatsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-3xl w-full shadow-2xl space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="font-black text-slate-800 dark:text-white text-base">Assessment Analytics & User Scores</h3>
+              <button
+                onClick={() => {
+                  setShowDevopsStatsModal(false);
+                  setDevopsStats(null);
+                  setDevopsScores([]);
+                }}
+                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            {devopsStats && (
+              <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
+                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Unique Users</span>
+                  <span className="text-lg font-black text-slate-800 dark:text-white">{devopsStats.uniqueUsers}</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
+                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Total Attempts</span>
+                  <span className="text-lg font-black text-slate-800 dark:text-white">{devopsStats.totalAttempts}</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
+                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Avg Score</span>
+                  <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{Math.round(devopsStats.avgScore || 0)}%</span>
+                </div>
+                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
+                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Pass Rate</span>
+                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    {devopsStats.uniqueUsers > 0 ? Math.round((devopsStats.passedUsers / devopsStats.uniqueUsers) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider">User Performance Records</h4>
+              <div className="overflow-y-auto max-h-[250px] rounded-xl border border-slate-150 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar text-xs">
+                <table className="w-full text-left border-collapse font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                      <th className="p-3">Student Name</th>
+                      <th className="p-3 text-center">Score</th>
+                      <th className="p-3 text-center">Passed</th>
+                      <th className="p-3 text-center">Attempts</th>
+                      <th className="p-3 text-right">Completed Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {devopsScores.length > 0 ? (
+                      devopsScores.map((scoreRec) => (
+                        <tr key={scoreRec._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
+                          <td className="p-3">
+                            <span className="font-bold text-slate-800 dark:text-white block">{scoreRec.userId?.fullName || "Deleted User"}</span>
+                            <span className="text-[9px] text-slate-550 mt-0.5 block">{scoreRec.userId?.email || ""}</span>
+                          </td>
+                          <td className="p-3 text-center font-bold text-slate-700 dark:text-slate-350">{scoreRec.score}%</td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                              scoreRec.passed 
+                                ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20' 
+                                : 'bg-rose-500/15 text-rose-500 border border-rose-500/20'
+                            }`}>
+                              {scoreRec.passed ? "Yes" : "No"}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center font-bold text-slate-650 dark:text-slate-400">{scoreRec.attempts}</td>
+                          <td className="p-3 text-right text-slate-500 text-[10px]">
+                            {scoreRec.completedAt ? new Date(scoreRec.completedAt).toLocaleDateString() : "Pending"}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="p-6 text-center text-slate-500 italic">No score records logged for this assessment yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setShowDevopsStatsModal(false);
+                  setDevopsStats(null);
+                  setDevopsScores([]);
+                }}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-650 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-xl text-xs font-black transition-colors"
+              >
+                Close Metrics Dashboard
+              </button>
+            </div>
           </div>
         </div>
       )}

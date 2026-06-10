@@ -130,6 +130,29 @@ const checkPhaseAccess = async (req, res, next) => {
       });
     }
 
+    if (key === 'devops' && phase.phaseNumber > 0) {
+      const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+      const Phase = require('../models/Phase');
+      const Topic = require('../models/Topic');
+      
+      const prevPhases = await Phase.find({ domainId: domain._id, phaseNumber: { $lt: phase.phaseNumber } });
+      const prevPhaseIds = prevPhases.map(p => p._id);
+      const requiredTopics = await Topic.find({ phaseId: { $in: prevPhaseIds }, isActive: true });
+      
+      const passedAssessmentsCount = await UserAssessmentProgress.countDocuments({
+        userId: req.user._id,
+        moduleId: { $in: requiredTopics.map(t => t._id) },
+        passed: true
+      });
+      
+      if (passedAssessmentsCount < requiredTopics.length) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied. You must pass all mini assessments in previous levels before unlocking Level ${phase.phaseNumber}.`
+        });
+      }
+    }
+
     next();
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

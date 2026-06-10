@@ -11,6 +11,8 @@ const Domain = require('../models/Domain');
 const Phase = require('../models/Phase');
 const Topic = require('../models/Topic');
 const Assessment = require('../models/Assessment');
+const DevOpsAssessment = require('../models/DevOpsAssessment');
+const UserAssessmentProgress = require('../models/UserAssessmentProgress');
 const Badge = require('../models/Badge');
 const CloudCredit = require('../models/CloudCredit');
 const Problem = require('../models/Problem');
@@ -130,6 +132,8 @@ async function seedDB() {
       Phase.deleteMany({}),
       Topic.deleteMany({}),
       Assessment.deleteMany({}),
+      DevOpsAssessment.deleteMany({}),
+      UserAssessmentProgress.deleteMany({}),
       Badge.deleteMany({}),
       CloudCredit.deleteMany({}),
       Problem.deleteMany({}),
@@ -260,6 +264,14 @@ async function seedDB() {
       console.log('📝 Problem bank seeded successfully');
     } catch (err) {
       console.error('❌ Failed to seed problem bank:', err.message);
+    }
+
+    // Seed DevOps mini-assessments
+    try {
+      const seedDevOps = require('./seedDevOpsAssessments');
+      await seedDevOps();
+    } catch (err) {
+      console.error('❌ Failed to seed DevOps assessments:', err.message);
     }
 
     console.log('\n🎉 Database seeded successfully!');

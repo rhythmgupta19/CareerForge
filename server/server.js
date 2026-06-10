@@ -100,6 +100,16 @@ const startServer = async () => {
           const seedDB = require('./seeds/seedAll');
           await seedDB();
           console.log('✅ Auto-seed completed!\n');
+        } else {
+          // If domain exists but DevOps assessments are empty, seed them
+          const DevOpsAssessment = require('./models/DevOpsAssessment');
+          const count = await DevOpsAssessment.countDocuments();
+          if (count === 0) {
+            console.log('🌱 DevOps Assessments are empty. Seeding DevOps assessments...');
+            const seedDevOps = require('./seeds/seedDevOpsAssessments');
+            await seedDevOps();
+            console.log('✅ DevOps Assessments seeded successfully!\n');
+          }
         }
       } catch (err) {
         console.error('❌ Auto-seed failed:', err.message);

@@ -602,12 +602,20 @@ const TopicDetail = () => {
   const [isAssessmentPassed, setIsAssessmentPassed] = useState(false);
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  
+  // DevOps specific assessment states
+  const [devopsAssessment, setDevopsAssessment] = useState(null);
+  const [quizExplanations, setQuizExplanations] = useState(null);
+  const [quizSubmissionResults, setQuizSubmissionResults] = useState(null);
+
   // Dynamic domain checks
   const isDsaDomain = topic?.domainId?.slug === 'dsa' || topic?.domainId === 'dsa' || 
                       (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
   const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
                         (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
-  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain;
+  const isDevOpsDomain = topic?.domainId?.slug === 'devops' || topic?.domainId === 'devops' ||
+                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'devops');
+  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain || isDevOpsDomain;
 
   useEffect(() => {
     if (id) {
@@ -619,6 +627,33 @@ const TopicDetail = () => {
       setQuizSubmitted(false);
     }
   }, [id, isCompleted, topic, shouldSplitWorkspace]);
+
+  // Fetch DevOps assessment dynamically from the backend
+  useEffect(() => {
+    if (id && isDevOpsDomain) {
+      api.get(`/assessments/module/${id}`)
+        .then(res => {
+          setDevopsAssessment(res.data.data);
+          if (res.data.data.isPassed) {
+            setIsAssessmentPassed(true);
+            localStorage.setItem(`assessment_passed_${id}`, 'true');
+          } else {
+            setIsAssessmentPassed(isCompleted);
+          }
+          setQuizExplanations(null);
+          setQuizSubmissionResults(null);
+        })
+        .catch(err => {
+          console.error('Failed to load DevOps assessment:', err);
+          setDevopsAssessment(null);
+          setIsAssessmentPassed(isCompleted);
+        });
+    } else {
+      setDevopsAssessment(null);
+      setQuizExplanations(null);
+      setQuizSubmissionResults(null);
+    }
+  }, [id, isDevOpsDomain, isCompleted]);
 
   // ─── CHECKPOINT MODULE STATE (for "Start Coding" Level 0 & "Arrays Explorer" Level 1) ────
   // Derived dynamically from database metadata
@@ -904,18 +939,22 @@ const TopicDetail = () => {
   }, [isDsaDomain, isWebDevDomain, topic, selectedLang, activeDifficulty, useStriverAdvanced]);
 
   const lessonAssessment = useMemo(() => {
+    if (isDevOpsDomain) {
+      return devopsAssessment?.questions || [];
+    }
     if (topic && topic.miniAssessment && topic.miniAssessment.questions && topic.miniAssessment.questions.length > 0) {
       return topic.miniAssessment.questions;
     }
     return shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
-  }, [topic, selectedLang, shouldSplitWorkspace]);
+  }, [topic, selectedLang, shouldSplitWorkspace, isDevOpsDomain, devopsAssessment]);
 
   const passingPercentage = useMemo(() => {
+    if (isDevOpsDomain) return 70;
     if (topic && topic.miniAssessment && typeof topic.miniAssessment.passingPercentage === 'number') {
       return topic.miniAssessment.passingPercentage;
     }
     return 60;
-  }, [topic]);
+  }, [topic, isDevOpsDomain]);
 
   // Active checkpoint content (only relevant when isCheckpointModule)
   const activeCheckpointContent = useMemo(() => {
@@ -3522,48 +3561,73 @@ const TopicDetail = () => {
                 </div>
 
                 <div className="space-y-6">
-                  {lessonAssessment.map((q, qIdx) => (
-                    <div key={qIdx} className="space-y-3">
-                      <div className="text-xs font-black text-white flex items-start gap-2">
-                        <span className="text-emerald-500 font-mono mt-0.5">{qIdx + 1}.</span>
-                        <span>{q.prompt}</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 pl-4">
-                        {q.options.map((opt, optIdx) => {
-                          const isSelected = selectedQuizAnswers[qIdx] === opt;
-                          return (
-                            <button
-                              key={optIdx}
-                              type="button"
-                              onClick={() => {
-                                setSelectedQuizAnswers(prev => ({
-                                  ...prev,
-                                  [qIdx]: opt
-                                }));
-                              }}
-                              className={`text-left px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 cursor-pointer ${
-                                isSelected
-                                  ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-bold shadow-md shadow-emerald-500/5'
-                                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                              }`}
-                            >
-                              {opt}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {quizSubmitted && selectedQuizAnswers[qIdx] !== q.answer && (
-                        <div className="pl-4 text-[10px] text-rose-400 font-bold flex items-center gap-1.5">
-                          ❌ Incorrect choice. Think again!
+                  {lessonAssessment.map((q, qIdx) => {
+                    const qPrompt = q.question || q.prompt;
+                    return (
+                      <div key={qIdx} className="space-y-3">
+                        <div className="text-xs font-black text-white flex items-start gap-2">
+                          <span className="text-emerald-500 font-mono mt-0.5">{qIdx + 1}.</span>
+                          <span>{qPrompt}</span>
                         </div>
-                      )}
-                      {quizSubmitted && selectedQuizAnswers[qIdx] === q.answer && (
-                        <div className="pl-4 text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
-                          ✓ Correct
+                        <div className="grid grid-cols-1 gap-2 pl-4">
+                          {q.options.map((opt, optIdx) => {
+                            const isSelected = selectedQuizAnswers[qIdx] === opt;
+                            return (
+                              <button
+                                key={optIdx}
+                                type="button"
+                                disabled={quizSubmitted}
+                                onClick={() => {
+                                  setSelectedQuizAnswers(prev => ({
+                                    ...prev,
+                                    [qIdx]: opt
+                                  }));
+                                }}
+                                className={`text-left px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${
+                                  quizSubmitted ? 'cursor-not-allowed' : 'cursor-pointer'
+                                } ${
+                                  isSelected
+                                    ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-bold shadow-md shadow-emerald-500/5'
+                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            );
+                          })}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {quizSubmitted && (
+                          isDevOpsDomain ? (
+                            quizExplanations?.[qIdx]?.isCorrect ? (
+                              <div className="pl-4 text-[10px] text-emerald-400 font-bold flex flex-col gap-1">
+                                <span className="flex items-center gap-1.5">✓ Correct</span>
+                                <span className="text-[9px] text-zinc-500 font-medium whitespace-pre-line italic bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800/50">
+                                  💡 Explanation: {quizExplanations[qIdx].explanation}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="pl-4 text-[10px] text-rose-400 font-bold flex flex-col gap-1">
+                                <span className="flex items-center gap-1.5">❌ Incorrect. Correct Answer: <span className="underline">{quizExplanations?.[qIdx]?.correctAnswer}</span></span>
+                                <span className="text-[9px] text-zinc-500 font-medium whitespace-pre-line italic bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800/50">
+                                  💡 Explanation: {quizExplanations?.[qIdx]?.explanation}
+                                </span>
+                              </div>
+                            )
+                          ) : (
+                            selectedQuizAnswers[qIdx] !== q.answer ? (
+                              <div className="pl-4 text-[10px] text-rose-400 font-bold flex items-center gap-1.5">
+                                ❌ Incorrect choice. Think again!
+                              </div>
+                            ) : (
+                              <div className="pl-4 text-[10px] text-emerald-400 font-bold flex items-center gap-1.5">
+                                ✓ Correct
+                              </div>
+                            )
+                          )
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -3573,6 +3637,35 @@ const TopicDetail = () => {
                   <button
                     type="button"
                     onClick={() => {
+                      if (isDevOpsDomain) {
+                        toast.loading('Submitting answers...', { id: 'submit-quiz' });
+                        api.post('/assessments/submit', {
+                          moduleId: id,
+                          answers: selectedQuizAnswers
+                        }).then(res => {
+                          const { score, passed, explanations } = res.data.data;
+                          setQuizSubmissionResults(res.data.data);
+                          setQuizExplanations(explanations);
+                          setQuizSubmitted(true);
+                          
+                          if (passed) {
+                            setIsAssessmentPassed(true);
+                            localStorage.setItem(`assessment_passed_${id}`, 'true');
+                            playSoundEffect('success');
+                            triggerConfettiExplosion();
+                            toast.success(`🎉 Mini Assessment Passed with ${score}%! Level is now unlocked!`, { id: 'submit-quiz', duration: 4000 });
+                          } else {
+                            playSoundEffect('error');
+                            toast.error(`You scored ${score}%, which is below the passing score of ${passingPercentage}%. Review explanations below and try again!`, { id: 'submit-quiz' });
+                          }
+                          refreshUser();
+                        }).catch(err => {
+                          console.error('Failed to submit DevOps assessment:', err);
+                          toast.error(err.response?.data?.message || 'Failed to submit assessment', { id: 'submit-quiz' });
+                        });
+                        return;
+                      }
+
                       setQuizSubmitted(true);
                       const allAnswers = lessonAssessment.map((q, qIdx) => selectedQuizAnswers[qIdx] === q.answer);
                       const correctCount = allAnswers.filter(Boolean).length;
@@ -3611,7 +3704,127 @@ const TopicDetail = () => {
             </div>
           ) : (
             <>
-          {isWebDevDomain ? (
+          {isDevOpsDomain ? (
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar bg-[#09090b] flex flex-col justify-center items-center">
+              <div className="max-w-xl w-full bg-[#18181b] rounded-2xl border border-zinc-800 p-6 md:p-8 space-y-6 shadow-2xl">
+                {/* Completion Banners inside Right Pane */}
+                {isCompleted && nextTopic && (
+                  <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-emerald-500/5 animate-fade-in">
+                    <div className="w-12 h-12 bg-emerald-500 text-black rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
+                      🎉
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-white uppercase tracking-widest">Quest Accomplished!</h4>
+                      <p className="text-[10px] text-zinc-400 font-semibold mt-1">
+                        You have successfully unlocked the next topic in this expedition:
+                      </p>
+                      <div className="text-xs font-black text-emerald-500 mt-1.5 uppercase tracking-tight">
+                        {nextTopic.title}
+                      </div>
+                    </div>
+                    <Link
+                      to={`/topic/${nextTopic._id}`}
+                      className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300 animate-pulse"
+                    >
+                      Unlock Next Topic <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                )}
+
+                {isCompleted && !nextTopic && (
+                  <div className="p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-amber-500/5 animate-fade-in">
+                    <div className="w-12 h-12 bg-amber-500 text-black rounded-full flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
+                      🏆
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-white uppercase tracking-widest">Phase Mastered!</h4>
+                      <p className="text-[10px] text-zinc-400 font-semibold mt-1">
+                        Outstanding! You have conquered every single topic in this active phase.
+                      </p>
+                    </div>
+                    <Link
+                      to="/roadmap"
+                      className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300"
+                    >
+                      Go to Roadmap <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+                )}
+
+                <div className="p-5 bg-zinc-900/40 rounded-2xl border border-zinc-800 space-y-4">
+                  <h3 className="text-sm font-black text-white flex items-center gap-1.5 uppercase tracking-wider">
+                    <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
+                  </h3>
+                  <form onSubmit={handleComplete} className="space-y-4 text-xs text-zinc-300">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">Study Duration (mins)</label>
+                        <input
+                          type="number"
+                          value={studyTime}
+                          onChange={(e) => setStudyTime(e.target.value)}
+                          className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 text-white rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">Confidence standing</label>
+                        <div className="flex gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-lg">
+                          {[1, 2, 3, 4, 5].map((lvl) => (
+                            <button
+                              type="button"
+                              key={lvl}
+                              onClick={() => setConfidenceLevel(lvl)}
+                              className={`flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all ${
+                                confidenceLevel === lvl
+                                  ? 'bg-emerald-500 text-black shadow-sm'
+                                  : 'text-zinc-400 hover:bg-zinc-900 bg-zinc-900'
+                              }`}
+                            >
+                              {lvl}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">DevOps insights / takeaways</label>
+                      <textarea
+                        rows={4}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Key architectural designs, CLI commands, config notes..."
+                        className="w-full p-3 bg-zinc-950 border border-zinc-800 text-white rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="revision-devops"
+                        checked={revisionNeeded}
+                        onChange={(e) => setRevisionNeeded(e.target.checked)}
+                        className="rounded border-zinc-800 text-emerald-500 focus:ring-emerald-500 h-3.5 w-3.5 bg-zinc-950 cursor-pointer"
+                      />
+                      <label htmlFor="revision-devops" className="text-[10px] font-black text-zinc-400 uppercase tracking-wider cursor-pointer">
+                        Flag this topic for scheduled revision
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? 'Submitting...' : 'Save Notes & Complete'} <FiChevronRight />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          ) : isWebDevDomain ? (
             <WebDevPlayground 
               topicId={id} 
               boilerplate={{

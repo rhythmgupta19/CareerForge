@@ -231,11 +231,39 @@ exports.completeTopic = async (req, res) => {
     const key = getProgressKey(user.activeDomain.slug);
     const domainProgress = getSafeDomainProgress(user, key);
 
+    if (key === 'devops') {
+      const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+      const passedAssessment = await UserAssessmentProgress.findOne({ userId: req.user._id, moduleId: topicId, passed: true });
+      if (!passedAssessment) {
+        return res.status(400).json({
+          success: false,
+          message: 'You must pass the mini assessment for this topic before completing it.'
+        });
+      }
+    }
+
     const alreadyCompleted = domainProgress.completedTopics.find(t => t.topicId.toString() === topicId);
     if (alreadyCompleted) {
+      alreadyCompleted.notes = notes || alreadyCompleted.notes;
+      if (studyTimeMinutes !== undefined) {
+        alreadyCompleted.studyTimeMinutes = Number(studyTimeMinutes) || alreadyCompleted.studyTimeMinutes;
+      }
+      if (confidenceLevel !== undefined) {
+        alreadyCompleted.confidenceLevel = Number(confidenceLevel) || alreadyCompleted.confidenceLevel;
+      }
+      if (revisionNeeded !== undefined) {
+        alreadyCompleted.revisionNeeded = !!revisionNeeded;
+      }
+      if (difficultyFeedback !== undefined) {
+        alreadyCompleted.difficultyFeedback = difficultyFeedback;
+      }
+      
+      user.markModified(`domainsProgress.${key}`);
+      await user.save();
+
       return res.json({ 
         success: true, 
-        message: 'Topic already completed',
+        message: 'Topic completion logs updated successfully',
         data: {
           overallProgress: domainProgress.overallProgress,
           dailyStreak: user.dailyStreak,
@@ -470,6 +498,38 @@ exports.getDashboard = async (req, res) => {
       .populate('earnedBadges.badgeId');
 
     const activeDomain = user.activeDomain;
+    
+    // Auto-sync DevOps assessment progress for existing completed topics
+    if (activeDomain && activeDomain.slug === 'devops') {
+      try {
+        const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+        const Topic = require('../models/Topic');
+        const devopsProgress = user.domainsProgress?.devops;
+        if (devopsProgress && devopsProgress.completedTopics && devopsProgress.completedTopics.length > 0) {
+          for (const completedTopic of devopsProgress.completedTopics) {
+            const topicId = completedTopic.topicId;
+            const progressExists = await UserAssessmentProgress.findOne({ userId: user._id, moduleId: topicId });
+            if (!progressExists) {
+              const topicObj = await Topic.findById(topicId);
+              if (topicObj) {
+                await UserAssessmentProgress.create({
+                  userId: user._id,
+                  roadmapId: activeDomain._id,
+                  levelId: topicObj.phaseId,
+                  moduleId: topicId,
+                  score: 100,
+                  passed: true,
+                  attempts: 1,
+                  completedAt: completedTopic.completedAt || new Date()
+                });
+              }
+            }
+          }
+        }
+      } catch (syncErr) {
+        console.error('DevOps progress sync failed:', syncErr.message);
+      }
+    }
     const key = activeDomain ? getProgressKey(activeDomain.slug) : 'dsa';
     const domainProgress = user.domainsProgress[key] || {
       xp: 0,
@@ -695,6 +755,12 @@ exports.skipPhase = async (req, res) => {
     }
 
     const key = getProgressKey(user.activeDomain.slug);
+    if (key === 'devops') {
+      return res.status(400).json({
+        success: false,
+        message: 'Skipping levels is not allowed for the DevOps roadmap. You must complete the topic mini assessments.'
+      });
+    }
     const domainProgress = getSafeDomainProgress(user, key);
 
     const phase = await Phase.findById(phaseId);
