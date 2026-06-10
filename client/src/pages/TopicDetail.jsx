@@ -3039,6 +3039,18 @@ const TopicDetail = () => {
                         toast.error("Please watch the video tutorial to unlock the assessment!");
                         return;
                       }
+                      // Safely destroy player while iframe is still in DOM to prevent unmount exceptions
+                      if (playerRef.current) {
+                        try {
+                          if (playerRef.current.progressInterval) {
+                            clearInterval(playerRef.current.progressInterval);
+                          }
+                          playerRef.current.destroy();
+                          playerRef.current = null;
+                        } catch (e) {
+                          console.warn("Failed to destroy player on click", e);
+                        }
+                      }
                       setLearningStep('transition');
                     }}
                     className={`font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 ${
@@ -3056,6 +3068,18 @@ const TopicDetail = () => {
                       if (topic.youtubeLink && !isCompleted && !isVideoFinished) {
                         toast.error("Please watch the video tutorial to unlock completion!");
                         return;
+                      }
+                      // Safely destroy player while iframe is still in DOM to prevent unmount exceptions
+                      if (playerRef.current) {
+                        try {
+                          if (playerRef.current.progressInterval) {
+                            clearInterval(playerRef.current.progressInterval);
+                          }
+                          playerRef.current.destroy();
+                          playerRef.current = null;
+                        } catch (e) {
+                          console.warn("Failed to destroy player on click", e);
+                        }
                       }
                       setLearningStep('transition');
                     }}
