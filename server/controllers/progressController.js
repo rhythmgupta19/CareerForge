@@ -118,20 +118,18 @@ const checkAndAdvancePhase = async (user, domainId, key) => {
   const currentPhase = await Phase.findOne({ domainId, phaseNumber: currentPhaseNum });
   if (!currentPhase) return null;
 
-  const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true });
-  if (topicsInPhase.length === 0) return null;
+  // Find active and required topics in the current phase
+  const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true, isRequired: true });
+  const topicsToCheck = topicsInPhase.length > 0 
+    ? topicsInPhase 
+    : await Topic.find({ phaseId: currentPhase._id, isActive: true });
+
+  if (topicsToCheck.length === 0) return null;
 
   const completedTopicIds = domainProgress.completedTopics.map(ct => ct.topicId.toString());
-  const allTopicsCompleted = topicsInPhase.every(tp => completedTopicIds.includes(tp._id.toString()));
+  const allTopicsCompleted = topicsToCheck.every(tp => completedTopicIds.includes(tp._id.toString()));
 
   if (!allTopicsCompleted) return null;
-
-  const Assessment = require('../models/Assessment');
-  const assessment = await Assessment.findOne({ phaseId: currentPhase._id, isActive: true });
-  if (assessment) {
-    const passedAssessment = domainProgress.testResults.some(t => t.assessmentId.toString() === assessment._id.toString() && t.passed);
-    if (!passedAssessment) return null;
-  }
 
   domainProgress.currentPhase = currentPhaseNum + 1;
   domainProgress.xp = (domainProgress.xp || 0) + 500;
@@ -175,7 +173,7 @@ exports.selectDomain = async (req, res) => {
 
     // Initialize domain-specific phase if not set
     if (user.domainsProgress && user.domainsProgress[key]) {
-      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null || user.domainsProgress[key].currentPhase === 1) {
+      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null) {
         user.domainsProgress[key].currentPhase = 0;
         domain.enrolledCount = (domain.enrolledCount || 0) + 1;
         await domain.save();
@@ -635,6 +633,18 @@ exports.submitCode = async (req, res) => {
           domainProgress.dsaStats.lastSolvedAt = new Date();
         }
         domainProgress.xp = (domainProgress.xp || 0) + 100; // 100 XP coding award!
+
+        // Recalculate overall progress
+        const totalTopicsInDomain = await Topic.countDocuments({ domainId: user.activeDomain._id, isActive: true });
+        const completedTopicsInDomain = await Topic.countDocuments({
+          _id: { $in: domainProgress.completedTopics.map(t => t.topicId) },
+          domainId: user.activeDomain._id,
+          isActive: true
+        });
+        domainProgress.overallProgress = totalTopicsInDomain > 0 ? Math.round((completedTopicsInDomain / totalTopicsInDomain) * 100) : 0;
+
+        // Auto-advance phase checks!
+        await checkAndAdvancePhase(user, user.activeDomain._id, key);
       } else {
         // Just add 10 XP for re-submitting correct solution
         domainProgress.xp = (domainProgress.xp || 0) + 10;
