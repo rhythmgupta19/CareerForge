@@ -17,14 +17,6 @@ const Blog = () => {
     }
   });
 
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('liked_blogs', JSON.stringify(likedBlogs));
-  }, [likedBlogs]);
-
   const fetchBlogs = async () => {
     try {
       const res = await api.get('/blogs');
@@ -35,6 +27,14 @@ const Blog = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('liked_blogs', JSON.stringify(likedBlogs));
+  }, [likedBlogs]);
 
   const categories = ['All', 'Web Development', 'DevOps', 'Data Science', 'General'];
 

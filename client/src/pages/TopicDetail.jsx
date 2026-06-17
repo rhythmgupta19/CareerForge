@@ -1351,7 +1351,9 @@ const TopicDetail = () => {
                         currentCheckpoint: `tutorial_${id}`,
                         lastOpenedTopic: id
                       }).catch(e => console.warn("Failed to persist video progress", e));
-                    } catch (err) {}
+                    } catch (err) {
+                      // ignored
+                    }
                   }
                 }
               },
@@ -1380,7 +1382,9 @@ const TopicDetail = () => {
         try {
           playerRef.current.destroy();
           playerRef.current = null;
-        } catch (e) {}
+        } catch (e) {
+          // ignored
+        }
       }
     };
   }, [activeVideoEmbedUrl, learningStep, user, id, isVideoFinished]);
@@ -1463,7 +1467,9 @@ const TopicDetail = () => {
                         currentCheckpoint: activeCheckpoint,
                         lastOpenedTopic: id
                       }).catch(e => console.warn("Failed to persist video progress", e));
-                    } catch (err) {}
+                    } catch (err) {
+                      // ignored
+                    }
                   }
                 }
               },
@@ -1492,7 +1498,9 @@ const TopicDetail = () => {
         try {
           checkpointPlayerRef.current.destroy();
           checkpointPlayerRef.current = null;
-        } catch (e) {}
+        } catch (e) {
+          // ignored
+        }
       }
     };
   }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id, checkpointVideoFinished]);
@@ -1857,7 +1865,7 @@ const TopicDetail = () => {
         });
       } catch (err) {
         logs.push(`💥 Parsing Error: ${err.message}`);
-        throw new Error(`Parsing Error: ${err.message}`);
+        throw new Error(`Parsing Error: ${err.message}`, { cause: err });
       }
       
       return { results, logs };
@@ -1929,7 +1937,7 @@ const TopicDetail = () => {
       syntaxCheck(userCode, lang);
     } catch (syntaxErr) {
       logs.push(`💥 Compilation Error: ${syntaxErr.message}`);
-      throw new Error(`Compilation Error: ${syntaxErr.message}`);
+      throw new Error(`Compilation Error: ${syntaxErr.message}`, { cause: syntaxErr });
     }
 
     logs.push(`📦 Parsing AST and transpiling constructs...`);
@@ -1939,7 +1947,7 @@ const TopicDetail = () => {
       transpiled = transpileToJS(userCode, lang);
     } catch (e) {
       logs.push(`💥 Transpilation Error: ${e.message}`);
-      throw new Error(`Transpilation Error: ${e.message}`);
+      throw new Error(`Transpilation Error: ${e.message}`, { cause: e });
     }
 
     // Verify transpiled JS syntax first to catch early syntax/compilation errors
@@ -1949,7 +1957,7 @@ const TopicDetail = () => {
       logs.push(`✨ Syntax validation passed! No compilation errors detected.`);
     } catch (err) {
       logs.push(`💥 Compilation Syntax Error: ${err.message}`);
-      throw new Error(`Compilation Error: ${err.message}`);
+      throw new Error(`Compilation Error: ${err.message}`, { cause: err });
     }
 
     const normalizedTitle = (topic?.title || '').toLowerCase();
@@ -3149,7 +3157,18 @@ const TopicDetail = () => {
                     {done ? <FiCheckCircle className="text-[10px]" /> : <span className="text-[8px] font-black">{index + 1}</span>}
                   </div>
                   <div>
-                    <span className={`text      {/* DUAL-PANE Split Workspace Content */}
+                    <span className={`text-xs font-bold ${active ? 'text-[var(--text-main)]' : 'text-[var(--text-muted)]'}`}>
+                      {t.title}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* DUAL-PANE Split Workspace Content */}
       <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
         {roadmapType === 'theory' ? (
           /* THEORY ROADMAP LAYOUT: Full Width (No Split) */
@@ -4257,7 +4276,7 @@ const TopicDetail = () => {
                       </div>
                     </div>
                   )
-                ) : isWebDevDomain ? (
+                )) : isWebDevDomain ? (
                   /* WEB DEV RIGHT PANE: Playground */
                   <WebDevPlayground 
                     topicId={id} 
@@ -4580,31 +4599,10 @@ const TopicDetail = () => {
                     </div>
                   </>
                 )
-              )}
+              }
             </div>
           </>
         )}
-      </div>opacity-50 cursor-pointer"
-                >
-                  <FiTerminal size={10} /> Run Code
-                </button>
-                <button
-                  onClick={handleSubmitCode}
-                  disabled={compilerStatus === 'running'}
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg text-[9px] font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                >
-                  <FiCheckCircle size={10} /> Submit Code
-                </button>
-              </div>
-            </div>
-          </div>
-          </>
-          )}
-          </>
-          )}
-        </div>
-        )}
-
       </div>
 
       {/* Submissions historical details modal dialog */}

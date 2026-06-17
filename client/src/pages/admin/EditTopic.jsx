@@ -25,10 +25,6 @@ const EditTopic = () => {
     instructor: ''
   });
 
-  useEffect(() => {
-    fetchTopic();
-  }, [id]);
-
   const fetchTopic = async () => {
     try {
       const res = await api.get(`/topics/${id}`);
@@ -54,6 +50,10 @@ const EditTopic = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTopic();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

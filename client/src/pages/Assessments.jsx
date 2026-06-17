@@ -32,14 +32,6 @@ const Assessments = () => {
     testResults: []
   };
 
-  useEffect(() => {
-    if (user?.selectedDomain) {
-      fetchAssessments();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
   const fetchAssessments = async () => {
     try {
       const res = await api.get(`/assessments/domain/${user.selectedDomain._id || user.selectedDomain}`);
@@ -50,6 +42,14 @@ const Assessments = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.selectedDomain) {
+      fetchAssessments();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const handleSimulatePass = async (assessment) => {
     setSubmittingScore(assessment._id);

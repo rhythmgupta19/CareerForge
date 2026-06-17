@@ -21,22 +21,6 @@ const ManageTopics = () => {
     notesLink: ''
   });
 
-  useEffect(() => {
-    fetchDomains();
-  }, []);
-
-  useEffect(() => {
-    if (selectedDomain) {
-      fetchPhases();
-    }
-  }, [selectedDomain]);
-
-  useEffect(() => {
-    if (selectedPhase) {
-      fetchTopics();
-    }
-  }, [selectedPhase]);
-
   const fetchDomains = async () => {
     try {
       const res = await api.get('/domains');
@@ -68,6 +52,22 @@ const ManageTopics = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDomains();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDomain) {
+      fetchPhases();
+    }
+  }, [selectedDomain]);
+
+  useEffect(() => {
+    if (selectedPhase) {
+      fetchTopics();
+    }
+  }, [selectedPhase]);
 
   const handleEdit = (topic) => {
     setEditingTopic(topic._id);

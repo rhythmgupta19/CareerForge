@@ -32,12 +32,6 @@ const PremiumPortal = () => {
     return s;
   };
 
-  useEffect(() => {
-    if (isSubscriber) {
-      fetchPremiumContent();
-    }
-  }, [isSubscriber, activeDomainSlug]);
-
   const fetchPremiumContent = async () => {
     try {
       setLoading(true);
@@ -54,6 +48,12 @@ const PremiumPortal = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isSubscriber) {
+      fetchPremiumContent();
+    }
+  }, [isSubscriber, activeDomainSlug]);
 
   const handleUpgrade = async (e) => {
     if (e) e.preventDefault();

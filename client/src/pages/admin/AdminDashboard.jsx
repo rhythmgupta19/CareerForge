@@ -258,10 +258,6 @@ const AdminDashboard = () => {
     });
   };
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
   const fetchInitialData = async () => {
     setLoading(true);
     try {
@@ -280,6 +276,10 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const fetchTopics = async () => {
     try {

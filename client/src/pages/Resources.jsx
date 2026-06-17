@@ -9,10 +9,6 @@ const Resources = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchResources();
-  }, []);
-
   const fetchResources = async () => {
     try {
       const res = await api.get('/cloud-credits');
@@ -23,6 +19,10 @@ const Resources = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchResources();
+  }, []);
 
   const filteredResources = resources.filter(res => {
     const matchesSearch = res.title.toLowerCase().includes(searchTerm.toLowerCase()) || 

@@ -11,10 +11,6 @@ const Profile = () => {
   const [editForm, setEditForm] = useState({ fullName: '', phone: '' });
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
-
   const fetchProfileData = async () => {
     try {
       // Reusing dashboard progress API as it contains user stats, activity log, and badges
@@ -30,6 +26,10 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
   const handleSaveProfile = async () => {
     try {

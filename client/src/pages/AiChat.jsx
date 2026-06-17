@@ -65,15 +65,6 @@ const AiChat = () => {
   const [insights, setInsights] = useState(null);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    fetchHistory();
-    fetchInsights();
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const fetchHistory = async () => {
     try {
       const res = await api.get('/ai/history');
@@ -105,6 +96,15 @@ const AiChat = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    fetchHistory();
+    fetchInsights();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleSend = async (textToSend) => {
     const text = textToSend || input;

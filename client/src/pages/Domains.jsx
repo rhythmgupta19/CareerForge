@@ -12,10 +12,6 @@ const Domains = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchDomains();
-  }, []);
-
   const fetchDomains = async () => {
     try {
       const res = await api.get('/domains');
@@ -26,6 +22,10 @@ const Domains = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDomains();
+  }, []);
 
   const handleSelectDomain = async (domainId) => {
     const currentDomainId = user.selectedDomain?._id || user.selectedDomain;

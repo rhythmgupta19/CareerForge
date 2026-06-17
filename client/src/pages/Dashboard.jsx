@@ -12,10 +12,6 @@ const Dashboard = () => {
   const [certificates, setCertificates] = useState([]);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
-
   const fetchDashboard = async () => {
     try {
       const res = await api.get('/progress/dashboard');
@@ -29,6 +25,10 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
 
   if (loading) return (
     <div className="flex justify-center items-center h-[80vh]">

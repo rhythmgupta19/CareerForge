@@ -19,18 +19,6 @@ const GlobalAiChat = () => {
   // Hide the global chat bubble if the user is on the dedicated Code Guru page
   const isDedicatedChatPage = location.pathname === '/code-guru';
 
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      fetchHistory();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      scrollToBottom();
-    }
-  }, [messages, isOpen]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -51,6 +39,18 @@ const GlobalAiChat = () => {
       console.log('Failed to load global chat history:', err.message);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      fetchHistory();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom();
+    }
+  }, [messages, isOpen]);
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();

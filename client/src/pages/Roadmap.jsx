@@ -59,6 +59,22 @@ const Roadmap = () => {
 
   const domainId = user?.selectedDomain?._id || user?.selectedDomain;
 
+  const fetchRoadmap = async (id) => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/domains/${id}`);
+      setDomainData(res.data.data);
+      if (activeLevel === null) {
+        const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 0;
+        setActiveLevel(currentPhaseVal);
+      }
+    } catch (err) {
+      toast.error('Failed to load roadmap');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Track initial state
   useEffect(() => {
     const initRoadmap = async () => {
@@ -93,22 +109,6 @@ const Roadmap = () => {
   useEffect(() => {
     localStorage.setItem('striver_advanced', useStriverAdvanced.toString());
   }, [useStriverAdvanced]);
-
-  const fetchRoadmap = async (id) => {
-    try {
-      setLoading(true);
-      const res = await api.get(`/domains/${id}`);
-      setDomainData(res.data.data);
-      if (activeLevel === null) {
-        const currentPhaseVal = (activeDomainProgress.currentPhase !== undefined && activeDomainProgress.currentPhase !== null) ? activeDomainProgress.currentPhase : 0;
-        setActiveLevel(currentPhaseVal);
-      }
-    } catch (err) {
-      toast.error('Failed to load roadmap');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const isTopicCompleted = (topicId) => {
     return activeDomainProgress.completedTopics?.some(t => t.topicId === topicId || t.topicId?._id === topicId);
