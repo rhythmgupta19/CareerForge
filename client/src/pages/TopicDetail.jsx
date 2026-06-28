@@ -587,7 +587,7 @@ const TopicDetail = () => {
     if (!id) return;
     setIsVideoFinished(false);
     if (isCompleted) {
-      setLearningStep(roadmapType === 'devops' ? 3 : 2);
+      setLearningStep(2);
     } else {
       const savedStep = localStorage.getItem(`dsa_learning_step_${id}`);
       setLearningStep(savedStep ? parseInt(savedStep, 10) : 1);
@@ -863,9 +863,9 @@ const TopicDetail = () => {
           setIsTerminalPracticeDone(true);
           newHistory.push(
             { type: 'system', text: '--- All Exercises Completed! ---' },
-            { type: 'success', text: '✅ Practice Terminal finished! You can now proceed to Step 3: Mini Assessment.' }
+            { type: 'success', text: '✅ Practice Terminal finished! You can now proceed to Step 2: Mini Assessment.' }
           );
-          toast.success('Practice complete! Step 3 (Mini Assessment) is now unlocked! 🔓');
+          toast.success('Practice complete! Step 2 (Mini Assessment) is now unlocked! 🔓');
         }
       } else {
         newHistory.push({ type: 'error', text: `❌ Command failed or incorrect. Type "hint" if you get stuck.` });
@@ -3342,24 +3342,18 @@ const TopicDetail = () => {
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
                     {isDevOpsDomain ? (
-                      /* DevOps Stepper: 3 steps */
+                      /* DevOps Stepper: 2 steps */
                       [
-                        { step: 1, label: '1. Watch Video' },
-                        { step: 2, label: '2. Practice Terminal' },
-                        { step: 3, label: '3. Mini Assessment' }
+                        { step: 1, label: '1. Watch & Practice' },
+                        { step: 2, label: '2. Mini Assessment' }
                       ].map(s => {
-                        const isLocked = (s.step === 2 && !isCompleted && !isVideoFinished) ||
-                                         (s.step === 3 && !isCompleted && !isTerminalPracticeDone);
+                        const isLocked = (s.step === 2 && !isCompleted && !isTerminalPracticeDone);
                         return (
                           <button
                             key={s.step}
                             onClick={() => {
                               if (isLocked) {
-                                if (s.step === 2) {
-                                  toast.error("Please watch the video tutorial to unlock Practice Terminal!");
-                                } else {
-                                  toast.error("Please complete all Practice Terminal exercises to unlock the Mini Assessment!");
-                                }
+                                toast.error("Please complete all Practice Terminal exercises to unlock the Mini Assessment!");
                                 return;
                               }
                               setLearningStep(s.step);
@@ -3373,11 +3367,11 @@ const TopicDetail = () => {
                             }`}
                           >
                             <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${
-                              learningStep > s.step || (s.step === 1 && isVideoFinished) || (s.step === 2 && isTerminalPracticeDone) || (s.step === 3 && isAssessmentPassed)
+                              learningStep > s.step || (s.step === 1 && isTerminalPracticeDone) || (s.step === 2 && isAssessmentPassed)
                                 ? 'bg-emerald-500 text-black shadow' 
                                 : 'border border-current'
                             }`}>
-                              {learningStep > s.step || (s.step === 1 && isVideoFinished) || (s.step === 2 && isTerminalPracticeDone) || (s.step === 3 && isAssessmentPassed) ? <FiCheckCircle size={8} /> : s.step}
+                              {learningStep > s.step || (s.step === 1 && isTerminalPracticeDone) || (s.step === 2 && isAssessmentPassed) ? <FiCheckCircle size={8} /> : s.step}
                             </div>
                             {s.label}
                           </button>
@@ -3455,65 +3449,26 @@ const TopicDetail = () => {
               <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--bg-card)] relative flex flex-col h-full">
                 
                 {learningStep === 1 ? (
-                  /* STEP 1: WATCH VIDEO/LEARN (Both paths) */
-                  <div className="flex-1 flex flex-col bg-black relative w-full h-full min-h-[300px]">
-                    <iframe
-                      id="tutorial-video-iframe"
-                      src={topic.youtubeLink ? `${getYouTubeEmbedUrl(topic.youtubeLink)}` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
-                      className="w-full flex-1"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                    <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <h2 className="text-white text-lg font-bold">{topic.title}</h2>
-                        <p className="text-zinc-400 text-xs">
-                          {isDevOpsDomain 
-                            ? "Watch the full tutorial to unlock the DevOps practice terminal exercises." 
-                            : "Watch the concepts video. You can write and test code on the right at any time."}
-                        </p>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          setLearningStep(2);
-                          if (isDevOpsDomain) {
-                            toast.success("Terminal Exercises Unlocked! 🚀");
-                          } else {
-                            setLeftTab('description');
-                          }
-                        }}
-                        className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20"
-                      >
-                        <FiCheckCircle size={16} />
-                        {isDevOpsDomain ? "Proceed to Practice" : "Go to Challenge"}
-                      </button>
-                    </div>
-                  </div>
-                ) : isDevOpsDomain ? (
-                  /* DEVOPS SPECIFIC STEPS */
-                  learningStep === 2 ? (
-                    /* DEVOPS Step 2: Practice Terminal Instructions & Exercise tasks */
-                    <div className="p-5 space-y-6">
-                      <div className="space-y-2">
-                        <h2 className="text-lg font-black text-[var(--text-main)] tracking-tight">Practice Exercises</h2>
-                        <p className="text-xs text-[var(--text-muted)] leading-relaxed font-semibold">
-                          Complete the interactive terminal exercises on the right to build practical DevOps skills. Type the commands into the terminal.
-                        </p>
-                      </div>
-
-                      <div className="bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)] space-y-3">
-                        <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider">
-                          Terminal Task List
+                  isDevOpsDomain ? (
+                    /* DEVOPS Step 1: Practice Terminal Exercises & Interactive Terminal stacked */
+                    <div className="flex-grow flex flex-col overflow-hidden h-full">
+                      {/* Tasks List Panel */}
+                      <div className="p-5 bg-[var(--bg-card)] border-b border-[var(--border)] shrink-0 space-y-4 max-h-[45%] overflow-y-auto custom-scrollbar">
+                        <div className="space-y-1">
+                          <h2 className="text-sm font-black text-[var(--text-main)] tracking-tight">Practice Exercises</h2>
+                          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed font-semibold">
+                            Complete the interactive terminal exercises below to build practical DevOps skills. Type commands into the terminal.
+                          </p>
                         </div>
-                        <div className="space-y-2.5">
+
+                        <div className="space-y-2">
                           {terminalTasks.map((task, idx) => {
                             const isTaskDone = idx < activeTaskIndex;
                             const isTaskActive = idx === activeTaskIndex;
                             return (
                               <div 
                                 key={task.id} 
-                                className={`p-3 rounded-lg border transition-all ${
+                                className={`p-2.5 rounded-xl border transition-all text-xs ${
                                   isTaskActive
                                     ? 'bg-[var(--primary-light)] border-[var(--primary)] text-[var(--text-main)] shadow-sm'
                                     : isTaskDone
@@ -3532,7 +3487,7 @@ const TopicDetail = () => {
                                     {isTaskDone ? '✓' : idx + 1}
                                   </div>
                                   <div className="space-y-1">
-                                    <div className="text-xs font-bold leading-tight">{task.description}</div>
+                                    <div className="font-bold leading-tight">{task.description}</div>
                                     {isTaskActive && (
                                       <div className="text-[9px] font-semibold text-[var(--primary)] bg-[var(--primary-light)] border border-[var(--primary)]/10 px-2 py-0.5 rounded inline-block">
                                         Expected: <code className="font-mono">{task.expectedCommand}</code>
@@ -3546,33 +3501,104 @@ const TopicDetail = () => {
                         </div>
                       </div>
 
-                      {isTerminalPracticeDone ? (
-                        <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md">
-                          <div className="w-12 h-12 bg-emerald-500 text-black rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
-                            🎉
+                      {/* Interactive Practice Terminal */}
+                      <div className="flex-grow flex flex-col bg-zinc-950 font-mono text-xs text-zinc-300 overflow-hidden">
+                        {/* Terminal Header */}
+                        <div className="bg-zinc-900 px-4 py-2 flex items-center justify-between border-b border-zinc-800 shrink-0">
+                          <div className="flex items-center gap-2">
+                            <FiTerminal className="text-emerald-400" />
+                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Practice Terminal</span>
                           </div>
-                          <div>
-                            <h4 className="text-xs font-black text-white uppercase tracking-widest">Practice Completed!</h4>
-                            <p className="text-[10px] text-zinc-400 font-semibold mt-1">
-                              You have cleared all terminal checks. Ready to verify your understanding?
-                            </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                              Task {activeTaskIndex + 1} of {terminalTasks.length}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setActiveTaskIndex(0);
+                                setIsTerminalPracticeDone(false);
+                                setTerminalHistory([
+                                  { type: 'system', text: 'Terminal reset. Start from Task 1!' }
+                                ]);
+                              }}
+                              className="text-[8px] font-bold text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 uppercase transition-all"
+                            >
+                              Reset ↺
+                            </button>
                           </div>
-                          <button
-                            onClick={() => setLearningStep(3)}
-                            className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300"
-                          >
-                            Proceed to Mini Assessment <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                          </button>
                         </div>
-                      ) : (
-                        <div className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] text-xs text-[var(--text-muted)] font-semibold flex items-center gap-3">
-                          <FiTerminal className="text-[var(--primary)] shrink-0 animate-pulse text-lg" />
-                          <p>Perform the commands in the terminal panel on the right to advance to the mini-assessment.</p>
+
+                        {/* Terminal History */}
+                        <div className="flex-1 p-4 overflow-y-auto space-y-2 select-text custom-scrollbar">
+                          {terminalHistory.map((item, idx) => (
+                            <div 
+                              key={idx} 
+                              className={`leading-relaxed whitespace-pre-wrap ${
+                                item.type === 'input' ? 'text-white font-bold' :
+                                item.type === 'success' ? 'text-emerald-400' :
+                                item.type === 'error' ? 'text-rose-400' :
+                                item.type === 'system' ? 'text-indigo-400 italic' :
+                                'text-zinc-400'
+                              }`}
+                            >
+                              {item.text}
+                            </div>
+                          ))}
+                          <div ref={terminalBottomRef} />
                         </div>
-                      )}
+
+                        {/* Terminal Input */}
+                        <form onSubmit={handleTerminalSubmit} className="bg-zinc-900 border-t border-zinc-800 p-2.5 flex items-center gap-2 shrink-0">
+                          <span className="text-emerald-400 font-bold">$</span>
+                          <input
+                            type="text"
+                            value={currentTerminalInput}
+                            onChange={(e) => setCurrentTerminalInput(e.target.value)}
+                            placeholder='Type command here (e.g. "docker ps") and press Enter...'
+                            className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder-zinc-600 focus:ring-0 focus:outline-none py-0.5"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck="false"
+                          />
+                        </form>
+                      </div>
                     </div>
                   ) : (
-                    /* DEVOPS Step 3: Mini Assessment instructions */
+                    /* STEP 1: WATCH VIDEO/LEARN (Non-DevOps paths) */
+                    <div className="flex-1 flex flex-col bg-black relative w-full h-full min-h-[300px]">
+                      <iframe
+                        id="tutorial-video-iframe"
+                        src={topic.youtubeLink ? `${getYouTubeEmbedUrl(topic.youtubeLink)}` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
+                        className="w-full flex-1"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                      <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <h2 className="text-white text-lg font-bold">{topic.title}</h2>
+                          <p className="text-zinc-400 text-xs">
+                            Watch the concepts video. You can write and test code on the right at any time.
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setLearningStep(2);
+                            setLeftTab('description');
+                          }}
+                          className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20"
+                        >
+                          <FiCheckCircle size={16} />
+                          Go to Challenge
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : isDevOpsDomain ? (
+                  /* DEVOPS SPECIFIC STEPS */
+                  learningStep === 2 ? (
+                    /* DEVOPS Step 2: Mini Assessment instructions (previously step 3) */
                     <div className="p-5 space-y-5">
                       <div className="space-y-2">
                         <h2 className="text-lg font-black text-[var(--text-main)] tracking-tight">Mini Assessment</h2>
@@ -3614,7 +3640,7 @@ const TopicDetail = () => {
                         <p className="text-[11px] text-[var(--text-muted)] leading-relaxed font-semibold">{topic.description}</p>
                       </div>
                     </div>
-                  )
+                  ) : null
                 ) : (
                   /* CODING SPECIFIC STEP 2 */
                   <div className="p-5 space-y-6">
@@ -3962,86 +3988,36 @@ const TopicDetail = () => {
               {isDevOpsDomain ? (
                 /* DEVOPS RIGHT PANE RENDERING */
                 learningStep === 1 ? (
-                  <div className="flex-grow h-full flex flex-col justify-center items-center p-8 text-center bg-[#09090b]">
-                    <div className="text-6xl mb-4 animate-bounce">📺</div>
-                    <h3 className="text-xl font-black text-white mb-2 uppercase tracking-wide">Watch Video Tutorial</h3>
-                    <p className="text-zinc-500 mb-6 max-w-sm text-xs font-semibold leading-relaxed">
-                      Please review the video tutorial on the left panel. It covers the core DevOps architecture and command line concepts required for the tasks.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setLearningStep(2);
-                        toast.success("Terminal Exercises Unlocked! 🚀");
-                      }}
-                      className="px-6 py-3 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-black uppercase text-xs rounded-xl tracking-wider transition-all"
-                    >
-                      Skip to Practice Terminal
-                    </button>
-                  </div>
-                ) : learningStep === 2 ? (
-                  /* Interactive Practice Terminal */
-                  <div className="flex-grow h-full flex flex-col bg-zinc-950 font-mono text-xs text-zinc-300 overflow-hidden">
-                    {/* Terminal Header */}
-                    <div className="bg-zinc-900 px-4 py-2 flex items-center justify-between border-b border-zinc-800 shrink-0">
-                      <div className="flex items-center gap-2">
-                        <FiTerminal className="text-emerald-400" />
-                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Practice Terminal</span>
+                  <div className="flex-grow h-full flex flex-col bg-black relative w-full overflow-hidden">
+                    <iframe
+                      id="tutorial-video-iframe"
+                      src={topic.youtubeLink ? `${getYouTubeEmbedUrl(topic.youtubeLink)}` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
+                      className="w-full flex-grow"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                    <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4 shrink-0">
+                      <div className="space-y-1 text-left">
+                        <h2 className="text-white text-lg font-bold">{topic.title}</h2>
+                        <p className="text-zinc-400 text-xs">
+                          Watch the tutorial video and practice DevOps commands in the terminal on the left panel.
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                          Task {activeTaskIndex + 1} of {terminalTasks.length}
-                        </span>
-                        <button
-                          onClick={() => {
-                            setActiveTaskIndex(0);
-                            setIsTerminalPracticeDone(false);
-                            setTerminalHistory([
-                              { type: 'system', text: 'Terminal reset. Start from Task 1!' }
-                            ]);
-                          }}
-                          className="text-[8px] font-bold text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 uppercase transition-all"
+                      {isTerminalPracticeDone ? (
+                        <button 
+                          onClick={() => setLearningStep(2)}
+                          className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-indigo-500/20"
                         >
-                          Reset Terminal ↺
+                          <FiCheckCircle size={16} />
+                          Proceed to Mini Assessment
                         </button>
-                      </div>
-                    </div>
-
-                    {/* Terminal History */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-2 select-text custom-scrollbar">
-                      {terminalHistory.map((item, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`leading-relaxed whitespace-pre-wrap ${
-                            item.type === 'input' ? 'text-white font-bold' :
-                            item.type === 'success' ? 'text-emerald-400' :
-                            item.type === 'error' ? 'text-rose-400' :
-                            item.type === 'system' ? 'text-indigo-400 italic' :
-                            'text-zinc-400'
-                          }`}
-                        >
-                          {item.text}
+                      ) : (
+                        <div className="text-zinc-500 text-xs font-semibold py-2 px-4 bg-zinc-900 border border-zinc-800 rounded-lg">
+                          Complete Terminal Tasks on the left to unlock Quiz
                         </div>
-                      ))}
-                      <div ref={terminalBottomRef} />
+                      )}
                     </div>
-
-                    {/* Terminal Input */}
-                    <form onSubmit={handleTerminalSubmit} className="bg-zinc-900 border-t border-zinc-800 p-2.5 flex items-center gap-2 shrink-0">
-                      <span className="text-emerald-400 font-bold">$</span>
-                      <input
-                        type="text"
-                        value={currentTerminalInput}
-                        onChange={(e) => setCurrentTerminalInput(e.target.value)}
-                        placeholder='Type command here (e.g. "docker ps") and press Enter...'
-                        className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder-zinc-600 focus:ring-0 focus:outline-none py-0.5"
-                        autoFocus
-                        autoComplete="off"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                        spellCheck="false"
-                      />
-                    </form>
                   </div>
                 ) : (
                   /* DevOps Step 3: MCQ Assessment or Completion Form */
