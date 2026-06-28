@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import UserAnalytics from './UserAnalytics';
+import LeaderboardManager from './LeaderboardManager';
 import { 
   FiUsers, 
   FiMap, 
@@ -773,6 +774,14 @@ const AdminDashboard = () => {
               className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'analytics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
             >
               📈 Analytics
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('gamification');
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'gamification' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+            >
+              🏆 Gamification
             </button>
           </div>
         </div>
@@ -1806,6 +1815,15 @@ const AdminDashboard = () => {
             <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Platform Analytics & Engagement</h3>
           </div>
           <UserAnalytics />
+        </div>
+      )}
+
+      {activeTab === 'gamification' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Leaderboard & Gamification Settings</h3>
+          </div>
+          <LeaderboardManager />
         </div>
       )}
 

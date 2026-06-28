@@ -404,6 +404,14 @@ exports.completeTopic = async (req, res) => {
     user.markModified(`domainsProgress.${key}`);
     await user.save();
 
+    // Trigger Gamification points for completing roadmap module
+    try {
+      const { awardPoints } = require('../services/gamificationService');
+      await awardPoints(user._id, 'module', topicId);
+    } catch (gamiErr) {
+      console.error('Failed to award complete topic points:', gamiErr.message);
+    }
+
     res.json({ 
       success: true, 
       message: 'Topic completed', 
@@ -471,6 +479,16 @@ exports.submitAssessment = async (req, res) => {
 
     user.markModified(`domainsProgress.${key}`);
     await user.save();
+
+    // Trigger Gamification points for passing assessment
+    if (passed) {
+      try {
+        const { awardPoints } = require('../services/gamificationService');
+        await awardPoints(user._id, 'assessment', assessmentId, score);
+      } catch (gamiErr) {
+        console.error('Failed to award assessment points:', gamiErr.message);
+      }
+    }
 
     res.json({ 
       success: true, 
@@ -717,6 +735,17 @@ exports.submitCode = async (req, res) => {
 
     user.markModified(`domainsProgress.${key}`);
     await user.save();
+
+    // Trigger Gamification points for solving coding problem
+    if (status === 'Accepted') {
+      try {
+        const { awardPoints } = require('../services/gamificationService');
+        await awardPoints(user._id, 'coding', topicId);
+      } catch (gamiErr) {
+        console.error('Failed to award coding points:', gamiErr.message);
+      }
+    }
+
     res.json({ success: true, message: status === 'Accepted' ? 'Expedition Mastered!' : 'Keep refining your code!', data: newSubmission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

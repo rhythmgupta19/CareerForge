@@ -24,6 +24,7 @@ import ZeroToCoding from './pages/ZeroToCoding';
 import Profile from './pages/Profile';
 import Blog from './pages/Blog';
 import PremiumPortal from './pages/PremiumPortal';
+import Leaderboard from './pages/Leaderboard';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -63,6 +64,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/premium-portal" element={<PremiumPortal />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
             </Route>
           </Route>
 

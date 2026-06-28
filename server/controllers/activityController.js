@@ -70,6 +70,18 @@ exports.recordLogin = async (userId, req) => {
     activity.ipAddress = req.ip || req.headers['x-forwarded-for'] || '';
 
     await activity.save();
+
+    // Trigger Gamification points allocation
+    try {
+      const { awardPoints } = require('../services/gamificationService');
+      await awardPoints(userId, 'login', todayStr);
+      
+      if (activity.currentLoginStreak > 1) {
+        await awardPoints(userId, 'streak', `${todayStr}_streak_${activity.currentLoginStreak}`);
+      }
+    } catch (gamiErr) {
+      console.error('Failed to award login points:', gamiErr.message);
+    }
   } catch (err) {
     console.error('Error in recordLogin:', err.message);
   }
@@ -265,6 +277,24 @@ exports.postHeartbeat = async (req, res) => {
     }
 
     await activity.save();
+
+    // Trigger Gamification points
+    try {
+      const { awardPoints } = require('../services/gamificationService');
+      
+      // Video lecture completion points
+      if (videoAnalytics && videoAnalytics.videoId && videoAnalytics.completionPercentage >= 90) {
+        await awardPoints(req.user._id, 'video', videoAnalytics.videoId);
+      }
+      
+      // Assessment passing points (includes score percentage checks)
+      if (assessmentAnalytics && assessmentAnalytics.assessmentId && assessmentAnalytics.passed) {
+        await awardPoints(req.user._id, 'assessment', assessmentAnalytics.assessmentId, assessmentAnalytics.score);
+      }
+    } catch (gamiErr) {
+      console.error('Failed to award heartbeat points:', gamiErr.message);
+    }
+
     res.json({ success: true, message: 'Heartbeat recorded successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
