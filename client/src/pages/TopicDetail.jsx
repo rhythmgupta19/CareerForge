@@ -1323,6 +1323,13 @@ const TopicDetail = () => {
                               player.progressInterval = null;
                             }
                             
+                            window.cf_videoAnalytics = {
+                              videoId: id,
+                              title: topic?.title || 'Video Tutorial',
+                              watchTime: (window.cf_videoAnalytics?.watchTime || 0) + 2,
+                              completionPercentage: Math.min(100, Math.round(progressRatio * 100))
+                            };
+
                             api.post('/progress/video-progress', {
                               checkpointId: `tutorial_${id}`,
                               timestamp: Math.round(currentTime),
@@ -4106,6 +4113,14 @@ const TopicDetail = () => {
                                 setQuizSubmissionResults(res.data.data);
                                 setQuizExplanations(explanations);
                                 setQuizSubmitted(true);
+                                
+                                window.cf_assessmentAnalytics = {
+                                  assessmentId: id,
+                                  title: topic?.title || 'DevOps Assessment',
+                                  score: score,
+                                  passed: passed,
+                                  timeSpent: 30
+                                };
                                 
                                 if (passed) {
                                   setIsAssessmentPassed(true);

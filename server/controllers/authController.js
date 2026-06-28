@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const axios = require('axios');
+const { recordLogin } = require('./activityController');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -20,6 +21,7 @@ exports.register = async (req, res) => {
     });
 
     const token = user.generateToken();
+    recordLogin(user._id, req);
     
     res.status(201).json({
       success: true,
@@ -64,6 +66,7 @@ exports.login = async (req, res) => {
     }
 
     const token = user.generateToken();
+    recordLogin(user._id, req);
 
     res.json({
       success: true,
@@ -206,6 +209,7 @@ exports.googleLogin = async (req, res) => {
     }
 
     const token = user.generateToken();
+    recordLogin(user._id, req);
 
     res.json({
       success: true,

@@ -46,7 +46,12 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post('/activity/session/end');
+    } catch (err) {
+      console.error('Failed to end session on logout:', err);
+    }
     localStorage.removeItem('cf_token');
     localStorage.removeItem('cf_user');
     setUser(null);

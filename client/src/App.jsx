@@ -33,11 +33,13 @@ import EditProblem from './pages/admin/EditProblem';
 import ManageSubmissions from './pages/admin/ManageSubmissions';
 import ManageTestCases from './pages/admin/ManageTestCases';
 import ManageTopics from './pages/admin/ManageTopics';
+import ActivityTracker from './components/ActivityTracker';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
+        <ActivityTracker />
         <Toaster position="top-right" toastOptions={{ className: 'premium-toast', style: { background: '#ffffff', color: '#101828', border: '1px solid #eaecf0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(16, 24, 40, 0.1)' } }} />
         <Routes>
           {/* Public Routes */}

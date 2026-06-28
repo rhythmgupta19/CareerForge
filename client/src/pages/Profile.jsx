@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import StudentActivity from '../components/StudentActivity';
 import { FiEdit2, FiMapPin, FiLink, FiGithub, FiTwitter, FiStar, FiAward, FiActivity, FiEye } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -252,6 +253,9 @@ const Profile = () => {
               )}
             </div>
           </div>
+
+          {/* Student activity metrics */}
+          <StudentActivity />
 
           {/* Activity Heatmap */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
