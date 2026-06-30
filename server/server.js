@@ -138,6 +138,10 @@ const startServer = async () => {
         } else if (domainCount === 0 && process.env.NODE_ENV === 'production') {
           console.log('⚠️ [Warning] Database is empty in production, but auto-seed is skipped to prevent accidental data loss/corruption.');
         }
+        
+        // Auto-run DevOps user progression repair
+        const repairDevOpsProgress = require('./scripts/repairDevOpsUsers');
+        await repairDevOpsProgress();
       } catch (err) {
         console.error('❌ Auto-seed check/execution failed:', err.message);
       }

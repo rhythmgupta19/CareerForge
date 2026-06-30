@@ -17,6 +17,8 @@ import { getWebDevLanguageContent, getWebDevCheckpointContent } from '../utils/w
 import { getLessonAssessment, normalizeDsaLanguage } from '../utils/dsaPersonalization';
 import RecursionVisualizer from '../components/RecursionVisualizer';
 import PracticeTerminal from '../components/devops/PracticeTerminal';
+import DevOpsAssessmentView from '../components/devops/DevOpsAssessmentView';
+
 
 
 // Audio Feedback Sound Engine for high gamification engagement
@@ -123,6 +125,7 @@ const TopicDetail = () => {
   
   // Topic state variables
   const [topic, setTopic] = useState(null);
+  const [rightPanelTab, setRightPanelTab] = useState('terminal');
   // Learning flow step state: 1=Video,2=Concept,3=Guided Practice,4=Challenge,5=Completed
   const [learningStep, setLearningStep] = useState(1);
   const [isVideoFinished, setIsVideoFinished] = useState(false);
@@ -542,6 +545,7 @@ const TopicDetail = () => {
       }
       
       // Reset ALL interactive playground variables on topic navigation
+      setRightPanelTab('terminal');
       setChallengePassed(false);
       setCompilerStatus('idle');
       setConsoleLogs([]);
@@ -3441,11 +3445,48 @@ const TopicDetail = () => {
           } ${isMobile && activeWorkspaceTab !== 'code' ? 'hidden' : 'flex'}`}
         >
           {isDevOpsDomain ? (
-            <PracticeTerminal
-              topicId={id}
-              activeLabId={activeLabId}
-              onProgressUpdate={(completed) => setCompletedTerminalLabs(completed)}
-            />
+            <div className="flex-1 h-full flex flex-col overflow-hidden bg-[#09090b]">
+              {/* Tab Selector for DevOps Terminal/MCQ */}
+              {topic?.hasAssessment && (
+                <div className="flex bg-[#141416] border-b border-zinc-800 shrink-0 items-center justify-start px-4 py-2 gap-2">
+                  <button
+                    onClick={() => setRightPanelTab('terminal')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
+                      rightPanelTab === 'terminal'
+                        ? 'bg-[var(--primary)] text-white shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-350 bg-transparent'
+                    }`}
+                  >
+                    💻 Interactive Terminal
+                  </button>
+                  <button
+                    onClick={() => setRightPanelTab('assessment')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
+                      rightPanelTab === 'assessment'
+                        ? 'bg-[var(--primary)] text-white shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-350 bg-transparent'
+                    }`}
+                  >
+                    🧠 Mini Assessment
+                  </button>
+                </div>
+              )}
+
+              {rightPanelTab === 'terminal' || !topic?.hasAssessment ? (
+                <PracticeTerminal
+                  topicId={id}
+                  activeLabId={activeLabId}
+                  onProgressUpdate={(completed) => setCompletedTerminalLabs(completed)}
+                />
+              ) : (
+                <DevOpsAssessmentView
+                  topicId={id}
+                  onPassed={() => {
+                    refreshUser();
+                  }}
+                />
+              )}
+            </div>
           ) : isWebDevDomain ? (
             <WebDevPlayground 
               topicId={id} 

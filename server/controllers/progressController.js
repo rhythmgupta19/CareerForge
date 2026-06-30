@@ -22,7 +22,7 @@ const getProgressKey = (slug) => {
 };
 
 // Helper function to safely retrieve and initialize domain progress
-const getSafeDomainProgress = (user, key) => {
+const getSafeDomainProgress = exports.getSafeDomainProgress = (user, key) => {
   if (!user.domainsProgress) {
     user.domainsProgress = {};
   }
@@ -107,6 +107,87 @@ const updateDSAStats = (user) => {
   dsaProgress.dsaStats.weakestTopic = weakest.name || 'Recursion';
   dsaProgress.dsaStats.totalProblemsSolved = dsaTopics.length;
 };
+
+// Helper to check and advance phase if complete
+exports.checkAndAdvancePhase = async (user, domainId, key, newlyEarnedBadges = [], newlyEarnedCertificateRef = { cert: null }) => {
+  const domainProgress = getSafeDomainProgress(user, key);
+  if (!domainProgress) return;
+
+  const currentPhase = await Phase.findOne({ domainId, phaseNumber: domainProgress.currentPhase });
+  if (currentPhase) {
+    const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true });
+    const completedInPhase = domainProgress.completedTopics.filter(ct => 
+      topicsInPhase.some(tp => tp._id.toString() === ct.topicId.toString())
+    );
+
+    let canAdvance = false;
+
+    if (key === 'devops') {
+      const DevOpsAssessment = require('../models/DevOpsAssessment');
+      const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+
+      const topicsInPhaseIds = topicsInPhase.map(t => t._id);
+      
+      const configuredAssessments = await DevOpsAssessment.find({ moduleId: { $in: topicsInPhaseIds } });
+      const configuredModuleIds = configuredAssessments.map(a => a.moduleId.toString());
+
+      const passedAssessmentsCount = await UserAssessmentProgress.countDocuments({
+        userId: user._id,
+        moduleId: { $in: configuredModuleIds },
+        passed: true
+      });
+
+      const allTopicsCompleted = completedInPhase.length === topicsInPhase.length && topicsInPhase.length > 0;
+      const allAssessmentsPassed = passedAssessmentsCount >= configuredModuleIds.length;
+
+      if (allTopicsCompleted && allAssessmentsPassed) {
+        canAdvance = true;
+      }
+    } else {
+      canAdvance = completedInPhase.length === topicsInPhase.length && topicsInPhase.length > 0;
+    }
+
+    if (canAdvance) {
+      domainProgress.currentPhase += 1;
+      domainProgress.xp = (domainProgress.xp || 0) + 500; // Bonus XP
+
+      // Award phase badge if exists
+      const badge = await Badge.findOne({ phaseId: currentPhase._id });
+      if (badge) {
+        const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
+        if (!alreadyEarned) {
+          user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
+          newlyEarnedBadges.push(badge);
+        }
+      }
+      
+      // Check if domain is fully completed (overallProgress === 100)
+      const totalTopicsInDomain = await Topic.countDocuments({ domainId, isActive: true });
+      const completedTopicsInDomain = await Topic.countDocuments({
+        _id: { $in: domainProgress.completedTopics.map(t => t.topicId) },
+        domainId,
+        isActive: true
+      });
+      domainProgress.overallProgress = totalTopicsInDomain > 0 ? Math.round((completedTopicsInDomain / totalTopicsInDomain) * 100) : 0;
+
+      if (domainProgress.overallProgress >= 100) {
+        const existingCert = await Certificate.findOne({ userId: user._id, domainId });
+        if (!existingCert) {
+          const domainObj = await Domain.findById(domainId);
+          const cert = await Certificate.create({
+            userId: user._id,
+            domainId,
+            title: `${domainObj.name} Completion Certificate`,
+            description: `Successfully completed the full course of ${domainObj.name} including all phases, coding exercises, and assessments.`,
+            completionPercentage: 100
+          });
+          newlyEarnedCertificateRef.cert = cert;
+        }
+      }
+    }
+  }
+};
+
 
 // @desc    Select domain for student
 // @route   POST /api/progress/select-domain
@@ -283,52 +364,28 @@ exports.completeTopic = async (req, res) => {
     });
     domainProgress.overallProgress = totalTopicsInDomain > 0 ? Math.round((completedTopicsInDomain / totalTopicsInDomain) * 100) : 0;
 
-    // Check if current phase is complete
+    // Check if current phase is complete and auto-advance
     const currentPhase = await Phase.findOne({ domainId: user.activeDomain._id, phaseNumber: domainProgress.currentPhase });
     if (currentPhase) {
       const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true });
       const completedInPhase = domainProgress.completedTopics.filter(ct => 
         topicsInPhase.some(tp => tp._id.toString() === ct.topicId.toString())
       );
-
       const averageConfidence = completedInPhase.length > 0 
         ? completedInPhase.reduce((acc, curr) => acc + (curr.confidenceLevel || 3), 0) / completedInPhase.length 
         : 0;
-
-      if (completedInPhase.length === topicsInPhase.length && topicsInPhase.length > 0) {
-        // Phase complete! Advance to next phase
-        domainProgress.currentPhase += 1;
-        domainProgress.xp = (domainProgress.xp || 0) + 500; // Bonus XP for phase completion
-        
-        // Award phase badge if exists
-        const badge = await Badge.findOne({ phaseId: currentPhase._id });
-        if (badge) {
-          const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
-          if (!alreadyEarned) {
-            user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
-            newlyEarnedBadges.push(badge);
-          }
-        }
-      } else if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
+      
+      if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
         domainProgress.xp = (domainProgress.xp || 0) + 100; // Fast-track bonus
       }
     }
 
-    // Check if domain is fully completed (overallProgress === 100)
-    if (domainProgress.overallProgress >= 100) {
-      const existingCert = await Certificate.findOne({ userId: user._id, domainId: user.activeDomain._id });
-      if (!existingCert) {
-        const domainObj = await Domain.findById(user.activeDomain._id);
-        const cert = await Certificate.create({
-          userId: user._id,
-          domainId: user.activeDomain._id,
-          title: `${domainObj.name} Completion Certificate`,
-          description: `Successfully completed the full course of ${domainObj.name} including all phases, coding exercises, and assessments.`,
-          completionPercentage: 100
-        });
-        newlyEarnedCertificate = cert;
-      }
+    const certRef = { cert: null };
+    await exports.checkAndAdvancePhase(user, user.activeDomain._id, key, newlyEarnedBadges, certRef);
+    if (certRef.cert) {
+      newlyEarnedCertificate = certRef.cert;
     }
+
 
     if (key === 'dsa') {
       updateDSAStats(user);
@@ -793,3 +850,16 @@ exports.getWebDevProject = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Repair DevOps progress for users
+// @route   POST /api/progress/repair-users
+exports.repairUsers = async (req, res) => {
+  try {
+    const repairDevOpsProgress = require('../scripts/repairDevOpsUsers');
+    const result = await repairDevOpsProgress();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

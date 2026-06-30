@@ -16,5 +16,7 @@ router.post('/skip-phase', protect, c.skipPhase);
 router.post('/video-progress', protect, c.saveVideoProgress);
 router.post('/webdev-project', protect, c.saveWebDevProject);
 router.get('/webdev-project/:topicId', protect, c.getWebDevProject);
+router.post('/repair-users', protect, c.repairUsers);
+
 
 module.exports = router;

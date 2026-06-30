@@ -134,22 +134,29 @@ const checkPhaseAccess = async (req, res, next) => {
       const UserAssessmentProgress = require('../models/UserAssessmentProgress');
       const Phase = require('../models/Phase');
       const Topic = require('../models/Topic');
+      const DevOpsAssessment = require('../models/DevOpsAssessment');
       
       const prevPhases = await Phase.find({ domainId: domain._id, phaseNumber: { $lt: phase.phaseNumber } });
       const prevPhaseIds = prevPhases.map(p => p._id);
       const requiredTopics = await Topic.find({ phaseId: { $in: prevPhaseIds }, isActive: true });
+      const requiredTopicIds = requiredTopics.map(t => t._id);
       
-      const passedAssessmentsCount = await UserAssessmentProgress.countDocuments({
-        userId: req.user._id,
-        moduleId: { $in: requiredTopics.map(t => t._id) },
-        passed: true
-      });
+      const configuredAssessments = await DevOpsAssessment.find({ moduleId: { $in: requiredTopicIds } });
+      const configuredModuleIds = configuredAssessments.map(a => a.moduleId.toString());
       
-      if (passedAssessmentsCount < requiredTopics.length) {
-        return res.status(403).json({
-          success: false,
-          message: `Access denied. You must pass all mini assessments in previous levels before unlocking Level ${phase.phaseNumber}.`
+      if (configuredModuleIds.length > 0) {
+        const passedAssessmentsCount = await UserAssessmentProgress.countDocuments({
+          userId: req.user._id,
+          moduleId: { $in: configuredModuleIds },
+          passed: true
         });
+        
+        if (passedAssessmentsCount < configuredModuleIds.length) {
+          return res.status(403).json({
+            success: false,
+            message: `Access denied. You must pass all mini assessments in previous levels before unlocking Level ${phase.phaseNumber}.`
+          });
+        }
       }
     }
 

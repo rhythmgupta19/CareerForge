@@ -5,7 +5,34 @@ const Topic = require('../models/Topic');
 exports.getTopicsByPhase = async (req, res) => {
   try {
     const topics = await Topic.find({ phaseId: req.params.phaseId, isActive: true }).sort('order');
-    res.json({ success: true, data: topics });
+    const DevOpsAssessment = require('../models/DevOpsAssessment');
+    const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+    
+    const topicsData = [];
+    for (let topic of topics) {
+      const hasAssessment = (topic.miniAssessment && topic.miniAssessment.questions && topic.miniAssessment.questions.length > 0) || 
+                            (await DevOpsAssessment.exists({ moduleId: topic._id })) ? true : false;
+                            
+      let assessmentCompleted = false;
+      let assessmentPassed = false;
+      
+      if (req.user) {
+        const progress = await UserAssessmentProgress.findOne({ userId: req.user._id, moduleId: topic._id });
+        if (progress) {
+          assessmentCompleted = true;
+          assessmentPassed = progress.passed;
+        }
+      }
+      
+      topicsData.push({
+        ...topic.toObject(),
+        hasAssessment,
+        assessmentCompleted,
+        assessmentPassed
+      });
+    }
+    
+    res.json({ success: true, data: topicsData });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -21,11 +48,31 @@ exports.getTopic = async (req, res) => {
     const Badge = require('../models/Badge');
     const badge = await Badge.findOne({ topicId: topic._id });
     
+    const DevOpsAssessment = require('../models/DevOpsAssessment');
+    const UserAssessmentProgress = require('../models/UserAssessmentProgress');
+
+    const hasAssessment = (topic.miniAssessment && topic.miniAssessment.questions && topic.miniAssessment.questions.length > 0) || 
+                          (await DevOpsAssessment.exists({ moduleId: topic._id })) ? true : false;
+                          
+    let assessmentCompleted = false;
+    let assessmentPassed = false;
+    
+    if (req.user) {
+      const progress = await UserAssessmentProgress.findOne({ userId: req.user._id, moduleId: topic._id });
+      if (progress) {
+        assessmentCompleted = true;
+        assessmentPassed = progress.passed;
+      }
+    }
+
     res.json({ 
       success: true, 
       data: {
         ...topic.toObject(),
-        badge
+        badge,
+        hasAssessment,
+        assessmentCompleted,
+        assessmentPassed
       } 
     });
   } catch (error) {
