@@ -2,6 +2,16 @@
 
 CareerForge is a career-guidance and skill-tracking platform for BTech/engineering students. It helps students choose a career domain, follow a structured roadmap, track progress, attempt assessments, earn badges, and get guided by an AI career agent.
 
+## Live Deployment 🌐
+
+The platform is deployed and live at:
+🔗 **[https://careerfor.vercel.app/](https://careerfor.vercel.app/)**
+
+### Deployment Details
+- **Frontend Hosting**: Vercel (for high-performance React static hosting)
+- **Database**: MongoDB Atlas Cluster (cloud-managed database)
+- **Features Available**: Student onboarding, interactive roadmap visualization, domain selection, progress analytics, and AI career guidance.
+
 ## Tech Stack
 - **Frontend**: React.js, Tailwind CSS (v4), React Router, Axios, Recharts
 - **Backend**: Node.js, Express.js
@@ -65,10 +75,6 @@ Start the frontend development server:
 ```bash
 npm run dev
 ```
-
-## Default Roles
-- **Admin**: `admin@careerforge.com` / `Admin@123` (Created via seed script)
-- **Student**: Any new user that registers via the UI will be a student by default.
 
 ## License
 MIT
