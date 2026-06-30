@@ -54,19 +54,45 @@ const playSoundEffect = (type) => {
 // Helper to extract embedded URL supporting both video IDs and playlists dynamically
 const getYouTubeEmbedUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
-  if (url.includes('playlist?list=') || url.includes('&list=')) {
-    const match = url.match(/[?&]list=([^#\&\?]+)/);
-    if (match && match[1]) {
-      return `https://www.youtube.com/embed/videoseries?list=${match[1]}`;
-    }
-  }
+  
+  // 1. Extract video ID first
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  if (match && match[2] && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&showinfo=0`;
+  const videoId = (match && match[2] && match[2].length === 11) ? match[2] : null;
+  
+  // 2. Extract list/playlist ID if present
+  let listId = null;
+  if (url.includes('list=')) {
+    const listMatch = url.match(/[?&]list=([^#\&\?]+)/);
+    if (listMatch && listMatch[1]) {
+      listId = listMatch[1];
+    }
   }
+  
+  // 3. Construct URL
+  if (videoId) {
+    if (listId) {
+      return `https://www.youtube.com/embed/${videoId}?list=${listId}&rel=0&modestbranding=1&showinfo=0`;
+    }
+    return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
+  }
+  
+  if (listId) {
+    return `https://www.youtube.com/embed/videoseries?list=${listId}`;
+  }
+  
   return null;
 };
+
+const isDirectVideoUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  return url.toLowerCase().includes('.mp4') || 
+         url.toLowerCase().includes('.webm') || 
+         url.toLowerCase().includes('.ogg') || 
+         url.toLowerCase().includes('.mov') ||
+         (!url.includes('youtube.com') && !url.includes('youtu.be') && url.startsWith('http'));
+};
+
 
 const TopicDetail = () => {
   const { id } = useParams();
@@ -313,11 +339,99 @@ const TopicDetail = () => {
     }
   };
 
+  const lastSaveTimeRef = useRef(0);
+
+  const handleEndedDirectVideo = () => {
+    setIsVideoFinished(true);
+    toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
+  };
+
+  const handleTimeUpdateDirectVideo = (e) => {
+    const video = e.target;
+    const currentTime = Math.round(video.currentTime);
+    if (Math.abs(currentTime - lastSaveTimeRef.current) >= 5) {
+      lastSaveTimeRef.current = currentTime;
+      api.post('/progress/video-progress', {
+        checkpointId: `tutorial_${id}`,
+        timestamp: currentTime,
+        currentCheckpoint: `tutorial_${id}`,
+        lastOpenedTopic: id
+      }).catch(e => console.warn("Failed to persist video progress", e));
+    }
+  };
+
+  const handlePauseDirectVideo = (e) => {
+    const video = e.target;
+    const currentTime = Math.round(video.currentTime);
+    api.post('/progress/video-progress', {
+      checkpointId: `tutorial_${id}`,
+      timestamp: currentTime,
+      currentCheckpoint: `tutorial_${id}`,
+      lastOpenedTopic: id
+    }).catch(e => console.warn("Failed to persist video progress", e));
+  };
+
+  const handleLoadedMetadataDirectVideo = (e) => {
+    const video = e.target;
+    const activeDomainKey = user?.activeDomain?.slug ? getProgressKey(user.activeDomain.slug) : 'dsa';
+    const savedProgress = user?.domainsProgress?.[activeDomainKey]?.videoProgress;
+    if (savedProgress && savedProgress.checkpointId === `tutorial_${id}` && savedProgress.timestamp > 0) {
+      video.currentTime = savedProgress.timestamp;
+      toast.success(`Resuming tutorial video from ${Math.floor(savedProgress.timestamp / 60)}m ${savedProgress.timestamp % 60}s ⚡`);
+    }
+  };
+
+  const handleCheckpointEndedDirectVideo = () => {
+    setCheckpointVideoFinished(true);
+    toast.success("Checkpoint tutorial video completed! challenge unlocked! 🔓");
+  };
+
+  const handleCheckpointTimeUpdateDirectVideo = (e) => {
+    const video = e.target;
+    const currentTime = Math.round(video.currentTime);
+    if (Math.abs(currentTime - lastSaveTimeRef.current) >= 5) {
+      lastSaveTimeRef.current = currentTime;
+      api.post('/progress/video-progress', {
+        checkpointId: activeCheckpoint,
+        timestamp: currentTime,
+        currentCheckpoint: activeCheckpoint,
+        lastOpenedTopic: id
+      }).catch(e => console.warn("Failed to persist video progress", e));
+    }
+  };
+
+  const handleCheckpointPauseDirectVideo = (e) => {
+    const video = e.target;
+    const currentTime = Math.round(video.currentTime);
+    api.post('/progress/video-progress', {
+      checkpointId: activeCheckpoint,
+      timestamp: currentTime,
+      currentCheckpoint: activeCheckpoint,
+      lastOpenedTopic: id
+    }).catch(e => console.warn("Failed to persist video progress", e));
+  };
+
+  const handleCheckpointLoadedMetadataDirectVideo = (e) => {
+    const video = e.target;
+    const activeDomainKey = user?.activeDomain?.slug ? getProgressKey(user.activeDomain.slug) : 'dsa';
+    const savedProgress = user?.domainsProgress?.[activeDomainKey]?.videoProgress;
+    if (savedProgress && savedProgress.checkpointId === activeCheckpoint && savedProgress.timestamp > 0) {
+      video.currentTime = savedProgress.timestamp;
+      toast.success(`Resuming tutorial video from ${Math.floor(savedProgress.timestamp / 60)}m ${savedProgress.timestamp % 60}s ⚡`);
+    }
+  };
+
+  const handleDirectVideoError = (e) => {
+    console.error("Direct video playback error:", e);
+    toast.error("Video failed to load. This might be due to expired signed URLs, CORS restrictions, or invalid file paths. ❌");
+  };
+
   // Window mouse resize dragging event listeners
   const startResize = (e) => {
     setIsDragging(true);
     e.preventDefault();
   };
+
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -1831,17 +1945,35 @@ const TopicDetail = () => {
                   </div>
 
                   <div className="aspect-video bg-black rounded-xl overflow-hidden border border-[var(--border)] shadow-lg">
-                    <iframe
-                      key={`video-${activeCheckpoint}-${selectedLang}`}
-                      id={`checkpoint-video-${activeCheckpoint}`}
-                      className="w-full h-full"
-                      src={cpVideoUrl}
-                      title={`${CHECKPOINT_LABELS[activeCheckpoint]} Tutorial`}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                    {isDirectVideoUrl(cpVideoUrl) ? (
+                      <video
+                        key={`video-${activeCheckpoint}-${selectedLang}`}
+                        id={`checkpoint-video-${activeCheckpoint}`}
+                        src={cpVideoUrl}
+                        className="w-full h-full"
+                        controls
+                        playsInline
+                        crossOrigin="anonymous"
+                        onLoadedMetadata={handleCheckpointLoadedMetadataDirectVideo}
+                        onTimeUpdate={handleCheckpointTimeUpdateDirectVideo}
+                        onPause={handleCheckpointPauseDirectVideo}
+                        onEnded={handleCheckpointEndedDirectVideo}
+                        onError={handleDirectVideoError}
+                      />
+                    ) : (
+                      <iframe
+                        key={`video-${activeCheckpoint}-${selectedLang}`}
+                        id={`checkpoint-video-${activeCheckpoint}`}
+                        className="w-full h-full"
+                        src={cpVideoUrl ? `${cpVideoUrl}${cpVideoUrl.includes('?') ? '&' : '?'}enablejsapi=1` : ""}
+                        title={`${CHECKPOINT_LABELS[activeCheckpoint]} Tutorial`}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )}
                   </div>
+
 
                   {/* Post-video state indicator */}
                   {!checkpointVideoFinished ? (
@@ -2423,16 +2555,33 @@ const TopicDetail = () => {
               {/* Tutorial Video */}
               {activeVideoEmbedUrl && (
                 <div className="aspect-video bg-black rounded-xl overflow-hidden border border-[var(--border)] shadow-lg mb-6 max-w-4xl mx-auto w-full">
-                  <iframe
-                    id="tutorial-video-iframe"
-                    src={activeVideoEmbedUrl ? activeVideoEmbedUrl + (activeVideoEmbedUrl.includes('?') ? '&' : '?') + "enablejsapi=1" : "https://www.youtube.com/embed/EAR7De6Goz4"}
-                    className="w-full h-full"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
+                  {isDirectVideoUrl(activeVideoEmbedUrl) ? (
+                    <video
+                      id="tutorial-video-player"
+                      src={activeVideoEmbedUrl}
+                      className="w-full h-full"
+                      controls
+                      playsInline
+                      crossOrigin="anonymous"
+                      onLoadedMetadata={handleLoadedMetadataDirectVideo}
+                      onTimeUpdate={handleTimeUpdateDirectVideo}
+                      onPause={handlePauseDirectVideo}
+                      onEnded={handleEndedDirectVideo}
+                      onError={handleDirectVideoError}
+                    />
+                  ) : (
+                    <iframe
+                      id="tutorial-video-iframe"
+                      src={activeVideoEmbedUrl ? activeVideoEmbedUrl + (activeVideoEmbedUrl.includes('?') ? '&' : '?') + "enablejsapi=1" : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  )}
                 </div>
               )}
+
 
               {/* Topic Info */}
               <div className="max-w-4xl mx-auto w-full space-y-6">
@@ -2613,14 +2762,31 @@ const TopicDetail = () => {
           {/* Left Pane Scrollable Content */}
           {learningStep === 1 ? (
             <div className="flex-1 flex flex-col bg-black relative w-full h-full">
-              <iframe
-                id="tutorial-video-iframe"
-                src={activeVideoEmbedUrl ? `${activeVideoEmbedUrl}${activeVideoEmbedUrl.includes('?') ? '&' : '?'}enablejsapi=1` : "https://www.youtube.com/embed/EAR7De6Goz4"}
-                className="w-full flex-1"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              {isDirectVideoUrl(activeVideoEmbedUrl) ? (
+                <video
+                  id="tutorial-video-player"
+                  src={activeVideoEmbedUrl}
+                  className="w-full flex-1"
+                  controls
+                  playsInline
+                  crossOrigin="anonymous"
+                  onLoadedMetadata={handleLoadedMetadataDirectVideo}
+                  onTimeUpdate={handleTimeUpdateDirectVideo}
+                  onPause={handlePauseDirectVideo}
+                  onEnded={handleEndedDirectVideo}
+                  onError={handleDirectVideoError}
+                />
+              ) : (
+                <iframe
+                  id="tutorial-video-iframe"
+                  src={activeVideoEmbedUrl ? `${activeVideoEmbedUrl}${activeVideoEmbedUrl.includes('?') ? '&' : '?'}enablejsapi=1` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
+                  className="w-full flex-1"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
+
               <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h2 className="text-white text-lg font-bold">{topic?.title || "Coding Foundations"}</h2>
