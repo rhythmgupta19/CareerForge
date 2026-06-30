@@ -277,3 +277,226 @@ exports.getAssessmentScores = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Get assessment for a specific level (phase)
+// @route   GET /api/assessments/level/:levelId
+exports.getLevelAssessment = async (req, res) => {
+  try {
+    const { levelId } = req.params;
+    
+    // Find a DevOps assessment for the level (phase) with no moduleId (meaning it is level-level)
+    const assessment = await DevOpsAssessment.findOne({ 
+      levelId, 
+      $or: [
+        { moduleId: null },
+        { moduleId: { $exists: false } }
+      ]
+    });
+    
+    if (!assessment) {
+      return res.json({ success: true, data: null });
+    }
+
+    const userProgress = await UserAssessmentProgress.findOne({
+      userId: req.user._id,
+      levelId,
+      moduleId: null
+    });
+
+    // Sanitize questions to hide correctAnswer
+    const sanitizedQuestions = assessment.questions.map(q => ({
+      question: q.question,
+      options: q.options
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        _id: assessment._id,
+        title: assessment.title,
+        questions: sanitizedQuestions,
+        userProgress: userProgress ? {
+          score: userProgress.score,
+          passed: userProgress.passed,
+          attempts: userProgress.attempts,
+          completedAt: userProgress.completedAt
+        } : null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Submit answers for level-level assessment
+// @route   POST /api/assessments/level/submit
+exports.submitLevelAssessment = async (req, res) => {
+  try {
+    const { levelId, answers } = req.body;
+    if (!levelId || !answers) {
+      return res.status(400).json({ success: false, message: 'levelId and answers are required.' });
+    }
+
+    const assessment = await DevOpsAssessment.findOne({ 
+      levelId,
+      $or: [
+        { moduleId: null },
+        { moduleId: { $exists: false } }
+      ]
+    });
+    
+    if (!assessment) {
+      return res.status(404).json({ success: false, message: 'No level assessment found.' });
+    }
+
+    // Grade
+    let correctCount = 0;
+    const gradingResults = [];
+
+    assessment.questions.forEach((q, idx) => {
+      const userAnswer = Array.isArray(answers) ? answers[idx] : answers[idx.toString()] || answers[idx];
+      const isCorrect = userAnswer === q.correctAnswer;
+      if (isCorrect) correctCount++;
+
+      gradingResults.push({
+        questionIndex: idx,
+        question: q.question,
+        userAnswer,
+        correctAnswer: q.correctAnswer,
+        isCorrect,
+        explanation: q.explanation || ''
+      });
+    });
+
+    const score = Math.round((correctCount / assessment.questions.length) * 100);
+    const passed = score >= 70; // 70% passing threshold
+
+    // Save progress in UserAssessmentProgress
+    let progress = await UserAssessmentProgress.findOne({
+      userId: req.user._id,
+      levelId,
+      moduleId: null
+    });
+
+    if (progress) {
+      progress.score = Math.max(progress.score, score);
+      progress.passed = progress.passed || passed;
+      progress.attempts += 1;
+      progress.completedAt = new Date();
+      await progress.save();
+    } else {
+      progress = await UserAssessmentProgress.create({
+        userId: req.user._id,
+        roadmapId: assessment.roadmapId,
+        levelId,
+        moduleId: null,
+        score,
+        passed,
+        attempts: 1,
+        completedAt: new Date()
+      });
+    }
+
+    // If passed, auto-advance phase using checkAndAdvancePhase helper
+    if (passed) {
+      const User = require('../models/User');
+      const { checkAndAdvancePhase } = require('./progressController');
+      const user = await User.findById(req.user._id);
+      
+      const key = 'devops';
+      await checkAndAdvancePhase(user, assessment.roadmapId, key);
+      
+      user.markModified(`domainsProgress.${key}`);
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      data: {
+        score,
+        passed,
+        explanations: gradingResults.reduce((acc, r) => {
+          acc[r.questionIndex] = {
+            question: r.question,
+            correctAnswer: r.correctAnswer,
+            isCorrect: r.isCorrect,
+            explanation: r.explanation
+          };
+          return acc;
+        }, {})
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Auto-complete level when no level assessment is configured
+// @route   POST /api/assessments/level/complete-without-assessment
+exports.completeLevelWithoutAssessment = async (req, res) => {
+  try {
+    const { levelId } = req.body;
+    if (!levelId) {
+      return res.status(400).json({ success: false, message: 'levelId is required.' });
+    }
+
+    const Phase = require('../models/Phase');
+    const phase = await Phase.findById(levelId);
+    if (!phase) {
+      return res.status(404).json({ success: false, message: 'Level/Phase not found.' });
+    }
+
+    // Verify no assessment exists for this level
+    const assessmentExists = await DevOpsAssessment.exists({
+      levelId,
+      $or: [
+        { moduleId: null },
+        { moduleId: { $exists: false } }
+      ]
+    });
+
+    if (assessmentExists) {
+      return res.status(400).json({ success: false, message: 'Assessment exists for this level. You must attempt it.' });
+    }
+
+    // Advance phase directly
+    const User = require('../models/User');
+    const Topic = require('../models/Topic');
+    const { checkAndAdvancePhase } = require('./progressController');
+    const user = await User.findById(req.user._id);
+    const key = 'devops';
+
+    const topicsInPhase = await Topic.find({ phaseId: levelId, isActive: true });
+    const domainProgress = user.domainsProgress[key];
+    
+    if (domainProgress) {
+      const completedInPhase = domainProgress.completedTopics.filter(ct => 
+        topicsInPhase.some(tp => tp._id.toString() === ct.topicId.toString())
+      );
+
+      if (completedInPhase.length < topicsInPhase.length) {
+        return res.status(400).json({ success: false, message: 'You must complete all topics in this level before unlocking the next one.' });
+      }
+
+      await checkAndAdvancePhase(user, phase.domainId, key);
+
+      // Force unlock if not already advanced
+      if (domainProgress.currentPhase === phase.phaseNumber) {
+        domainProgress.currentPhase = phase.phaseNumber + 1;
+        domainProgress.xp = (domainProgress.xp || 0) + 500;
+      }
+
+      user.markModified(`domainsProgress.${key}`);
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Level completed successfully. Next level unlocked!',
+      currentPhase: user.domainsProgress[key]?.currentPhase
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

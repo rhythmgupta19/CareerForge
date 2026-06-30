@@ -654,6 +654,7 @@ const Roadmap = () => {
                 isTopicCompleted={isTopicCompleted}
                 activeLevel={activeLevel}
                 isDSA={isDSA}
+                domainSlug={domain?.slug}
               />
             </motion.div>
           )}
@@ -1168,7 +1169,7 @@ const Roadmap = () => {
   );
 };
 
-const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA }) => {
+const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA, domainSlug }) => {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1213,6 +1214,8 @@ const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA }) => {
     );
   }
 
+  const allCompleted = topics.length > 0 && topics.every(t => isTopicCompleted(t._id));
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
       {topics.map((topic, i) => {
@@ -1248,11 +1251,31 @@ const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA }) => {
             </div>
             
             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${completed ? 'bg-emerald-500/10 text-emerald-500' : 'bg-[var(--bg-sub)] text-[var(--text-light)] group-hover:bg-[var(--primary-light)] group-hover:text-[var(--primary)] group-hover:translate-x-0.5'}`}>
-              <FiZap className="text-base" />
+              <FiChevronRight />
             </div>
           </Link>
         );
       })}
+
+      {allCompleted && domainSlug === 'devops' && (
+        <div className="col-span-full mt-8 p-6 bg-gradient-to-r from-indigo-950 via-[#141416] to-indigo-950 border-2 border-indigo-500/25 rounded-3xl text-center space-y-4 shadow-xl relative overflow-hidden">
+          <div className="text-4xl">🎯</div>
+          <div>
+            <h4 className="text-sm font-black text-white uppercase tracking-wider">Level Completed!</h4>
+            <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed">
+              You have completed all requirements for Level {activeLevel}. Take the final assessment to unlock Level {activeLevel + 1}!
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              to={`/roadmap-assessment/${phaseId}`}
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-[var(--primary)] to-indigo-650 hover:opacity-90 text-white font-black text-xs uppercase tracking-wider rounded-xl transition duration-300 shadow-lg transform hover:-translate-y-0.5"
+            >
+              Go For Assessment <FiChevronRight />
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -14,6 +14,12 @@ router.delete('/:id', protect, authorize('admin'), c.deleteAssessment);
 router.get('/module/:moduleId', protect, devopsC.getAssessmentByModule);
 router.post('/submit', protect, devopsC.submitAssessment);
 
+// DevOps Level Assessment Routes
+router.get('/level/:levelId', protect, devopsC.getLevelAssessment);
+router.post('/level/submit', protect, devopsC.submitLevelAssessment);
+router.post('/level/complete-without-assessment', protect, devopsC.completeLevelWithoutAssessment);
+
+
 // Admin DevOps MCQ Routes
 router.post('/admin/save', protect, authorize('admin'), devopsC.saveAssessmentAdmin);
 router.delete('/admin/:moduleId', protect, authorize('admin'), devopsC.deleteAssessmentAdmin);

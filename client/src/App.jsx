@@ -17,6 +17,8 @@ import Domains from './pages/Domains';
 import Roadmap from './pages/Roadmap';
 import TopicDetail from './pages/TopicDetail';
 import Assessments from './pages/Assessments';
+import RoadmapLevelAssessment from './pages/RoadmapLevelAssessment';
+
 import AiChat from './pages/AiChat';
 import Resources from './pages/Resources';
 import CareerGuide from './pages/CareerGuide';
@@ -66,6 +68,7 @@ function App() {
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/topic/:id" element={<TopicDetail />} />
               <Route path="/assessments" element={<Assessments />} />
+              <Route path="/roadmap-assessment/:levelId" element={<RoadmapLevelAssessment />} />
               <Route path="/code-guru" element={<AiChat />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/career-guide" element={<CareerGuide />} />
