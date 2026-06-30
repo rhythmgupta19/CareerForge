@@ -19,7 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 // Security
 app.use(helmet({
   contentSecurityPolicy: process.env.NODE_ENV === 'development' ? false : undefined,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 
 // CORS
@@ -54,9 +55,6 @@ app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/activity', require('./routes/activity'));
-app.use('/api/admin/activity', require('./routes/adminActivity'));
-app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/domains', require('./routes/domains'));
 app.use('/api/phases', require('./routes/phases'));
 app.use('/api/topics', require('./routes/topics'));
@@ -71,13 +69,33 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/problems', require('./routes/problemRoutes'));
 app.use('/api/code', require('./routes/codeRoutes'));
 app.use('/api/submissions', require('./routes/submissionRoutes'));
-app.use('/api/blogs', require('./routes/blogs'));
-app.use('/api/projects', require('./routes/projects'));
-app.use('/api/internships', require('./routes/internships'));
+app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/jobs', require('./routes/jobs'));
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'CareerForge API is running', timestamp: new Date() });
+});
+
+// Seed DB Migration trigger
+app.get('/api/health/seed-db-migration', async (req, res) => {
+  try {
+    const force = req.query.force === 'true';
+    const secret = req.query.secret;
+
+    if (!secret || secret !== process.env.JWT_SECRET) {
+      return res.status(403).json({ success: false, message: 'Forbidden: Invalid migration secret key.' });
+    }
+
+    console.log(`🔄 Manual seed trigger initiated (force: ${force})...`);
+    const seedDB = require('./seeds/seedAll');
+    await seedDB(force);
+    console.log('✅ Manual seed completed successfully');
+    res.json({ success: true, message: 'Database successfully seeded!' });
+  } catch (err) {
+    console.error('❌ Manual seed failed:', err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // Error handler
@@ -94,51 +112,32 @@ const startServer = async () => {
       console.log(`📡 Environment: ${process.env.NODE_ENV}`);
       console.log(`🌐 Client URL: ${process.env.CLIENT_URL}\n`);
 
-      // Migrate existing domains to include roadmapType
+      // User Collection Audit
       try {
-        const Domain = require('./models/Domain');
-        const domainsToMigrate = await Domain.find({ roadmapType: { $exists: false } });
-        if (domainsToMigrate.length > 0) {
-          console.log(`🔄 Migrating ${domainsToMigrate.length} domains to set roadmapType...`);
-          for (const d of domainsToMigrate) {
-            let type = 'theory';
-            const slug = d.slug.toLowerCase();
-            if (slug === 'devops') {
-              type = 'devops';
-            } else if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(slug)) {
-              type = 'coding';
-            }
-            d.roadmapType = type;
-            await d.save();
-          }
-          console.log('✅ Domains migration completed successfully!');
-        }
-      } catch (migrateErr) {
-        console.error('❌ Domain migration failed:', migrateErr.message);
+        const User = require('./models/User');
+        const mongoose = require('mongoose');
+        const userCount = await User.countDocuments();
+        console.log(`📊 [Audit] Total Users in DB: ${userCount}`);
+        console.log(`📊 [Audit] Active Database: ${mongoose.connection.name}`);
+        console.log(`📊 [Audit] Collection Name: ${User.collection.name}\n`);
+      } catch (auditErr) {
+        console.error('❌ User Collection Audit failed:', auditErr.message);
       }
 
       // Auto-seed if empty (useful for In-Memory DB)
       try {
         const Domain = require('./models/Domain');
         const domainCount = await Domain.countDocuments();
-        if (domainCount === 0) {
+        if (domainCount === 0 && process.env.NODE_ENV !== 'production') {
           console.log('🌱 Database is empty. Running auto-seed...');
           const seedDB = require('./seeds/seedAll');
           await seedDB();
           console.log('✅ Auto-seed completed!\n');
-        } else {
-          // If domain exists but DevOps assessments are empty, seed them
-          const DevOpsAssessment = require('./models/DevOpsAssessment');
-          const count = await DevOpsAssessment.countDocuments();
-          if (count === 0) {
-            console.log('🌱 DevOps Assessments are empty. Seeding DevOps assessments...');
-            const seedDevOps = require('./seeds/seedDevOpsAssessments');
-            await seedDevOps();
-            console.log('✅ DevOps Assessments seeded successfully!\n');
-          }
+        } else if (domainCount === 0 && process.env.NODE_ENV === 'production') {
+          console.log('⚠️ [Warning] Database is empty in production, but auto-seed is skipped to prevent accidental data loss/corruption.');
         }
       } catch (err) {
-        console.error('❌ Auto-seed failed:', err.message);
+        console.error('❌ Auto-seed check/execution failed:', err.message);
       }
     });
   } catch (err) {

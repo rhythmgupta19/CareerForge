@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
-import UserAnalytics from './UserAnalytics';
-import LeaderboardManager from './LeaderboardManager';
 import { 
   FiUsers, 
   FiMap, 
@@ -20,7 +19,8 @@ import {
   FiTrendingUp,
   FiEdit,
   FiVideo,
-  FiFileText
+  FiFileText,
+  FiStar
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -31,133 +31,14 @@ const AdminDashboard = () => {
   const [topics, setTopics] = useState([]);
   const [assessments, setAssessments] = useState([]);
   
-  const [blogs, setBlogs] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [internships, setInternships] = useState([]);
-  const [credits, setCredits] = useState([]);
-
-  // Form creation inputs
-  const [newBlog, setNewBlog] = useState({ title: '', content: '', author: '', category: 'Web Development', tags: '', imageUrl: '' });
-  const [newProject, setNewProject] = useState({ title: '', description: '', domain: 'webdev', difficulty: 'intermediate', steps: '', roadmap: '' });
-  const [newInternship, setNewInternship] = useState({ title: '', company: '', location: 'Remote', stipend: '', description: '', applyLink: '', domain: 'webdev', requirements: '' });
-  const [newCredit, setNewCredit] = useState({ title: '', platform: '', category: 'cloud', link: '', description: '', icon: '☁️', eligibility: '', order: 1 });
-  
-  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments'
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments' | 'feedback'
   const [loading, setLoading] = useState(true);
 
-  // DevOps MCQ admin panel states
-  const [assessmentsSubTab, setAssessmentsSubTab] = useState('milestones'); // 'milestones' | 'devops'
-  const [editingDevopsAssessment, setEditingDevopsAssessment] = useState(null);
-  const [showDevopsEditModal, setShowDevopsEditModal] = useState(false);
-  const [devopsStats, setDevopsStats] = useState(null);
-  const [devopsScores, setDevopsScores] = useState([]);
-  const [showDevopsStatsModal, setShowDevopsStatsModal] = useState(false);
-
-  const fetchDevopsStatsAndScores = async (moduleId) => {
-    const loadingToast = toast.loading("Loading statistics and user score records...");
-    try {
-      const [statsRes, scoresRes] = await Promise.all([
-        api.get(`/assessments/admin/stats/${moduleId}`),
-        api.get(`/assessments/admin/scores/${moduleId}`)
-      ]);
-      setDevopsStats(statsRes.data.data);
-      setDevopsScores(scoresRes.data.data || []);
-      setShowDevopsStatsModal(true);
-      toast.success("DevOps metrics loaded!", { id: loadingToast });
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to load statistics/scores.", { id: loadingToast });
-    }
-  };
-
-  const handleEditDevopsAssessment = async (topic) => {
-    const loadingToast = toast.loading("Loading DevOps assessment details...");
-    try {
-      const res = await api.get(`/assessments/module/${topic._id}`);
-      if (res.data.success && res.data.data) {
-        const fullAssessment = res.data.data;
-        let questions = fullAssessment.questions || [];
-        if (questions.length < 10) {
-          const defaultQs = Array.from({ length: 10 - questions.length }, () => ({
-            question: '',
-            options: ['', '', '', ''],
-            correctAnswer: '',
-            explanation: ''
-          }));
-          questions = [...questions, ...defaultQs];
-        }
-        setEditingDevopsAssessment({
-          roadmapId: topic.domainId?._id || topic.domainId,
-          levelId: topic.phaseId?._id || topic.phaseId,
-          moduleId: topic._id,
-          title: fullAssessment.title || `${topic.title} Assessment`,
-          questions: questions.map(q => ({
-            question: q.question || '',
-            options: q.options || ['', '', '', ''],
-            correctAnswer: q.correctAnswer || '',
-            explanation: q.explanation || ''
-          }))
-        });
-        setShowDevopsEditModal(true);
-        toast.success("DevOps assessment loaded for editing!", { id: loadingToast });
-      }
-    } catch (err) {
-      if (err.response?.status === 404) {
-        const questionsTemplate = Array.from({ length: 10 }, () => ({
-          question: '',
-          options: ['', '', '', ''],
-          correctAnswer: '',
-          explanation: ''
-        }));
-        setEditingDevopsAssessment({
-          roadmapId: topic.domainId?._id || topic.domainId,
-          levelId: topic.phaseId?._id || topic.phaseId,
-          moduleId: topic._id,
-          title: `${topic.title} MCQ Assessment`,
-          questions: questionsTemplate
-        });
-        setShowDevopsEditModal(true);
-        toast.success("Initialized a fresh DevOps assessment template!", { id: loadingToast });
-      } else {
-        toast.error(err.response?.data?.message || "Failed to load assessment.", { id: loadingToast });
-      }
-    }
-  };
-
-  const handleSaveDevopsAssessment = async (e) => {
-    e.preventDefault();
-    if (!editingDevopsAssessment.title || !editingDevopsAssessment.questions || editingDevopsAssessment.questions.length !== 10) {
-      toast.error("An assessment requires a title and exactly 10 questions.");
-      return;
-    }
-    
-    for (let i = 0; i < 10; i++) {
-      const q = editingDevopsAssessment.questions[i];
-      if (!q.question || !q.correctAnswer || !q.explanation) {
-        toast.error(`Question ${i + 1} is missing a prompt, correct answer, or explanation.`);
-        return;
-      }
-      if (!q.options || q.options.length !== 4 || q.options.some(opt => !opt)) {
-        toast.error(`Question ${i + 1} must contain exactly 4 non-empty options.`);
-        return;
-      }
-      if (!q.options.includes(q.correctAnswer)) {
-        toast.error(`Question ${i + 1}'s correct answer must match one of its options exactly.`);
-        return;
-      }
-    }
-    
-    const loadingToast = toast.loading("Saving DevOps Assessment...");
-    try {
-      const res = await api.post('/assessments/admin/save', editingDevopsAssessment);
-      if (res.data.success) {
-        toast.success("DevOps assessment updated successfully!", { id: loadingToast });
-        setShowDevopsEditModal(false);
-        setEditingDevopsAssessment(null);
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to save DevOps assessment.", { id: loadingToast });
-    }
-  };
+  // Feedback System State
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [feedbackSearchQuery, setFeedbackSearchQuery] = useState('');
+  const [feedbackRatingFilter, setFeedbackRatingFilter] = useState('all');
+  const [feedbackSortKey, setFeedbackSortKey] = useState('date');
   
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -200,77 +81,23 @@ const AdminDashboard = () => {
   });
   const [editingAssessment, setEditingAssessment] = useState(null);
 
-  const handleAddQuestion = () => {
-    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
-    const questions = [...(miniAssessment.questions || [])];
-    questions.push({ prompt: '', options: ['', '', '', ''], answer: '' });
-    setEditingTopic({
-      ...editingTopic,
-      miniAssessment: {
-        ...miniAssessment,
-        questions
-      }
-    });
-  };
-
-  const handleUpdateQuestion = (qIdx, field, value) => {
-    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
-    const questions = [...(miniAssessment.questions || [])];
-    questions[qIdx] = { ...questions[qIdx], [field]: value };
-    setEditingTopic({
-      ...editingTopic,
-      miniAssessment: {
-        ...miniAssessment,
-        questions
-      }
-    });
-  };
-
-  const handleUpdateOption = (qIdx, optIdx, value) => {
-    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
-    const questions = [...(miniAssessment.questions || [])];
-    const options = [...(questions[qIdx].options || ['', '', '', ''])];
-    options[optIdx] = value;
-    
-    let answer = questions[qIdx].answer;
-    if (questions[qIdx].answer && !options.includes(questions[qIdx].answer)) {
-      answer = '';
-    }
-
-    questions[qIdx] = { ...questions[qIdx], options, answer };
-
-    setEditingTopic({
-      ...editingTopic,
-      miniAssessment: {
-        ...miniAssessment,
-        questions
-      }
-    });
-  };
-
-  const handleDeleteQuestion = (qIdx) => {
-    const miniAssessment = editingTopic?.miniAssessment || { passingPercentage: 60, questions: [] };
-    const questions = (miniAssessment.questions || []).filter((_, idx) => idx !== qIdx);
-    setEditingTopic({
-      ...editingTopic,
-      miniAssessment: {
-        ...miniAssessment,
-        questions
-      }
-    });
-  };
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
 
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [statsRes, usersRes, domainsRes] = await Promise.all([
+      const [statsRes, usersRes, domainsRes, feedbackRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/users'),
-        api.get('/domains')
+        api.get('/domains'),
+        api.get('/feedback')
       ]);
       setStats(statsRes.data.data);
       setUsers(usersRes.data.data || []);
       setDomains(domainsRes.data.data || []);
+      setFeedbacks(feedbackRes.data.data || []);
     } catch (err) {
       console.error(err);
       toast.error('Failed to load administration workspace data');
@@ -278,10 +105,6 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
 
   const fetchTopics = async () => {
     try {
@@ -330,11 +153,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const getProgressKey = (slug) => {
+    if (!slug) return 'dsa';
+    const lowercaseSlug = slug.toLowerCase();
+    if (lowercaseSlug === 'web-development' || lowercaseSlug === 'webdev') return 'webdev';
+    if (lowercaseSlug === 'open-source' || lowercaseSlug === 'opensource') return 'opensource';
+    if (lowercaseSlug === 'devops') return 'devops';
+    if (lowercaseSlug === 'dsa') return 'dsa';
+    if (lowercaseSlug.includes('web') || lowercaseSlug.includes('ui-ux')) return 'webdev';
+    if (lowercaseSlug.includes('open') || lowercaseSlug.includes('git')) return 'opensource';
+    if (lowercaseSlug.includes('dsa') || lowercaseSlug.includes('data')) return 'dsa';
+    return 'devops';
+  };
+
   const openPersonalizeDrawer = (user) => {
     setSelectedUser(user);
-    setCustomXp(user.xp || 0);
-    setCustomProgress(user.overallProgress || 0);
-    setCustomPhase(user.currentPhase || 0);
+    const key = getProgressKey(user.activeDomain?.slug || user.selectedDomain?.slug);
+    const activeProg = user.domainsProgress?.[key] || {};
+    setCustomXp(activeProg.xp || 0);
+    setCustomProgress(activeProg.overallProgress || 0);
+    setCustomPhase(activeProg.currentPhase || 0);
   };
 
   const handleSaveProgress = async () => {
@@ -423,11 +261,10 @@ const AdminDashboard = () => {
     try {
       const res = await api.put(`/topics/${editingTopic._id}`, {
         youtubeLink: editingTopic.youtubeLink?.trim() || '',
-        gfgLink: editingTopic.gfgLink?.trim() || '',
-        miniAssessment: editingTopic.miniAssessment
+        gfgLink: editingTopic.gfgLink?.trim() || ''
       });
       if (res.data.success) {
-        toast.success("Topic video, doc links & assessment updated!", { id: loadingToast });
+        toast.success("Topic video & doc links updated!", { id: loadingToast });
         setTopics(topics.map(t => t._id === editingTopic._id ? res.data.data : t));
         setEditingTopic(null);
       }
@@ -492,186 +329,76 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchBlogs = async () => {
+  const handleToggleFeedbackApproval = async (id) => {
+    const loadingToast = toast.loading("Updating feedback visibility...");
     try {
-      const res = await api.get('/blogs');
-      setBlogs(res.data.data || []);
-    } catch (err) {
-      toast.error('Failed to load blogs');
-    }
-  };
-
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get('/projects');
-      setProjects(res.data.data || []);
-    } catch (err) {
-      toast.error('Failed to load projects');
-    }
-  };
-
-  const fetchInternships = async () => {
-    try {
-      const res = await api.get('/internships');
-      setInternships(res.data.data || []);
-    } catch (err) {
-      toast.error('Failed to load internships');
-    }
-  };
-
-  const fetchCredits = async () => {
-    try {
-      const res = await api.get('/cloud-credits');
-      setCredits(res.data.data || []);
-    } catch (err) {
-      toast.error('Failed to load cloud credits');
-    }
-  };
-
-  const handleCreateBlog = async (e) => {
-    e.preventDefault();
-    const loadingToast = toast.loading("Adding blog post...");
-    try {
-      const tagsArray = newBlog.tags.split(',').map(t => t.trim()).filter(Boolean);
-      const res = await api.post('/blogs', { ...newBlog, tags: tagsArray });
+      const res = await api.patch(`/feedback/${id}/toggle-approve`);
       if (res.data.success) {
-        toast.success("Blog created!", { id: loadingToast });
-        setBlogs([res.data.data, ...blogs]);
-        setNewBlog({ title: '', content: '', author: '', category: 'Web Development', tags: '', imageUrl: '' });
+        toast.success(res.data.message || "Approval status updated!", { id: loadingToast });
+        setFeedbacks(feedbacks.map(f => f._id === id ? { ...f, isApproved: res.data.data.isApproved } : f));
       }
     } catch (err) {
-      toast.error("Failed to create blog", { id: loadingToast });
+      toast.error("Failed to update feedback status", { id: loadingToast });
     }
   };
 
-  const handleDeleteBlog = async (id) => {
-    if (!window.confirm("Delete this blog post?")) return;
-    const loadingToast = toast.loading("Deleting blog post...");
+  const handleDeleteFeedback = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this feedback review permanently?")) return;
+    const loadingToast = toast.loading("Deleting feedback review...");
     try {
-      const res = await api.delete(`/blogs/${id}`);
+      const res = await api.delete(`/feedback/${id}`);
       if (res.data.success) {
-        toast.success("Blog deleted", { id: loadingToast });
-        setBlogs(blogs.filter(b => b._id !== id));
+        toast.success("Feedback review deleted successfully", { id: loadingToast });
+        setFeedbacks(feedbacks.filter(f => f._id !== id));
       }
     } catch (err) {
-      toast.error("Failed to delete blog", { id: loadingToast });
+      toast.error("Failed to delete feedback review", { id: loadingToast });
     }
   };
 
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    const loadingToast = toast.loading("Adding project blueprint...");
-    try {
-      const stepsArray = newProject.steps.split('\n').map((line, idx) => {
-        const parts = line.split(':');
-        return {
-          stepNumber: idx + 1,
-          title: parts[0]?.trim() || `Step ${idx + 1}`,
-          guidance: parts.slice(1).join(':')?.trim() || parts[0]?.trim()
-        };
-      }).filter(s => s.guidance);
+  const handleViewUserProfile = (userId) => {
+    const fullUser = users.find(u => u._id === userId);
+    if (fullUser) {
+      openPersonalizeDrawer(fullUser);
+    } else {
+      toast.error("User profile details not found in active list");
+    }
+  };
 
-      const roadmapArray = newProject.roadmap.split('\n').map(line => {
-        const parts = line.split(':');
-        const tasks = parts.slice(1).join(':')?.split(',').map(t => t.trim()).filter(Boolean) || [];
-        return {
-          phaseName: parts[0]?.trim() || 'Phase Details',
-          tasks
-        };
-      }).filter(r => r.phaseName);
+  const filteredAndSortedFeedbacks = feedbacks
+    .filter(f => {
+      if (!f) return false;
+      const userObj = f.userId && typeof f.userId === 'object' ? f.userId : {};
+      const fullName = userObj.fullName || 'Deleted User';
+      const email = userObj.email || '';
 
-      const res = await api.post('/projects', {
-        ...newProject,
-        steps: stepsArray,
-        roadmap: roadmapArray
-      });
-      if (res.data.success) {
-        toast.success("Project blueprint created!", { id: loadingToast });
-        setProjects([res.data.data, ...projects]);
-        setNewProject({ title: '', description: '', domain: 'webdev', difficulty: 'intermediate', steps: '', roadmap: '' });
+      const matchesSearch =
+        fullName.toLowerCase().includes(feedbackSearchQuery.toLowerCase()) ||
+        email.toLowerCase().includes(feedbackSearchQuery.toLowerCase());
+
+      const matchesRating = feedbackRatingFilter === 'all' || f.rating === Number(feedbackRatingFilter);
+
+      return matchesSearch && matchesRating;
+    })
+    .sort((a, b) => {
+      if (feedbackSortKey === 'rating') {
+        return b.rating - a.rating;
+      } else if (feedbackSortKey === 'domain') {
+        const domainA = a.userId?.activeDomain?.name || 'Unselected';
+        const domainB = b.userId?.activeDomain?.name || 'Unselected';
+        return domainA.localeCompare(domainB);
+      } else {
+        return new Date(b.createdAt) - new Date(a.createdAt);
       }
-    } catch (err) {
-      toast.error("Failed to create project blueprint", { id: loadingToast });
-    }
-  };
-
-  const handleDeleteProject = async (id) => {
-    if (!window.confirm("Delete this project blueprint?")) return;
-    const loadingToast = toast.loading("Deleting project...");
-    try {
-      const res = await api.delete(`/projects/${id}`);
-      if (res.data.success) {
-        toast.success("Project deleted", { id: loadingToast });
-        setProjects(projects.filter(p => p._id !== id));
-      }
-    } catch (err) {
-      toast.error("Failed to delete project", { id: loadingToast });
-    }
-  };
-
-  const handleCreateInternship = async (e) => {
-    e.preventDefault();
-    const loadingToast = toast.loading("Adding internship position...");
-    try {
-      const reqsArray = newInternship.requirements.split('\n').map(r => r.trim()).filter(Boolean);
-      const res = await api.post('/internships', { ...newInternship, requirements: reqsArray });
-      if (res.data.success) {
-        toast.success("Internship listed!", { id: loadingToast });
-        setInternships([res.data.data, ...internships]);
-        setNewInternship({ title: '', company: '', location: 'Remote', stipend: '', description: '', applyLink: '', domain: 'webdev', requirements: '' });
-      }
-    } catch (err) {
-      toast.error("Failed to list internship", { id: loadingToast });
-    }
-  };
-
-  const handleDeleteInternship = async (id) => {
-    if (!window.confirm("Delete this internship position?")) return;
-    const loadingToast = toast.loading("Deleting internship...");
-    try {
-      const res = await api.delete(`/internships/${id}`);
-      if (res.data.success) {
-        toast.success("Internship deleted", { id: loadingToast });
-        setInternships(internships.filter(i => i._id !== id));
-      }
-    } catch (err) {
-      toast.error("Failed to delete internship", { id: loadingToast });
-    }
-  };
-
-  const handleCreateCredit = async (e) => {
-    e.preventDefault();
-    const loadingToast = toast.loading("Adding cloud credit tool...");
-    try {
-      const res = await api.post('/cloud-credits', newCredit);
-      if (res.data.success) {
-        toast.success("Cloud Credit added!", { id: loadingToast });
-        setCredits([...credits, res.data.data]);
-        setNewCredit({ title: '', platform: '', category: 'cloud', link: '', description: '', icon: '☁️', eligibility: '', order: 1 });
-      }
-    } catch (err) {
-      toast.error("Failed to add credit benefit", { id: loadingToast });
-    }
-  };
-
-  const handleDeleteCredit = async (id) => {
-    if (!window.confirm("Delete this cloud credit perk?")) return;
-    const loadingToast = toast.loading("Deleting perk...");
-    try {
-      const res = await api.delete(`/cloud-credits/${id}`);
-      if (res.data.success) {
-        toast.success("Perk deleted", { id: loadingToast });
-        setCredits(credits.filter(c => c._id !== id));
-      }
-    } catch (err) {
-      toast.error("Failed to delete perk", { id: loadingToast });
-    }
-  };
+    });
 
   const filteredUsers = users.filter(user => {
+    if (!user) return false;
+    const name = user.fullName || '';
+    const email = user.email || '';
     const matchesSearch = 
-      user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -699,90 +426,51 @@ const AdminDashboard = () => {
             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium">Personalize student trajectories, oversee specializations, and customize platform curriculums.</p>
           </div>
 
-          <div className="flex flex-wrap gap-2 bg-slate-100/80 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'users' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="flex flex-wrap gap-2 bg-slate-100/80 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
+              <button
+                onClick={() => setActiveTab('users')}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'users' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                👥 Manage Users
+              </button>
+              <button
+                onClick={() => setActiveTab('domains')}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'domains' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                🗺️ Domains
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('topics');
+                  fetchTopics();
+                }}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'topics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                📚 Topic Video Links
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('assessments');
+                  fetchAssessments();
+                }}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'assessments' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                📝 Assign Assessments
+              </button>
+              <button
+                onClick={() => setActiveTab('feedback')}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'feedback' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                ⭐ User Feedback
+              </button>
+            </div>
+            <Link
+              to="/dashboard"
+              className="px-4 py-2.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             >
-              👥 Users
-            </button>
-            <button
-              onClick={() => setActiveTab('domains')}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'domains' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              🗺️ Domains
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('topics');
-                fetchTopics();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'topics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              📚 Topics
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('assessments');
-                fetchAssessments();
-                fetchTopics();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'assessments' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              📝 Assessments
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('blogs');
-                fetchBlogs();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'blogs' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              📝 Blogs
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('projects');
-                fetchProjects();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'projects' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              🛠️ Projects
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('internships');
-                fetchInternships();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'internships' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              💼 Internships
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('credits');
-                fetchCredits();
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'credits' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              ☁️ Credits
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('analytics');
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'analytics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              📈 Analytics
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab('gamification');
-              }}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'gamification' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
-            >
-              🏆 Gamification
-            </button>
+              👁️ View as Student
+            </Link>
           </div>
         </div>
       </div>
@@ -872,11 +560,11 @@ const AdminDashboard = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-indigo-600/20 border border-emerald-100 dark:border-indigo-500/20 text-emerald-700 dark:text-indigo-400 font-black text-sm flex items-center justify-center">
-                            {user.fullName.charAt(0)}
+                            {(user.fullName || '').charAt(0) || '?'}
                           </div>
                           <div>
-                            <span className="font-bold text-slate-800 dark:text-white text-xs block">{user.fullName}</span>
-                            <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{user.email}</span>
+                            <span className="font-bold text-slate-800 dark:text-white text-xs block">{user.fullName || 'No Name'}</span>
+                            <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{user.email || 'No Email'}</span>
                           </div>
                         </div>
                       </td>
@@ -901,16 +589,26 @@ const AdminDashboard = () => {
                         )}
                       </td>
                       <td className="p-4 space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-black">
-                          <span className="text-amber-600 dark:text-amber-400">{user.xp || 0} XP • Lvl {Math.floor((user.xp || 0) / 1000) + 1}</span>
-                          <span className="text-emerald-700 dark:text-indigo-400">{user.overallProgress || 0}% Complete</span>
-                        </div>
-                        <div className="w-32 h-1.5 bg-slate-200 dark:bg-slate-950/80 rounded-full overflow-hidden border border-slate-300/40 dark:border-white/5">
-                          <div 
-                            className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-indigo-500 dark:to-indigo-400 transition-all duration-300"
-                            style={{ width: `${user.overallProgress || 0}%` }}
-                          ></div>
-                        </div>
+                        {(() => {
+                          const key = getProgressKey(user.activeDomain?.slug || user.selectedDomain?.slug);
+                          const activeProg = user.domainsProgress?.[key] || {};
+                          const xp = activeProg.xp || 0;
+                          const overallProgress = activeProg.overallProgress || 0;
+                          return (
+                            <>
+                              <div className="flex justify-between text-[10px] font-black">
+                                <span className="text-amber-600 dark:text-amber-400">{xp} XP • Lvl {Math.floor(xp / 1000) + 1}</span>
+                                <span className="text-emerald-700 dark:text-indigo-400">{overallProgress}% Complete</span>
+                              </div>
+                              <div className="w-32 h-1.5 bg-slate-200 dark:bg-slate-950/80 rounded-full overflow-hidden border border-slate-300/40 dark:border-white/5">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-indigo-500 dark:to-indigo-400 transition-all duration-300"
+                                  style={{ width: `${overallProgress}%` }}
+                                ></div>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </td>
                       <td className="p-4">
                         {user.profile?.collegeName ? (
@@ -1104,726 +802,245 @@ const AdminDashboard = () => {
 
       {activeTab === 'assessments' && (
         <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <div className="flex gap-2 border-b border-slate-100 dark:border-white/5 pb-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-black text-slate-800 dark:text-white">Milestone Assessments</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage and assign diagnostic tests / validation assessments to specific domains</p>
+            </div>
             <button
-              onClick={() => setAssessmentsSubTab('milestones')}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-                assessmentsSubTab === 'milestones'
-                  ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
+              onClick={() => {
+                if (domains.length === 0) {
+                  toast.error("Please add a domain specialization path first!");
+                  return;
+                }
+                setNewAssessment({
+                  ...newAssessment,
+                  domainId: domains[0]._id
+                });
+                setShowAssessmentModal(true);
+              }}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
             >
-              Milestone External Tests
-            </button>
-            <button
-              onClick={() => setAssessmentsSubTab('devops')}
-              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-                assessmentsSubTab === 'devops'
-                  ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              DevOps MCQ Assessments
+              <FiPlus /> Assign Assessment
             </button>
           </div>
 
-          {assessmentsSubTab === 'milestones' ? (
-            <>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-black text-slate-800 dark:text-white">Milestone Assessments</h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage and assign diagnostic tests / validation assessments to specific domains</p>
-                </div>
-                <button
-                  onClick={() => {
-                    if (domains.length === 0) {
-                      toast.error("Please add a domain specialization path first!");
-                      return;
-                    }
-                    setNewAssessment({
-                      ...newAssessment,
-                      domainId: domains[0]._id
-                    });
-                    setShowAssessmentModal(true);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
-                >
-                  <FiPlus /> Assign Assessment
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {assessments.map((a) => {
-                  const domain = domains.find(d => d._id === (a.domainId?._id || a.domainId));
-                  return (
-                    <div key={a._id} className="bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-emerald-500/30 dark:hover:border-indigo-500/30 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
-                      <div>
-                        <div className="flex justify-between items-start gap-2">
-                          <h4 className="font-black text-slate-800 dark:text-white text-sm">{a.title}</h4>
-                          <span className="text-[8px] font-black text-emerald-700 dark:text-indigo-400 uppercase tracking-widest bg-emerald-50 dark:bg-indigo-950 border border-emerald-200 dark:border-indigo-900 px-2 py-0.5 rounded-full">{a.platform}</span>
-                        </div>
-                        <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed mt-2 line-clamp-3">{a.description || "No description provided."}</p>
-                        <div className="mt-3">
-                          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TARGET DOMAIN:</span>
-                          <span className="text-xs font-bold text-emerald-700 dark:text-indigo-300">{domain ? domain.name : 'All Specializations'}</span>
-                        </div>
-                        <div className="mt-3 truncate">
-                          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TEST URL:</span>
-                          <a href={a.assessmentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-600 dark:text-indigo-400 hover:underline">
-                            {a.assessmentLink}
-                          </a>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-100 dark:border-white/5 pt-4 flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-400 font-bold">
-                        <span className="text-slate-700 dark:text-slate-300">🎯 Pass: {a.passingScore}%</span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingAssessment(a)}
-                            className="px-2.5 py-1 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAssessment(a._id)}
-                            className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-550/10 dark:border-rose-500/10 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {assessments.map((a) => {
+              const domain = domains.find(d => d._id === (a.domainId?._id || a.domainId));
+              return (
+                <div key={a._id} className="bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-5 hover:border-emerald-500/30 dark:hover:border-indigo-500/30 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="flex justify-between items-start gap-2">
+                      <h4 className="font-black text-slate-800 dark:text-white text-sm">{a.title}</h4>
+                      <span className="text-[8px] font-black text-emerald-700 dark:text-indigo-400 uppercase tracking-widest bg-emerald-50 dark:bg-indigo-950 border border-emerald-200 dark:border-indigo-900 px-2 py-0.5 rounded-full">{a.platform}</span>
                     </div>
-                  );
-                })}
-                {assessments.length === 0 && (
-                  <div className="col-span-3 p-12 text-center text-slate-500 dark:text-slate-550 text-xs font-black bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
-                    No milestone assessments assigned yet. Click "Assign Assessment" to begin!
+                    <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed mt-2 line-clamp-3">{a.description || "No description provided."}</p>
+                    <div className="mt-3">
+                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TARGET DOMAIN:</span>
+                      <span className="text-xs font-bold text-emerald-700 dark:text-indigo-300">{domain ? domain.name : 'All Specializations'}</span>
+                    </div>
+                    <div className="mt-3 truncate">
+                      <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TEST URL:</span>
+                      <a href={a.assessmentLink} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-600 dark:text-indigo-400 hover:underline">
+                        {a.assessmentLink}
+                      </a>
+                    </div>
                   </div>
-                )}
+
+                  <div className="border-t border-slate-100 dark:border-white/5 pt-4 flex justify-between items-center text-[10px] text-slate-600 dark:text-slate-400 font-bold">
+                    <span className="text-slate-700 dark:text-slate-300">🎯 Pass: {a.passingScore}%</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditingAssessment(a)}
+                        className="px-2.5 py-1 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAssessment(a._id)}
+                        className="px-2.5 py-1 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-550/10 dark:border-rose-500/10 rounded-lg hover:bg-rose-500 hover:text-white transition-all"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {assessments.length === 0 && (
+              <div className="col-span-3 p-12 text-center text-slate-500 dark:text-slate-550 text-xs font-black bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl border border-dashed border-slate-200 dark:border-white/5">
+                No milestone assessments assigned yet. Click "Assign Assessment" to begin!
               </div>
-            </>
-          ) : (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-black text-slate-800 dark:text-white">DevOps Topic MCQs</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage the 10-question MCQ quizzes for all DevOps roadmap tracks.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'feedback' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 dark:border-white/5 pb-5">
+            <div>
+              <h3 className="text-lg font-black text-slate-800 dark:text-white">User Reviews & Feedback</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Analyze and moderate testimonials provided by CareerForge students</p>
+            </div>
+
+            {/* Filters and Sorting Console */}
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              {/* Search Bar */}
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/45 border border-slate-200 dark:border-white/5 px-3 py-1.5 rounded-xl text-xs w-full sm:w-48 focus-within:border-emerald-600 dark:focus-within:border-indigo-500 transition-colors">
+                <FiSearch className="text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search name/email..."
+                  value={feedbackSearchQuery}
+                  onChange={(e) => setFeedbackSearchQuery(e.target.value)}
+                  className="bg-transparent border-none outline-none text-xs w-full text-slate-700 dark:text-slate-350 placeholder:text-slate-400"
+                />
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
-                <table className="w-full text-left border-collapse text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Topic Title</th>
-                      <th className="p-3">Phase / Level</th>
-                      <th className="p-3">Questions</th>
-                      <th className="p-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {topics.filter(t => (t.domainId?.slug === 'devops' || t.domainId === 'devops' || (typeof t.domainId === 'object' && t.domainId?.slug === 'devops'))).length > 0 ? (
-                      topics.filter(t => (t.domainId?.slug === 'devops' || t.domainId === 'devops' || (typeof t.domainId === 'object' && t.domainId?.slug === 'devops'))).map((t) => (
-                        <tr key={t._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3 font-bold text-slate-800 dark:text-white">{t.title}</td>
-                          <td className="p-3 text-slate-500 font-bold uppercase">Level {t.phaseId?.phaseNumber ?? 0}</td>
-                          <td className="p-3 font-black text-emerald-600 dark:text-emerald-400">10 Questions (Pass &ge; 70%)</td>
-                          <td className="p-3 text-right">
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => handleEditDevopsAssessment(t)}
-                                className="px-3 py-1.5 bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 rounded-lg hover:bg-emerald-600 dark:hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-1 font-black uppercase tracking-wider text-[10px]"
-                              >
-                                <FiEdit size={10} /> Edit Questions
-                              </button>
-                              <button
-                                onClick={() => fetchDevopsStatsAndScores(t._id)}
-                                className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-600/10 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/10 rounded-lg hover:bg-indigo-650 hover:text-white transition-all flex items-center gap-1 font-black uppercase tracking-wider text-[10px]"
-                              >
-                                <FiActivity size={10} /> Performance Scores
-                              </button>
+              {/* Rating Filter */}
+              <select
+                value={feedbackRatingFilter}
+                onChange={(e) => setFeedbackRatingFilter(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-950/45 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-bold focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500"
+              >
+                <option value="all">⭐ Filter: All Ratings</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+
+              {/* Sort By Dropdown */}
+              <select
+                value={feedbackSortKey}
+                onChange={(e) => setFeedbackSortKey(e.target.value)}
+                className="bg-slate-50 dark:bg-slate-950/45 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-bold focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500"
+              >
+                <option value="date">📅 Sort: Latest Date</option>
+                <option value="rating">⭐ Sort: Highest Rating</option>
+                <option value="domain">🚀 Sort: Active Domain</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Feedback Reviews Table */}
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[10px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
+                  <th className="p-4">User Details</th>
+                  <th className="p-4">Track Detail</th>
+                  <th className="p-4">Rating Given</th>
+                  <th className="p-4">Written Feedback</th>
+                  <th className="p-4">Submission Date</th>
+                  <th className="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {filteredAndSortedFeedbacks.length > 0 ? (
+                  filteredAndSortedFeedbacks.map((f) => {
+                    if (!f) return null;
+                    const userObj = f.userId && typeof f.userId === 'object' ? f.userId : {};
+                    const fullName = userObj.fullName || 'Deleted User';
+                    const email = userObj.email || 'deleted@user.com';
+                    const role = userObj.role || 'student';
+                    const avatar = userObj.avatar || '';
+                    const domainName = userObj.activeDomain?.name || 'No Selected Specialization';
+
+                    return (
+                      <tr key={f._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30 transition-colors">
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            {avatar ? (
+                              <img src={avatar} alt={fullName} className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-white/5" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-indigo-600/20 border border-emerald-100 dark:border-indigo-500/20 text-emerald-700 dark:text-indigo-400 font-black text-sm flex items-center justify-center">
+                                {fullName.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-bold text-slate-800 dark:text-white text-xs block">{fullName}</span>
+                              <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{email}</span>
                             </div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No DevOps topics loaded yet. Make sure to seed or select DevOps domain first.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'blogs' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Community Blogs</h3>
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* Create Form */}
-            <form onSubmit={handleCreateBlog} className="lg:col-span-5 space-y-4 text-xs font-semibold">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Create Blog Post</h4>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  value={newBlog.title}
-                  onChange={(e) => setNewBlog({ ...newBlog, title: e.target.value })}
-                  placeholder="Demystifying JavaScript Event Loop"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Author Name</label>
-                <input 
-                  type="text" 
-                  value={newBlog.author}
-                  onChange={(e) => setNewBlog({ ...newBlog, author: e.target.value })}
-                  placeholder="Jane Doe"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Category</label>
-                  <select 
-                    value={newBlog.category}
-                    onChange={(e) => setNewBlog({ ...newBlog, category: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
-                  >
-                    <option value="Web Development">Web Development</option>
-                    <option value="DevOps">DevOps</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Tags (comma-separated)</label>
-                  <input 
-                    type="text" 
-                    value={newBlog.tags}
-                    onChange={(e) => setNewBlog({ ...newBlog, tags: e.target.value })}
-                    placeholder="javascript, event-loop, webdev"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Cover Image URL</label>
-                <input 
-                  type="url" 
-                  value={newBlog.imageUrl}
-                  onChange={(e) => setNewBlog({ ...newBlog, imageUrl: e.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Article Content</label>
-                <textarea 
-                  rows="4"
-                  value={newBlog.content}
-                  onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
-                  placeholder="Write full article body content..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <button 
-                type="submit"
-                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
-              >
-                Create Blog Post
-              </button>
-            </form>
-
-            {/* List */}
-            <div className="lg:col-span-7 space-y-4">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Blog Posts</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
-                <table className="w-full text-left border-collapse text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Title</th>
-                      <th className="p-3">Category</th>
-                      <th className="p-3">Author</th>
-                      <th className="p-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {blogs.length > 0 ? (
-                      blogs.map(blog => (
-                        <tr key={blog._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3 font-bold text-slate-800 dark:text-white truncate max-w-[200px]">{blog.title}</td>
-                          <td className="p-3 text-[10px] text-indigo-400 uppercase font-black">{blog.category}</td>
-                          <td className="p-3 text-slate-500">{blog.author}</td>
-                          <td className="p-3 text-right">
-                            <button 
-                              onClick={() => handleDeleteBlog(blog._id)}
-                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-black uppercase bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5 block w-max">
+                              {role}
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block truncate max-w-[150px]">
+                              🚀 {domainName}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex text-amber-500">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <FiStar key={i} className={`w-3.5 h-3.5 ${i < f.rating ? 'fill-amber-500' : 'text-slate-305 dark:text-slate-700'}`} />
+                            ))}
+                          </div>
+                        </td>
+                        <td className="p-4 max-w-xs sm:max-w-md">
+                          <p className="text-slate-700 dark:text-slate-300 text-xs leading-relaxed whitespace-pre-wrap">
+                            {f.feedbackText}
+                          </p>
+                        </td>
+                        <td className="p-4 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          {new Date(f.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Toggle Approval */}
+                            <button
+                              onClick={() => handleToggleFeedbackApproval(f._id)}
+                              className={`px-2.5 py-1 text-[10px] font-black rounded-lg border transition-all ${
+                                f.isApproved
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-450 border-emerald-100 dark:border-emerald-900/30 hover:bg-emerald-600 hover:text-white'
+                                  : 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-450 border-amber-100 dark:border-amber-900/30 hover:bg-amber-600 hover:text-white'
+                              }`}
+                              title={f.isApproved ? 'Approved (Click to Hide)' : 'Hidden (Click to Approve)'}
                             >
-                              Delete
+                              {f.isApproved ? 'Approved' : 'Hidden'}
                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No blog posts seeded yet.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {activeTab === 'projects' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Guided Capstone Projects</h3>
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* Create Form */}
-            <form onSubmit={handleCreateProject} className="lg:col-span-5 space-y-4 text-xs font-semibold">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Create Capstone Project</h4>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                  placeholder="E-Commerce Microservices Orchestration"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Domain Track</label>
-                  <select 
-                    value={newProject.domain}
-                    onChange={(e) => setNewProject({ ...newProject, domain: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
-                  >
-                    <option value="webdev">Web Development (webdev)</option>
-                    <option value="devops">DevOps (devops)</option>
-                    <option value="datascience">Data Science (datascience)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Difficulty</label>
-                  <select 
-                    value={newProject.difficulty}
-                    onChange={(e) => setNewProject({ ...newProject, difficulty: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
-                  >
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Description</label>
-                <textarea 
-                  rows="2"
-                  value={newProject.description}
-                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  placeholder="Brief high-level description of requirements..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Checklist Steps (Format: "Title: Guidance" - one per line)</label>
-                <textarea 
-                  rows="3"
-                  value={newProject.steps}
-                  onChange={(e) => setNewProject({ ...newProject, steps: e.target.value })}
-                  placeholder="Local Orchestration: Create a docker-compose definition&#10;Containerize Services: Write multi-stage Dockerfiles"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Phase Roadmap (Format: "Phase Name: Task 1, Task 2" - one per line)</label>
-                <textarea 
-                  rows="3"
-                  value={newProject.roadmap}
-                  onChange={(e) => setNewProject({ ...newProject, roadmap: e.target.value })}
-                  placeholder="Phase 1 - Containerization: Dockerfiles, Secrets management&#10;Phase 2 - Kubernetes: Deployments, Services, ConfigMaps"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white font-mono focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <button 
-                type="submit"
-                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
-              >
-                Create Project Blueprint
-              </button>
-            </form>
+                            {/* View User Profile */}
+                            {f.userId && (
+                              <button
+                                onClick={() => handleViewUserProfile(f.userId._id)}
+                                className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-indigo-600/10 text-emerald-700 dark:text-indigo-400 border border-emerald-100 dark:border-indigo-500/10 flex items-center justify-center text-xs hover:bg-emerald-650 dark:hover:bg-indigo-600 hover:text-white transition-all"
+                                title="View User Profile"
+                              >
+                                <FiEye />
+                              </button>
+                            )}
 
-            {/* List */}
-            <div className="lg:col-span-7 space-y-4">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Capstone Project Blueprints</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
-                <table className="w-full text-left border-collapse text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Project Title</th>
-                      <th className="p-3">Track</th>
-                      <th className="p-3">Difficulty</th>
-                      <th className="p-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {projects.length > 0 ? (
-                      projects.map(p => (
-                        <tr key={p._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3 font-bold text-slate-800 dark:text-white">{p.title}</td>
-                          <td className="p-3 text-[10px] text-emerald-550 uppercase font-black">{p.domain}</td>
-                          <td className="p-3 text-slate-550 capitalize">{p.difficulty}</td>
-                          <td className="p-3 text-right">
-                            <button 
-                              onClick={() => handleDeleteProject(p._id)}
-                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
+                            {/* Delete */}
+                            <button
+                              onClick={() => handleDeleteFeedback(f._id)}
+                              className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-550/10 dark:border-rose-500/10 flex items-center justify-center text-xs hover:bg-rose-500 hover:text-white hover:bg-rose-650 transition-all"
+                              title="Delete Feedback"
                             >
-                              Delete
+                              <FiTrash2 />
                             </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No guided projects found.</td>
+                          </div>
+                        </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="p-12 text-center text-slate-500 dark:text-slate-550 text-xs font-black bg-slate-50/50 dark:bg-slate-950/20">
+                      No user feedback records matched your query.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
-
-      {activeTab === 'internships' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Internship Board</h3>
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* Create Form */}
-            <form onSubmit={handleCreateInternship} className="lg:col-span-5 space-y-4 text-xs font-semibold">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">List Internship Position</h4>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  value={newInternship.title}
-                  onChange={(e) => setNewInternship({ ...newInternship, title: e.target.value })}
-                  placeholder="Frontend Engineer Intern"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Company Name</label>
-                  <input 
-                    type="text" 
-                    value={newInternship.company}
-                    onChange={(e) => setNewInternship({ ...newInternship, company: e.target.value })}
-                    placeholder="Vercel Inc."
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Location</label>
-                  <input 
-                    type="text" 
-                    value={newInternship.location}
-                    onChange={(e) => setNewInternship({ ...newInternship, location: e.target.value })}
-                    placeholder="Remote / Hybrid"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Stipend / Month</label>
-                  <input 
-                    type="text" 
-                    value={newInternship.stipend}
-                    onChange={(e) => setNewInternship({ ...newInternship, stipend: e.target.value })}
-                    placeholder="$2,500 / Month"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Domain Path</label>
-                  <select 
-                    value={newInternship.domain}
-                    onChange={(e) => setNewInternship({ ...newInternship, domain: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
-                  >
-                    <option value="webdev">Web Development (webdev)</option>
-                    <option value="devops">DevOps (devops)</option>
-                    <option value="datascience">Data Science (datascience)</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Application URL</label>
-                <input 
-                  type="url" 
-                  value={newInternship.applyLink}
-                  onChange={(e) => setNewInternship({ ...newInternship, applyLink: e.target.value })}
-                  placeholder="https://vercel.com/careers"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Candidate Requirements (one per line)</label>
-                <textarea 
-                  rows="2"
-                  value={newInternship.requirements}
-                  onChange={(e) => setNewInternship({ ...newInternship, requirements: e.target.value })}
-                  placeholder="Proficient in React & TS&#10;Familiarity with TailwindCSS"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Short Role Description</label>
-                <textarea 
-                  rows="3"
-                  value={newInternship.description}
-                  onChange={(e) => setNewInternship({ ...newInternship, description: e.target.value })}
-                  placeholder="Provide a description of the tasks the intern will perform..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <button 
-                type="submit"
-                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
-              >
-                List Position
-              </button>
-            </form>
-
-            {/* List */}
-            <div className="lg:col-span-7 space-y-4">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Internship Board</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
-                <table className="w-full text-left border-collapse text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Role Title</th>
-                      <th className="p-3">Company</th>
-                      <th className="p-3">Location</th>
-                      <th className="p-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {internships.length > 0 ? (
-                      internships.map(i => (
-                        <tr key={i._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3 font-bold text-slate-800 dark:text-white">{i.title}</td>
-                          <td className="p-3 text-emerald-750 dark:text-indigo-400 font-bold">{i.company}</td>
-                          <td className="p-3 text-slate-500">{i.location}</td>
-                          <td className="p-3 text-right">
-                            <button 
-                              onClick={() => handleDeleteInternship(i._id)}
-                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No internship positions active.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'credits' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <h3 className="text-lg font-black text-slate-800 dark:text-white mb-2">Manage Cloud Credits & Free Perks</h3>
-          <div className="grid lg:grid-cols-12 gap-8">
-            {/* Create Form */}
-            <form onSubmit={handleCreateCredit} className="lg:col-span-5 space-y-4 text-xs font-semibold">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Add Free Perk</h4>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Title</label>
-                <input 
-                  type="text" 
-                  value={newCredit.title}
-                  onChange={(e) => setNewCredit({ ...newCredit, title: e.target.value })}
-                  placeholder="GitHub Student Developer Pack"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Platform Name</label>
-                  <input 
-                    type="text" 
-                    value={newCredit.platform}
-                    onChange={(e) => setNewCredit({ ...newCredit, platform: e.target.value })}
-                    placeholder="GitHub / Google Cloud"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Category</label>
-                  <select 
-                    value={newCredit.category}
-                    onChange={(e) => setNewCredit({ ...newCredit, category: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none"
-                  >
-                    <option value="cloud">Cloud Credits (cloud)</option>
-                    <option value="education">Education Pack (education)</option>
-                    <option value="hosting">Hosting Service (hosting)</option>
-                    <option value="database">Database (database)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Icon Emoji</label>
-                  <input 
-                    type="text" 
-                    value={newCredit.icon}
-                    onChange={(e) => setNewCredit({ ...newCredit, icon: e.target.value })}
-                    placeholder="☁️"
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] text-slate-500 mb-1">Display Order</label>
-                  <input 
-                    type="number" 
-                    value={newCredit.order}
-                    onChange={(e) => setNewCredit({ ...newCredit, order: Number(e.target.value) })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Claim Link</label>
-                <input 
-                  type="url" 
-                  value={newCredit.link}
-                  onChange={(e) => setNewCredit({ ...newCredit, link: e.target.value })}
-                  placeholder="https://education.github.com/pack"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Candidate Eligibility Requirements</label>
-                <input 
-                  type="text" 
-                  value={newCredit.eligibility}
-                  onChange={(e) => setNewCredit({ ...newCredit, eligibility: e.target.value })}
-                  placeholder="Students with active .edu email address"
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] text-slate-500 mb-1">Short Description</label>
-                <textarea 
-                  rows="2"
-                  value={newCredit.description}
-                  onChange={(e) => setNewCredit({ ...newCredit, description: e.target.value })}
-                  placeholder="Free premium student developer tools pack..."
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500"
-                  required
-                ></textarea>
-              </div>
-              <button 
-                type="submit"
-                className="w-full py-2.5 bg-emerald-600 dark:bg-indigo-600 hover:bg-emerald-500 dark:hover:bg-indigo-500 text-white font-black rounded-xl uppercase tracking-wider transition-colors cursor-pointer text-xs"
-              >
-                Add Credit Perk
-              </button>
-            </form>
-
-            {/* List */}
-            <div className="lg:col-span-7 space-y-4">
-              <h4 className="text-sm font-black text-slate-700 dark:text-white uppercase tracking-wider">Active Credits & Perks</h4>
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20">
-                <table className="w-full text-left border-collapse text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Perk Title</th>
-                      <th className="p-3">Platform</th>
-                      <th className="p-3">Category</th>
-                      <th className="p-3 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {credits.length > 0 ? (
-                      credits.map(c => (
-                        <tr key={c._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3 font-bold text-slate-800 dark:text-white">{c.icon} {c.title}</td>
-                          <td className="p-3 text-emerald-700 dark:text-indigo-400 font-bold">{c.platform}</td>
-                          <td className="p-3 text-slate-550 uppercase font-black text-[9px]">{c.category}</td>
-                          <td className="p-3 text-right">
-                            <button 
-                              onClick={() => handleDeleteCredit(c._id)}
-                              className="text-rose-500 hover:text-rose-600 p-1 cursor-pointer font-bold"
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="p-8 text-center text-slate-500 italic">No free perks listed yet.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'analytics' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Platform Analytics & Engagement</h3>
-          </div>
-          <UserAnalytics />
-        </div>
-      )}
-
-      {activeTab === 'gamification' && (
-        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight">Leaderboard & Gamification Settings</h3>
-          </div>
-          <LeaderboardManager />
         </div>
       )}
 
@@ -1836,11 +1053,11 @@ const AdminDashboard = () => {
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-indigo-600/20 border border-emerald-100 dark:border-indigo-500/20 text-emerald-700 dark:text-indigo-400 font-black text-lg flex items-center justify-center">
-                    {selectedUser.fullName.charAt(0)}
+                    {(selectedUser.fullName || '').charAt(0) || '?'}
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-slate-800 dark:text-white">{selectedUser.fullName}</h3>
-                    <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{selectedUser.email}</span>
+                    <h3 className="text-base font-black text-slate-800 dark:text-white">{selectedUser.fullName || 'No Name'}</h3>
+                    <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{selectedUser.email || 'No Email'}</span>
                   </div>
                 </div>
                 <button
@@ -1849,6 +1066,40 @@ const AdminDashboard = () => {
                 >
                   <FiX />
                 </button>
+              </div>
+
+              {/* Active Specialization & Progress Overview */}
+              <div className="bg-slate-50 dark:bg-slate-950/45 border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Specialization</span>
+                  {selectedUser.selectedDomain ? (
+                    <span className="text-[10px] font-black text-emerald-700 dark:text-indigo-400 bg-emerald-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-emerald-100 dark:border-indigo-900/30">
+                      🚀 {selectedUser.selectedDomain.name}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-bold uppercase">Unselected</span>
+                  )}
+                </div>
+                {(() => {
+                  const key = getProgressKey(selectedUser.activeDomain?.slug || selectedUser.selectedDomain?.slug);
+                  const activeProg = selectedUser.domainsProgress?.[key] || {};
+                  const xp = activeProg.xp || 0;
+                  const overallProgress = activeProg.overallProgress || 0;
+                  return (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between text-[10px] font-black">
+                        <span className="text-amber-650 dark:text-amber-400">{xp} XP • Level {Math.floor(xp / 1000) + 1}</span>
+                        <span className="text-slate-700 dark:text-slate-350">{overallProgress}% Completed</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-indigo-500 dark:to-indigo-400"
+                          style={{ width: `${overallProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Progress & Personalization Slider Console */}
@@ -2165,11 +1416,13 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Topic Links Modal */}
       {editingTopic && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-2xl w-full shadow-2xl space-y-6">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit Topic Resource Links & Assessment</h3>
+              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit Topic Resource Links</h3>
               <button
                 onClick={() => setEditingTopic(null)}
                 className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
@@ -2179,135 +1432,31 @@ const AdminDashboard = () => {
             </div>
 
             <form onSubmit={handleUpdateTopicLinks} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-[10px] font-black text-slate-550 dark:text-slate-400 block">TOPIC TITLE:</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-white block mt-1">{editingTopic.title}</span>
-                </div>
+              <div>
+                <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 block">TOPIC TITLE:</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-white block mt-1">{editingTopic.title}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">YouTube Video Link:</label>
-                  <input
-                    type="text"
-                    placeholder="https://youtube.com/watch?v=... or video ID"
-                    value={editingTopic.youtubeLink || ''}
-                    onChange={(e) => setEditingTopic({ ...editingTopic, youtubeLink: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Documentation (GFG/Other) Link:</label>
-                  <input
-                    type="url"
-                    placeholder="https://geeksforgeeks.org/..."
-                    value={editingTopic.gfgLink || ''}
-                    onChange={(e) => setEditingTopic({ ...editingTopic, gfgLink: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">YouTube Video Link:</label>
+                <input
+                  type="text"
+                  placeholder="https://youtube.com/watch?v=... or video ID"
+                  value={editingTopic.youtubeLink || ''}
+                  onChange={(e) => setEditingTopic({ ...editingTopic, youtubeLink: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                />
               </div>
 
-              <hr className="border-slate-100 dark:border-white/5" />
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">Mini Assessment (MCQ)</h4>
-                  <button
-                    type="button"
-                    onClick={handleAddQuestion}
-                    className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-indigo-950 dark:hover:bg-indigo-900 border border-emerald-200 dark:border-indigo-800 text-emerald-700 dark:text-indigo-400 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
-                  >
-                    + Add Question
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Passing Percentage (%):</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editingTopic.miniAssessment?.passingPercentage ?? 60}
-                      onChange={(e) => setEditingTopic({
-                        ...editingTopic,
-                        miniAssessment: {
-                          ...(editingTopic.miniAssessment || { questions: [] }),
-                          passingPercentage: Number(e.target.value)
-                        }
-                      })}
-                      className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                  {(!editingTopic.miniAssessment?.questions || editingTopic.miniAssessment.questions.length === 0) ? (
-                    <div className="text-center py-6 border-2 border-dashed border-slate-200 dark:border-white/5 rounded-2xl">
-                      <p className="text-[10px] text-slate-400 font-bold">No custom assessment questions defined.</p>
-                      <p className="text-[9px] text-slate-400/80 font-medium mt-0.5">(Will fallback to default keyword-matching MCQ quiz)</p>
-                    </div>
-                  ) : (
-                    editingTopic.miniAssessment.questions.map((q, qIdx) => (
-                      <div key={qIdx} className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl space-y-3 relative">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteQuestion(qIdx)}
-                          className="absolute top-3 right-3 text-rose-500 hover:text-rose-700 text-xs font-bold"
-                          title="Delete Question"
-                        >
-                          ✕ Delete
-                        </button>
-                        
-                        <div>
-                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Question {qIdx + 1} Prompt:</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. What is the time complexity of reading arr[i]?"
-                            value={q.prompt || ''}
-                            onChange={(e) => handleUpdateQuestion(qIdx, 'prompt', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          {[0, 1, 2, 3].map((optIdx) => (
-                            <div key={optIdx}>
-                              <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-0.5">Option {optIdx + 1}:</label>
-                              <input
-                                type="text"
-                                required
-                                placeholder={`Option ${optIdx + 1}`}
-                                value={q.options?.[optIdx] || ''}
-                                onChange={(e) => handleUpdateOption(qIdx, optIdx, e.target.value)}
-                                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1 text-[11px] text-slate-800 dark:text-white focus:outline-none"
-                              />
-                            </div>
-                          ))}
-                        </div>
-
-                        <div>
-                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Correct Answer:</label>
-                          <select
-                            required
-                            value={q.answer || ''}
-                            onChange={(e) => handleUpdateQuestion(qIdx, 'answer', e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
-                          >
-                            <option value="">-- Select Correct Option --</option>
-                            {(q.options || []).map((opt, oIdx) => (
-                              <option key={oIdx} value={opt} disabled={!opt}>{opt || `Option ${oIdx + 1} (Empty)`}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Documentation (GFG/Other) Link:</label>
+                <input
+                  type="url"
+                  placeholder="https://geeksforgeeks.org/..."
+                  value={editingTopic.gfgLink || ''}
+                  onChange={(e) => setEditingTopic({ ...editingTopic, gfgLink: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
+                />
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -2322,7 +1471,7 @@ const AdminDashboard = () => {
                   type="submit"
                   className="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-colors"
                 >
-                  Save Links & Assessment
+                  Save Links
                 </button>
               </div>
             </form>
@@ -2551,253 +1700,6 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* DevOps Assessment MCQ Edit Modal */}
-      {showDevopsEditModal && editingDevopsAssessment && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-4xl w-full shadow-2xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-black text-slate-800 dark:text-white text-base">Edit DevOps MCQ Mini Assessment</h3>
-              <button
-                onClick={() => {
-                  setShowDevopsEditModal(false);
-                  setEditingDevopsAssessment(null);
-                }}
-                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveDevopsAssessment} className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-slate-550 dark:text-slate-400 block mb-1">Assessment Title:</label>
-                <input
-                  type="text"
-                  required
-                  value={editingDevopsAssessment.title}
-                  onChange={(e) => setEditingDevopsAssessment({ ...editingDevopsAssessment, title: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500 transition-colors"
-                />
-              </div>
-
-              <div className="space-y-6 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                {editingDevopsAssessment.questions.map((q, qIdx) => (
-                  <div key={qIdx} className="p-5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/5 rounded-2xl space-y-4 relative">
-                    <div className="text-xs font-black text-slate-800 dark:text-white border-b border-slate-100 dark:border-white/5 pb-2">
-                      Question {qIdx + 1} of 10
-                    </div>
-                    
-                    <div>
-                      <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Prompt / Question Text:</label>
-                      <textarea
-                        required
-                        rows="2"
-                        placeholder="e.g. Which tool is standard for container orchestration?"
-                        value={q.question || ''}
-                        onChange={(e) => {
-                          const updatedQs = [...editingDevopsAssessment.questions];
-                          updatedQs[qIdx] = { ...q, question: e.target.value };
-                          setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
-                        }}
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs text-slate-800 dark:text-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      {[0, 1, 2, 3].map((optIdx) => (
-                        <div key={optIdx}>
-                          <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Option {optIdx + 1}:</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder={`Option ${optIdx + 1}`}
-                            value={q.options?.[optIdx] || ''}
-                            onChange={(e) => {
-                              const updatedQs = [...editingDevopsAssessment.questions];
-                              const newOpts = [...(q.options || ['', '', '', ''])];
-                              newOpts[optIdx] = e.target.value;
-                              
-                              let correctAns = q.correctAnswer;
-                              if (correctAns && !newOpts.includes(correctAns)) {
-                                correctAns = '';
-                              }
-                              
-                              updatedQs[qIdx] = { ...q, options: newOpts, correctAnswer: correctAns };
-                              setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
-                            }}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Correct Answer Match:</label>
-                        <select
-                          required
-                          value={q.correctAnswer || ''}
-                          onChange={(e) => {
-                            const updatedQs = [...editingDevopsAssessment.questions];
-                            updatedQs[qIdx] = { ...q, correctAnswer: e.target.value };
-                            setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
-                          }}
-                          className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none font-bold"
-                        >
-                          <option value="">-- Select Correct Answer Option --</option>
-                          {q.options.map((opt, oIdx) => (
-                            <option key={oIdx} value={opt} disabled={!opt}>{opt || `Option ${oIdx + 1} (Empty)`}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Explanation Hint:</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Kubernetes orchestrates containers, Docker builds them."
-                          value={q.explanation || ''}
-                          onChange={(e) => {
-                            const updatedQs = [...editingDevopsAssessment.questions];
-                            updatedQs[qIdx] = { ...q, explanation: e.target.value };
-                            setEditingDevopsAssessment({ ...editingDevopsAssessment, questions: updatedQs });
-                          }}
-                          className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-white focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDevopsEditModal(false);
-                    setEditingDevopsAssessment(null);
-                  }}
-                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-black hover:text-slate-900 dark:hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-colors"
-                >
-                  Save DevOps Assessment
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* DevOps Assessment Statistics & Scores Modal */}
-      {showDevopsStatsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-3xl p-6 max-w-3xl w-full shadow-2xl space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-black text-slate-800 dark:text-white text-base">Assessment Analytics & User Scores</h3>
-              <button
-                onClick={() => {
-                  setShowDevopsStatsModal(false);
-                  setDevopsStats(null);
-                  setDevopsScores([]);
-                }}
-                className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
-              >
-                <FiX />
-              </button>
-            </div>
-
-            {devopsStats && (
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
-                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Unique Users</span>
-                  <span className="text-lg font-black text-slate-800 dark:text-white">{devopsStats.uniqueUsers}</span>
-                </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
-                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Total Attempts</span>
-                  <span className="text-lg font-black text-slate-800 dark:text-white">{devopsStats.totalAttempts}</span>
-                </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
-                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Avg Score</span>
-                  <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{Math.round(devopsStats.avgScore || 0)}%</span>
-                </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-white/5 rounded-2xl">
-                  <span className="text-[8px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-0.5">Pass Rate</span>
-                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                    {devopsStats.uniqueUsers > 0 ? Math.round((devopsStats.passedUsers / devopsStats.uniqueUsers) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-black text-slate-700 dark:text-white uppercase tracking-wider">User Performance Records</h4>
-              <div className="overflow-y-auto max-h-[250px] rounded-xl border border-slate-150 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/20 custom-scrollbar text-xs">
-                <table className="w-full text-left border-collapse font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-100/70 dark:bg-slate-950/40 text-[9px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">
-                      <th className="p-3">Student Name</th>
-                      <th className="p-3 text-center">Score</th>
-                      <th className="p-3 text-center">Passed</th>
-                      <th className="p-3 text-center">Attempts</th>
-                      <th className="p-3 text-right">Completed Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {devopsScores.length > 0 ? (
-                      devopsScores.map((scoreRec) => (
-                        <tr key={scoreRec._id} className="hover:bg-slate-100/50 dark:hover:bg-slate-900/30">
-                          <td className="p-3">
-                            <span className="font-bold text-slate-800 dark:text-white block">{scoreRec.userId?.fullName || "Deleted User"}</span>
-                            <span className="text-[9px] text-slate-550 mt-0.5 block">{scoreRec.userId?.email || ""}</span>
-                          </td>
-                          <td className="p-3 text-center font-bold text-slate-700 dark:text-slate-350">{scoreRec.score}%</td>
-                          <td className="p-3 text-center">
-                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                              scoreRec.passed 
-                                ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20' 
-                                : 'bg-rose-500/15 text-rose-500 border border-rose-500/20'
-                            }`}>
-                              {scoreRec.passed ? "Yes" : "No"}
-                            </span>
-                          </td>
-                          <td className="p-3 text-center font-bold text-slate-650 dark:text-slate-400">{scoreRec.attempts}</td>
-                          <td className="p-3 text-right text-slate-500 text-[10px]">
-                            {scoreRec.completedAt ? new Date(scoreRec.completedAt).toLocaleDateString() : "Pending"}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="p-6 text-center text-slate-500 italic">No score records logged for this assessment yet.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setShowDevopsStatsModal(false);
-                  setDevopsStats(null);
-                  setDevopsScores([]);
-                }}
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-650 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-xl text-xs font-black transition-colors"
-              >
-                Close Metrics Dashboard
-              </button>
-            </div>
           </div>
         </div>
       )}

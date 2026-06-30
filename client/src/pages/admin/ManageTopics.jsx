@@ -152,7 +152,7 @@ const ManageTopics = () => {
                 <option value="">-- Choose Phase --</option>
                 {phases.map((phase) => (
                   <option key={phase._id} value={phase._id}>
-                    Phase {phase.phaseNumber}: {phase.title}
+                    Phase {phase.phaseNumber}: {phase.name || phase.title}
                   </option>
                 ))}
               </select>

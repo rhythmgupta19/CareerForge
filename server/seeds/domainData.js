@@ -2,7 +2,6 @@ const domains = [
   {
     name: 'Web Development',
     slug: 'web-development',
-    roadmapType: 'coding',
     shortDescription: 'Build modern, responsive websites and full-stack web applications.',
     icon: '🌐',
     color: '#6366f1',
@@ -13,7 +12,6 @@ const domains = [
   {
     name: 'Data Science',
     slug: 'data-science',
-    roadmapType: 'coding',
     shortDescription: 'Extract insights from data using Python and statistics.',
     icon: '📊',
     color: '#10b981',
@@ -24,7 +22,6 @@ const domains = [
   {
     name: 'Data Analytics',
     slug: 'data-analytics',
-    roadmapType: 'theory',
     shortDescription: 'Analyze business data and create dashboards.',
     icon: '📈',
     color: '#f59e0b',
@@ -35,7 +32,6 @@ const domains = [
   {
     name: 'DevOps',
     slug: 'devops',
-    roadmapType: 'devops',
     shortDescription: 'Automate, deploy, and scale software with CI/CD.',
     icon: '⚙️',
     color: '#ef4444',
@@ -46,7 +42,6 @@ const domains = [
   {
     name: 'Cloud Computing',
     slug: 'cloud-computing',
-    roadmapType: 'theory',
     shortDescription: 'Master AWS, Azure, GCP and cloud architectures.',
     icon: '☁️',
     color: '#3b82f6',
@@ -57,7 +52,6 @@ const domains = [
   {
     name: 'Cybersecurity',
     slug: 'cybersecurity',
-    roadmapType: 'theory',
     shortDescription: 'Protect systems and networks through ethical hacking.',
     icon: '🔒',
     color: '#8b5cf6',
@@ -68,7 +62,6 @@ const domains = [
   {
     name: 'App Development',
     slug: 'app-development',
-    roadmapType: 'coding',
     shortDescription: 'Build cross-platform mobile apps with Flutter.',
     icon: '📱',
     color: '#06b6d4',
@@ -79,7 +72,6 @@ const domains = [
   {
     name: 'AI/ML',
     slug: 'ai-ml',
-    roadmapType: 'coding',
     shortDescription: 'Design and train AI models at scale.',
     icon: '🤖',
     color: '#ec4899',
@@ -90,7 +82,6 @@ const domains = [
   {
     name: 'Blockchain',
     slug: 'blockchain',
-    roadmapType: 'theory',
     shortDescription: 'Build decentralized apps and smart contracts.',
     icon: '⛓️',
     color: '#f97316',
@@ -101,7 +92,6 @@ const domains = [
   {
     name: 'UI/UX',
     slug: 'ui-ux',
-    roadmapType: 'theory',
     shortDescription: 'Design beautiful digital experiences.',
     icon: '🎨',
     color: '#a855f7',
@@ -112,7 +102,6 @@ const domains = [
   {
     name: 'Database Administration',
     slug: 'database-administration',
-    roadmapType: 'theory',
     shortDescription: 'Manage, optimize, and secure databases.',
     icon: '🗄️',
     color: '#14b8a6',
@@ -123,7 +112,6 @@ const domains = [
   {
     name: 'QA Testing',
     slug: 'qa-testing',
-    roadmapType: 'theory',
     shortDescription: 'Ensure software quality through testing.',
     icon: '🧪',
     color: '#84cc16',
@@ -134,24 +122,12 @@ const domains = [
   {
     name: 'DSA',
     slug: 'dsa',
-    roadmapType: 'coding',
     shortDescription: 'Master data structures and algorithms.',
     icon: '🏆',
     color: '#eab308',
     difficultyLevel: 'intermediate',
     estimatedDuration: '4-6 months',
     order: 13
-  },
-  {
-    name: 'Open Source',
-    slug: 'open-source',
-    roadmapType: 'theory',
-    shortDescription: 'Contribute to real-world projects.',
-    icon: '🌱',
-    color: '#22c55e',
-    difficultyLevel: 'beginner',
-    estimatedDuration: '2-4 months',
-    order: 14
   }
 ];
 

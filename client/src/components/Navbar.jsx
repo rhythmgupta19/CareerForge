@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImg from '../assets/logo.png';
 import { 
   FiMenu, FiX, FiBell, FiSearch, FiSun, FiMoon, FiLogOut, FiSettings,
-  FiMap, FiList, FiCheckSquare, FiMessageSquare, FiGift, FiBookOpen, FiZap, FiUsers
+  FiMap, FiList, FiCheckSquare, FiMessageSquare, FiGift, FiBookOpen, FiZap, FiUsers,
+  FiEye, FiShield, FiDownload, FiStar, FiBriefcase
 } from 'react-icons/fi';
 import { MdOutlineDashboard } from "react-icons/md";
 
@@ -45,6 +47,35 @@ const Navbar = ({ isAdmin }) => {
     window.dispatchEvent(new Event('themechange'));
   };
 
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const checkPrompt = () => {
+      // Show install options always on web browser, except when already in standalone app mode
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      setCanInstall(!isStandalone);
+    };
+    checkPrompt();
+    window.addEventListener('pwa-prompt-change', checkPrompt);
+    return () => window.removeEventListener('pwa-prompt-change', checkPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    const promptEvent = window.deferredPrompt;
+    if (promptEvent) {
+      promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt from Navbar');
+      }
+      window.deferredPrompt = null;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-change'));
+    } else {
+      // Trigger custom instructions modal if native installer is not ready
+      window.dispatchEvent(new CustomEvent('pwa-show-instructions'));
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -56,18 +87,23 @@ const Navbar = ({ isAdmin }) => {
     { name: 'Roadmaps', path: '/roadmap', icon: <FiMap /> },
     { name: 'Domains', path: '/domains', icon: <FiList /> },
     { name: 'Code Guru', path: '/code-guru', icon: <FiMessageSquare /> },
-    { name: 'Leaderboard', path: '/leaderboard', icon: <FiAward /> },
-    { name: 'Free Credits', path: '/resources', icon: <FiGift /> },
-    { name: 'Community Blog', path: '/blog', icon: <FiBookOpen /> },
-    { name: 'Premium Portal', path: '/premium-portal', icon: <FiZap className="text-amber-500 animate-pulse font-black" /> },
+    { name: 'Jobs', path: '/jobs', icon: <FiBriefcase /> },
+    { name: 'Feedback', path: '/feedback', icon: <FiStar /> },
   ];
 
   const adminLinks = [
     { name: 'Admin Dashboard', path: '/admin', icon: <MdOutlineDashboard /> },
-    { name: 'Manage Users', path: '/admin/users', icon: <FiUsers /> },
   ];
 
-  const links = isAdmin ? adminLinks : studentLinks;
+  // If the user's account is an admin, let them toggle views
+  let links = [...(isAdmin ? adminLinks : studentLinks)];
+  if (user?.role === 'admin') {
+    if (isAdmin) {
+      links.push({ name: 'View as Student', path: '/dashboard', icon: <FiEye className="text-[var(--secondary)] font-black" /> });
+    } else {
+      links.push({ name: 'Return to Admin', path: '/admin', icon: <FiShield className="text-[var(--brand-orange)] font-black" /> });
+    }
+  }
 
   return (
     <>
@@ -83,11 +119,9 @@ const Navbar = ({ isAdmin }) => {
           </button>
           
           <Link to="/" className="flex items-center gap-2 group outline-none">
-            <div className="w-9 h-9 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white font-extrabold text-lg shadow-md group-hover:scale-105 transition-transform shrink-0">
-              CF
-            </div>
+            <img src={logoImg} alt="CareerForge Logo" className="w-9 h-9 rounded-xl shadow-md group-hover:scale-105 transition-transform shrink-0 object-cover" />
             <div className="hidden sm:block">
-              <h1 className="text-xl font-black tracking-tight text-[var(--text-main)] leading-none">CareerForge</h1>
+              <h1 className="text-xl font-black tracking-tight text-[var(--text-main)] leading-none"><span className="text-logo-gradient">CareerForge</span></h1>
               <div className="text-[8px] font-black text-[var(--secondary)] uppercase tracking-[0.2em] mt-0.5">Geek in Training</div>
             </div>
           </Link>
@@ -131,6 +165,17 @@ const Navbar = ({ isAdmin }) => {
           >
             {theme === 'dark' ? <FiSun className="text-lg text-amber-400" /> : <FiMoon className="text-lg text-indigo-500" />}
           </button>
+
+          {canInstall && (
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600/10 to-green-600/10 hover:from-emerald-600/20 hover:to-green-600/20 text-emerald-500 border border-emerald-500/20 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm shadow-emerald-950/5"
+              title="Install CareerForge App"
+            >
+              <FiDownload className="text-sm shrink-0 animate-bounce" />
+              <span>Install App</span>
+            </button>
+          )}
 
           <div className="relative" ref={notifRef}>
             <button 
@@ -195,6 +240,17 @@ const Navbar = ({ isAdmin }) => {
                       <FiSettings /> Settings
                     </Link>
                   )}
+                  {canInstall && (
+                    <button
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        handleInstallClick();
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[var(--primary)] hover:bg-[var(--bg-sub)] transition-colors text-left cursor-pointer border-t border-[var(--border)]"
+                    >
+                      <FiDownload /> Install App
+                    </button>
+                  )}
                   <button 
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
@@ -215,8 +271,8 @@ const Navbar = ({ isAdmin }) => {
           <div className="relative w-72 max-w-full bg-[var(--bg-card)] h-full shadow-2xl flex flex-col transform transition-transform duration-300">
             <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
-                <div className="w-8 h-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white font-extrabold text-sm shadow-md">CF</div>
-                <h1 className="text-lg font-black tracking-tight text-[var(--text-main)]">CareerForge</h1>
+                <img src={logoImg} alt="CareerForge Logo" className="w-8 h-8 rounded-lg shadow-md shrink-0 object-cover" />
+                <h1 className="text-lg font-black tracking-tight text-[var(--text-main)]"><span className="text-logo-gradient">CareerForge</span></h1>
               </Link>
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[var(--text-muted)] hover:bg-[var(--bg-sub)] rounded-lg">
                 <FiX className="text-xl" />
@@ -241,6 +297,18 @@ const Navbar = ({ isAdmin }) => {
                   {link.name}
                 </NavLink>
               ))}
+              {canInstall && (
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleInstallClick();
+                  }}
+                  className="flex items-center justify-center gap-3 px-3 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 transition-all mx-3 mt-4 shadow-lg shadow-emerald-950/20 cursor-pointer border border-emerald-500/20"
+                >
+                  <FiDownload className="text-xl" />
+                  <span>Install App</span>
+                </button>
+              )}
             </nav>
             {!isAdmin && (
               <div className="p-4 border-t border-[var(--border)] bg-[var(--bg-sub)]/30">

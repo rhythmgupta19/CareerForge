@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImg from '../assets/logo.png';
 import { FiMenu, FiX, FiArrowRight, FiCheckCircle, FiStar, FiTrendingUp, FiTarget, FiZap } from 'react-icons/fi';
 import { BsLightningFill } from 'react-icons/bs';
+import api from '../api/axios';
 
 const Landing = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Force light mode on public pages to prevent dark mode class leakage
+    document.documentElement.classList.remove('dark');
+  }, []);
 
   // Removed auto-redirect useEffect to allow logged-in users to view the landing page
 
@@ -18,10 +25,8 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[var(--brand-green)] flex items-center justify-center text-white font-extrabold text-lg shadow-[var(--shadow-bubbly)]">
-              CF
-            </div>
-            <h1 className="text-2xl font-black text-[var(--land-text)] tracking-tight">CareerForge</h1>
+            <img src={logoImg} alt="CareerForge Logo" className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-[var(--shadow-bubbly)] object-cover" />
+            <h1 className="text-xl sm:text-2xl font-black text-[var(--land-text)] tracking-tight"><span className="text-logo-gradient">CareerForge</span></h1>
           </div>
           
           {/* Center Links */}
@@ -33,9 +38,9 @@ const Landing = () => {
           </div>
           
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {isAuthenticated ? (
-              <Link to="/dashboard" className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-hover)] text-white font-extrabold px-6 py-2.5 rounded-lg transition-all shadow-[var(--shadow-bubbly)] hover:-translate-y-0.5 flex items-center gap-2">
+              <Link to="/dashboard" className="hidden sm:inline-flex bg-[var(--brand-green)] hover:bg-[var(--brand-green-hover)] text-white font-extrabold px-6 py-2.5 rounded-lg transition-all shadow-[var(--shadow-bubbly)] hover:-translate-y-0.5 items-center gap-2">
                 Go to Dashboard <FiArrowRight strokeWidth={3} />
               </Link>
             ) : (
@@ -43,7 +48,7 @@ const Landing = () => {
                 <Link to="/login" className="hidden sm:block text-[var(--land-nav)] hover:text-[var(--brand-green)] font-extrabold transition-colors px-4 py-2">
                   Sign In
                 </Link>
-                <Link to="/signup" className="bg-[var(--brand-green)] hover:bg-[var(--brand-green-hover)] text-white font-extrabold px-6 py-2.5 rounded-lg transition-all shadow-[var(--shadow-bubbly)] hover:-translate-y-0.5 flex items-center gap-2">
+                <Link to="/signup" className="hidden sm:inline-flex bg-[var(--brand-green)] hover:bg-[var(--brand-green-hover)] text-white font-extrabold px-6 py-2.5 rounded-lg transition-all shadow-[var(--shadow-bubbly)] hover:-translate-y-0.5 items-center gap-2">
                   Sign Up For Free <FiArrowRight strokeWidth={3} />
                 </Link>
               </>
@@ -118,7 +123,7 @@ const Landing = () => {
               </h1>
               
               <p className="text-[var(--land-nav)] text-lg md:text-xl font-semibold mb-10 max-w-xl mx-auto lg:mx-0">
-                Master Data Structures, Web Development, and AI. Join millions of students upgrading their skills with interactive roadmaps and AI mentorship.
+                Master Data Structures, Web Development, and AI. Upgrade your skills with interactive roadmaps and AI mentorship.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -230,25 +235,24 @@ const Landing = () => {
           </div>
         </section>
 
+
       </main>
 
       {/* Footer */}
       <footer className="bg-[#1E293B] text-white py-16 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--brand-green)] flex items-center justify-center text-white font-extrabold text-lg">
-              CF
-            </div>
+            <img src={logoImg} alt="CareerForge Logo" className="w-10 h-10 rounded-xl object-cover" />
             <div>
-              <span className="text-xl font-black tracking-tight block">CareerForge</span>
+              <span className="text-xl font-black tracking-tight block"><span className="text-logo-gradient">CareerForge</span></span>
               <span className="text-gray-400 text-sm font-semibold">© 2026 All rights reserved.</span>
             </div>
           </div>
           <div className="flex flex-wrap justify-center gap-8 text-gray-300 font-bold">
-            <a href="#" className="hover:text-white hover:underline transition-all">About Us</a>
-            <a href="#" className="hover:text-white hover:underline transition-all">Careers</a>
-            <a href="#" className="hover:text-white hover:underline transition-all">Privacy Policy</a>
-            <a href="#" className="hover:text-white hover:underline transition-all">Contact</a>
+            <Link to="/about" className="hover:text-white hover:underline transition-all">About Us</Link>
+            <Link to="/careers" className="hover:text-white hover:underline transition-all">Careers</Link>
+            <Link to="/privacy-policy" className="hover:text-white hover:underline transition-all">Privacy Policy</Link>
+            <Link to="/contact" className="hover:text-white hover:underline transition-all">Contact</Link>
           </div>
         </div>
       </footer>

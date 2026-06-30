@@ -1,7 +1,24 @@
 import axios from 'axios';
 
-const rawApiUrl = import.meta.env.VITE_API_URL || 'https://careerforge-nkf0.onrender.com/api';
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Runtime host check for local testing (handles dev, preview, and build modes on localhost)
+  const isLocal = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    window.location.hostname.startsWith('192.168.')
+  );
+                  
+  return isLocal ? 'http://localhost:5000' : 'https://careerforge-nkf0.onrender.com';
+};
+
+const rawApiUrl = getBaseURL();
 const baseURL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl.replace(/\/$/, '')}/api`;
+
+console.log('🔌 Axios API baseURL:', baseURL);
 
 const api = axios.create({
   baseURL,

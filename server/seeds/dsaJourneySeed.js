@@ -28,22 +28,24 @@ const phases = [
   { phaseNumber: 1, name: 'Arrays Explorer', description: 'Master 1D and 2D arrays with Easy, Medium, and Hard problems.', estimatedDuration: '2 weeks', icon: '🧱' },
   { phaseNumber: 2, name: 'Hashing Hunter', description: 'Frequency counting, Hash Maps, and Set operations.', estimatedDuration: '3 days', icon: '🗺️' },
   { phaseNumber: 3, name: 'Recursion Survivor', description: 'Recursion patterns, Backtracking, and classic recursive problems.', estimatedDuration: '1 week', icon: '🥷' },
-  { phaseNumber: 4, name: 'Linked List Warrior', description: 'Singly, Doubly, and Circular Linked Lists with complex operations.', estimatedDuration: '1 week', icon: '⚔️' },
-  { phaseNumber: 5, name: 'Stack & Queue Master', description: 'Implementation, Monotonic Stack, and Queue conversions.', estimatedDuration: '1 week', icon: '🛡️' },
-  { phaseNumber: 6, name: 'Tree Master', description: 'Binary Trees, BSTs, Traversals, and complex tree algorithms.', estimatedDuration: '2 weeks', icon: '🌳' },
-  { phaseNumber: 7, name: 'Graph Adventurer', description: 'BFS/DFS, Topo Sort, Shortest Path, MST, and Disjoint Set.', estimatedDuration: '2 weeks', icon: '⛰️' },
-  { phaseNumber: 8, name: 'Dynamic Programming Beast', description: '1D/2D/3D DP, Grids, Subsequences, Strings, Stocks, and LIS.', estimatedDuration: '3 weeks', icon: '👹' },
-  { phaseNumber: 9, name: 'Greedy Strategist', description: 'Master Greedy algorithms with real-world problem scenarios.', estimatedDuration: '1 week', icon: '🏹' },
-  { phaseNumber: 10, name: 'Placement Challenger', description: 'Bit Manipulation, Heaps, and high-frequency placement problems.', estimatedDuration: '2 weeks', icon: '🏆' }
+  { phaseNumber: 4, name: 'OOPs Master', description: 'Object-Oriented Programming (OOPs) concepts & the 4 pillars.', estimatedDuration: '4 days', icon: '💎' },
+  { phaseNumber: 5, name: 'Linked List Warrior', description: 'Singly, Doubly, and Circular Linked Lists with complex operations.', estimatedDuration: '1 week', icon: '⚔️' },
+  { phaseNumber: 6, name: 'Stack & Queue Master', description: 'Implementation, Monotonic Stack, and Queue conversions.', estimatedDuration: '1 week', icon: '🛡️' },
+  { phaseNumber: 7, name: 'Tree Master', description: 'Binary Trees, BSTs, Traversals, and complex tree algorithms.', estimatedDuration: '2 weeks', icon: '🌳' },
+  { phaseNumber: 8, name: 'Graph Adventurer', description: 'BFS/DFS, Topo Sort, Shortest Path, MST, and Disjoint Set.', estimatedDuration: '2 weeks', icon: '⛰️' },
+  { phaseNumber: 9, name: 'Dynamic Programming Beast', description: '1D/2D/3D DP, Grids, Subsequences, Strings, Stocks, and LIS.', estimatedDuration: '3 weeks', icon: '👹' },
+  { phaseNumber: 10, name: 'Greedy Strategist', description: 'Master Greedy algorithms with real-world problem scenarios.', estimatedDuration: '1 week', icon: '🏹' },
+  { phaseNumber: 11, name: 'Placement Challenger', description: 'Bit Manipulation, Heaps, and high-frequency placement problems.', estimatedDuration: '2 weeks', icon: '🏆' }
 ];
 
 const dsaBadges = [
   { name: 'Array Rookie', level: 1, icon: '🛡️' },
   { name: 'Recursion Survivor', level: 3, icon: '🥷' },
-  { name: 'Tree Explorer', level: 6, icon: '🌳' },
-  { name: 'Graph Warrior', level: 7, icon: '⚔️' },
-  { name: 'DP Beast', level: 8, icon: '👹' },
-  { name: 'Placement Ready', level: 10, icon: '🎓' }
+  { name: 'OOPs Master', level: 4, icon: '💎' },
+  { name: 'Tree Explorer', level: 7, icon: '🌳' },
+  { name: 'Graph Warrior', level: 8, icon: '⚔️' },
+  { name: 'DP Beast', level: 9, icon: '👹' },
+  { name: 'Placement Ready', level: 11, icon: '🎓' }
 ];
 
 async function seedDSA() {

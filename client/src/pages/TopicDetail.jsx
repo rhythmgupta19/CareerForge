@@ -7,7 +7,7 @@ import {
   FiCheckCircle, FiPlay, FiBook, FiYoutube, FiCode, FiArrowLeft, 
   FiMessageSquare, FiZap, FiAward, FiClock, FiArrowRight, FiInfo,
   FiBookOpen, FiTerminal, FiAward as FiTrophy, FiChevronRight, FiMaximize2, FiMinimize2,
-  FiList, FiX, FiExternalLink, FiFileText, FiDownload
+  FiList
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,429 +54,18 @@ const playSoundEffect = (type) => {
 // Helper to extract embedded URL supporting both video IDs and playlists dynamically
 const getYouTubeEmbedUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
-  let embedUrl = null;
   if (url.includes('playlist?list=') || url.includes('&list=')) {
     const match = url.match(/[?&]list=([^#\&\?]+)/);
     if (match && match[1]) {
-      embedUrl = `https://www.youtube.com/embed/videoseries?list=${match[1]}`;
-    }
-  } else {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2] && match[2].length === 11) {
-      embedUrl = `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&showinfo=0`;
+      return `https://www.youtube.com/embed/videoseries?list=${match[1]}`;
     }
   }
-  if (embedUrl) {
-    const separator = embedUrl.includes('?') ? '&' : '?';
-    return `${embedUrl}${separator}enablejsapi=1`;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2] && match[2].length === 11) {
+    return `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&showinfo=0`;
   }
   return null;
-};
-
-const ResourceTabs = ({ topic, isCompleted }) => {
-  const [activeTab, setActiveTab] = useState('video');
-  
-  const tabs = [
-    { id: 'video', label: 'Video Tutorial', icon: <FiYoutube />, color: 'red' },
-    { id: 'documentation', label: 'Documentation', icon: <FiBook />, color: 'green' },
-    { id: 'practice', label: 'Practice', icon: <FiCode />, color: 'orange' },
-    { id: 'notes', label: 'Notes', icon: <FiFileText />, color: 'purple' }
-  ];
-  
-  const hasResources = {
-    video: topic.youtubeLink,
-    documentation: topic.gfgLink || topic.documentationLink || topic.theoryLink,
-    practice: topic.practiceLink,
-    notes: topic.notesLink
-  };
-  
-  const visibleTabs = tabs.filter(tab => hasResources[tab.id]);
-  
-  // Tailwind static class mappings to ensure compilability
-  const activeColorClasses = {
-    red: 'border-red-500 text-red-500',
-    green: 'border-emerald-500 text-emerald-500',
-    orange: 'border-orange-500 text-orange-500',
-    purple: 'border-purple-500 text-purple-500'
-  };
-
-  return (
-    <div className="resource-tabs-container">
-      {/* Tabs Header */}
-      <div className="flex gap-2 border-b border-[var(--border)] mb-6 overflow-x-auto">
-        {visibleTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 font-bold text-sm transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? `border-b-2 ${activeColorClasses[tab.color]}`
-                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      
-      {/* Tab Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          {/* Video Tab */}
-          {activeTab === 'video' && topic.youtubeLink && (
-            <div className="space-y-4">
-              {isCompleted && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg text-sm">
-                  <FiCheckCircle className="text-green-500" />
-                  <span className="font-bold text-green-700 dark:text-green-400">
-                    Topic Completed! Feel free to rewatch this tutorial anytime.
-                  </span>
-                </div>
-              )}
-              
-              <div className="aspect-video rounded-xl overflow-hidden border border-[var(--border)] shadow-lg">
-                <iframe
-                  id="tutorial-video-iframe"
-                  src={getYouTubeEmbedUrl(topic.youtubeLink)}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-[var(--bg-sub)] rounded-lg border border-[var(--border)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
-                    <FiClock />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-[var(--text-light)] uppercase">Estimated Time</div>
-                    <div className="font-bold text-[var(--text-main)]">{topic.estimatedTime}</div>
-                  </div>
-                </div>
-                
-                {topic.instructor && (
-                  <div className="text-right">
-                    <div className="text-xs font-bold text-[var(--text-light)] uppercase">Instructor</div>
-                    <div className="font-bold text-[var(--text-main)]">{topic.instructor}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {/* Documentation Tab */}
-          {activeTab === 'documentation' && (
-            <div className="grid md:grid-cols-2 gap-4">
-              {topic.gfgLink && (
-                <a
-                  href={topic.gfgLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group p-6 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl hover:shadow-lg hover:border-emerald-400 transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center text-2xl">
-                      📚
-                    </div>
-                    <FiExternalLink className="text-emerald-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </div>
-                  <h3 className="font-black text-lg text-emerald-900 dark:text-emerald-100 mb-2">
-                    GeeksforGeeks
-                  </h3>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
-                    Comprehensive article with theory, examples, and code snippets
-                  </p>
-                </a>
-              )}
-              
-              {topic.documentationLink && (
-                <a
-                  href={topic.documentationLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl hover:shadow-lg hover:border-blue-400 transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-2xl">
-                      📖
-                    </div>
-                    <FiExternalLink className="text-blue-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </div>
-                  <h3 className="font-black text-lg text-blue-900 dark:text-blue-100 mb-2">
-                    Official Documentation
-                  </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                    Authoritative reference and technical specifications
-                  </p>
-                </a>
-              )}
-              
-              {topic.theoryLink && (
-                <a
-                  href={topic.theoryLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-2 border-purple-200 dark:border-purple-800 rounded-xl hover:shadow-lg hover:border-purple-400 transition-all"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl">
-                      🎓
-                    </div>
-                    <FiExternalLink className="text-purple-500 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </div>
-                  <h3 className="font-black text-lg text-purple-900 dark:text-purple-100 mb-2">
-                    Theory & Concepts
-                  </h3>
-                  <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">
-                    In-depth explanation and conceptual understanding
-                  </p>
-                </a>
-              )}
-            </div>
-          )}
-          
-          {/* Practice Tab */}
-          {activeTab === 'practice' && topic.practiceLink && (
-            <div className="space-y-4">
-              <div className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center text-3xl">
-                    💪
-                  </div>
-                  <div>
-                    <h3 className="font-black text-xl text-orange-900 dark:text-orange-100">
-                      Practice Problems
-                    </h3>
-                    <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">
-                      Apply what you learned with hands-on coding challenges
-                    </p>
-                  </div>
-                </div>
-                
-                <a
-                  href={topic.practiceLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  Start Practicing
-                  <FiArrowRight />
-                </a>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg">
-                  <div className="text-xs font-bold text-[var(--text-light)] uppercase mb-1">Difficulty</div>
-                  <div className={`font-black text-lg ${
-                    topic.difficulty === 'beginner' ? 'text-green-600' :
-                    topic.difficulty === 'intermediate' ? 'text-orange-600' :
-                    'text-red-600'
-                  }`}>
-                    {topic.difficulty ? topic.difficulty.charAt(0).toUpperCase() + topic.difficulty.slice(1) : 'Medium'}
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg">
-                  <div className="text-xs font-bold text-[var(--text-light)] uppercase mb-1">XP Reward</div>
-                  <div className="font-black text-lg text-amber-500">+50 XP</div>
-                </div>
-                
-                <div className="p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg">
-                  <div className="text-xs font-bold text-[var(--text-light)] uppercase mb-1">Platform</div>
-                  <div className="font-black text-lg text-[var(--primary)]">
-                    {topic.practiceLink.includes('leetcode') ? 'LeetCode' :
-                     topic.practiceLink.includes('hackerrank') ? 'HackerRank' :
-                     topic.practiceLink.includes('codechef') ? 'CodeChef' : 'External'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Notes Tab */}
-          {activeTab === 'notes' && topic.notesLink && (
-            <div className="space-y-4">
-              <div className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 border-2 border-pink-200 dark:border-pink-800 rounded-xl">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-xl bg-pink-500/10 flex items-center justify-center text-3xl">
-                    📝
-                  </div>
-                  <div>
-                    <h3 className="font-black text-xl text-pink-900 dark:text-pink-100">
-                      Study Notes & Cheatsheet
-                    </h3>
-                    <p className="text-sm text-pink-700 dark:text-pink-300 font-medium">
-                      Download comprehensive notes and quick reference materials
-                    </p>
-                  </div>
-                </div>
-                
-                <a
-                  href={topic.notesLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-                >
-                  <FiDownload />
-                  Download Notes
-                </a>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const PhaseTopicsSidebar = ({ allTopics, currentTopicId, phaseInfo, isTopicCompleted }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const sorted = [...allTopics].sort((a, b) => (a.order || 0) - (b.order || 0));
-  
-  return (
-    <>
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed left-4 top-1/2 -translate-y-1/2 z-40 lg:left-[calc(var(--sidebar-width)+1rem)] flex items-center gap-2 px-4 py-3 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white rounded-r-xl font-bold text-sm shadow-lg transition-all hover:shadow-xl"
-      >
-        <FiList size={18} />
-        <span className="hidden sm:inline">Topics ({sorted.length})</span>
-      </button>
-      
-      {/* Sidebar Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            />
-            
-            {/* Sidebar */}
-            <motion.div
-              initial={{ x: -400, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -400, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-80 sm:w-96 bg-[var(--bg-card)] border-r-2 border-[var(--border)] shadow-2xl z-50 overflow-y-auto"
-            >
-              {/* Header */}
-              <div className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--border)] p-6 z-10">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-2xl font-black text-[var(--text-main)] mb-1">
-                      Phase Topics
-                    </h3>
-                    <p className="text-sm text-[var(--text-muted)] font-medium">
-                      {phaseInfo?.name || 'Current Phase'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="w-10 h-10 rounded-lg bg-[var(--bg-sub)] hover:bg-[var(--bg-main)] border border-[var(--border)] flex items-center justify-center text-[var(--text-main)] transition-all"
-                  >
-                    <FiX size={20} />
-                  </button>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-[var(--text-light)] uppercase">Progress</span>
-                    <span className="font-black text-[var(--primary)]">
-                      {sorted.filter(t => isTopicCompleted(t._id)).length} / {sorted.length}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-[var(--bg-sub)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] rounded-full transition-all duration-1000"
-                      style={{ width: `${(sorted.filter(t => isTopicCompleted(t._id)).length / sorted.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Topics List */}
-              <div className="p-4 space-y-2">
-                {sorted.map((topic, index) => {
-                  const isActive = topic._id === currentTopicId;
-                  const isCompleted = isTopicCompleted(topic._id);
-                  
-                  return (
-                    <Link
-                      key={topic._id}
-                      to={`/topic/${topic._id}`}
-                      onClick={() => setIsOpen(false)}
-                      className={`group flex items-center gap-4 p-4 rounded-xl transition-all ${
-                        isActive
-                          ? 'bg-[var(--primary)] text-white shadow-lg'
-                          : isCompleted
-                          ? 'bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 hover:shadow-md'
-                          : 'bg-[var(--bg-sub)] hover:bg-[var(--bg-card)] border border-[var(--border)] hover:border-[var(--primary)] hover:shadow-md'
-                      }`}
-                    >
-                      {/* Number Badge */}
-                      <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center font-black text-sm ${
-                        isActive
-                          ? 'bg-white/20 text-white'
-                          : isCompleted
-                          ? 'bg-green-500/10 text-green-600'
-                          : 'bg-[var(--bg-card)] text-[var(--text-muted)]'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      
-                      {/* Topic Info */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-bold text-sm leading-tight mb-1 truncate ${
-                          isActive ? 'text-white' : 'text-[var(--text-main)] group-hover:text-[var(--primary)]'
-                        }`}>
-                          {topic.title}
-                        </h4>
-                        <div className={`flex items-center gap-2 text-xs ${
-                          isActive ? 'text-white/80' : 'text-[var(--text-muted)]'
-                        }`}>
-                          <FiClock size={12} />
-                          <span className="font-medium">{topic.estimatedTime}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Status Icon */}
-                      <div className="shrink-0">
-                        {isCompleted && !isActive && (
-                          <FiCheckCircle className="text-green-500 text-xl" />
-                        )}
-                        {isActive && (
-                          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                        )}
-                        {!isCompleted && !isActive && (
-                          <FiChevronRight className="text-[var(--text-light)] group-hover:text-[var(--primary)] transition-transform group-hover:translate-x-1" />
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
-  );
 };
 
 const TopicDetail = () => {
@@ -498,7 +87,7 @@ const TopicDetail = () => {
   const activeDomainKey = getProgressKey(activeDomainSlug);
   const activeDomainProgress = user?.domainsProgress?.[activeDomainKey] || {
     xp: 0,
-    currentPhase: 0,
+    currentPhase: 1,
     overallProgress: 0,
     completedTopics: [],
     startedTopics: []
@@ -506,41 +95,7 @@ const TopicDetail = () => {
   
   // Topic state variables
   const [topic, setTopic] = useState(null);
-
-  // Roadmap Type & Workspace Configuration
-  const roadmapType = useMemo(() => {
-    if (!topic || !topic.domainId) return 'coding';
-    if (typeof topic.domainId === 'object') {
-      if (topic.domainId.roadmapType) return topic.domainId.roadmapType;
-      const slug = (topic.domainId.slug || '').toLowerCase();
-      if (slug === 'devops') return 'devops';
-      if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(slug)) return 'coding';
-    }
-    const rawDomain = String(topic.domainId).toLowerCase();
-    if (rawDomain === 'devops') return 'devops';
-    if (['dsa', 'web-development', 'webdev', 'app-development', 'ai-ml', 'data-science'].includes(rawDomain)) return 'coding';
-    return 'theory';
-  }, [topic]);
-
-  const isDsaDomain = useMemo(() => {
-    const slug = typeof topic?.domainId === 'object' ? topic?.domainId?.slug : topic?.domainId;
-    return slug === 'dsa';
-  }, [topic]);
-
-  const isWebDevDomain = useMemo(() => {
-    const slug = typeof topic?.domainId === 'object' ? topic?.domainId?.slug : topic?.domainId;
-    return slug === 'web-development' || slug === 'webdev';
-  }, [topic]);
-
-  const isDevOpsDomain = useMemo(() => {
-    return roadmapType === 'devops';
-  }, [roadmapType]);
-
-  const shouldSplitWorkspace = useMemo(() => {
-    return roadmapType === 'coding' || roadmapType === 'devops';
-  }, [roadmapType]);
-
-  // Learning flow step state: 1=Video, 2=Concept/Practice, 3=Mini Assessment (for devops)
+  // Learning flow step state: 1=Video,2=Concept,3=Guided Practice,4=Challenge,5=Completed
   const [learningStep, setLearningStep] = useState(1);
   const [isVideoFinished, setIsVideoFinished] = useState(false);
   const playerRef = useRef(null);
@@ -568,10 +123,6 @@ const TopicDetail = () => {
     return activeDomainProgress.completedTopics?.some(t => t.topicId === id || t.topicId?._id === id);
   }, [activeDomainProgress.completedTopics, id]);
 
-  const isTopicCompleted = (topicId) => {
-    return activeDomainProgress.completedTopics?.some(t => t.topicId === topicId || t.topicId?._id === topicId);
-  };
-
   const nextTopic = useMemo(() => {
     if (!topic || allTopics.length === 0) return null;
     const sorted = [...allTopics].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -592,17 +143,17 @@ const TopicDetail = () => {
       const savedStep = localStorage.getItem(`dsa_learning_step_${id}`);
       setLearningStep(savedStep ? parseInt(savedStep, 10) : 1);
     }
-  }, [id, isCompleted, roadmapType]);
+  }, [id, isCompleted]);
 
   // Save learning step when it changes
   useEffect(() => {
     if (!id || learningStep === undefined) return;
     localStorage.setItem(`dsa_learning_step_${id}`, learningStep.toString());
   }, [id, learningStep]);
-  
   // Custom Dynamic Languages & Tracks State
   const [selectedLang, setSelectedLang] = useState(() => normalizeDsaLanguage(localStorage.getItem('dsa_lang') || 'cpp'));
   const [useStriverAdvanced, setUseStriverAdvanced] = useState(() => localStorage.getItem('striver_advanced') === 'true');
+  const [dsaCourse, setDsaCourse] = useState(() => localStorage.getItem('dsa_course') || 'default');
   
   const langDisplayMap = { cpp: 'C++', java: 'Java', python: 'Python', javascript: 'JavaScript' };
   const currentLangName = langDisplayMap[selectedLang] || 'C++';
@@ -633,308 +184,13 @@ const TopicDetail = () => {
   // Progressive Question Difficulty State
   const [activeDifficulty, setActiveDifficulty] = useState(() => localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
   const [lessonAnswers, setLessonAnswers] = useState({});
-  const [isAssessmentPassed, setIsAssessmentPassed] = useState(false);
-  const [selectedQuizAnswers, setSelectedQuizAnswers] = useState({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
   
-  // DevOps specific assessment states
-  const [devopsAssessment, setDevopsAssessment] = useState(null);
-  const [quizExplanations, setQuizExplanations] = useState(null);
-  const [quizSubmissionResults, setQuizSubmissionResults] = useState(null);
-
-  // DevOps Practice Terminal States
-  const [isTerminalPracticeDone, setIsTerminalPracticeDone] = useState(isCompleted);
-  const [terminalHistory, setTerminalHistory] = useState([
-    { type: 'system', text: 'Welcome to CareerForge Interactive Terminal!' },
-    { type: 'system', text: 'Type "help" for a list of available commands.' },
-    { type: 'system', text: '---' }
-  ]);
-  const [currentTerminalInput, setCurrentTerminalInput] = useState('');
-  const [activeTaskIndex, setActiveTaskIndex] = useState(0);
-  const terminalBottomRef = useRef(null);
-
-  const terminalTasks = useMemo(() => {
-    const titleLower = (topic?.title || '').toLowerCase();
-    if (titleLower.includes('linux') || titleLower.includes('bash') || titleLower.includes('shell') || titleLower.includes('cli')) {
-      return [
-        {
-          id: 1,
-          description: 'Print the current working directory path to understand where you are.',
-          expectedCommand: 'pwd',
-          hint: 'Type "pwd" and press Enter.',
-          successMessage: 'Correct! You are currently in /home/workspace/project.'
-        },
-        {
-          id: 2,
-          description: 'List all files (including hidden ones) in the current directory in long listing format.',
-          expectedCommand: 'ls -la',
-          hint: 'Use "ls" with flags "-la" (long listing, all files).',
-          successMessage: 'Great! You can see the files: .git, .dockerignore, src, package.json...'
-        },
-        {
-          id: 3,
-          description: 'Create a new directory named "configs" to store configuration files.',
-          expectedCommand: 'mkdir configs',
-          hint: 'Use the "mkdir" command followed by the directory name "configs".',
-          successMessage: 'Excellent! Directory "configs" has been created successfully.'
-        }
-      ];
-    }
-    if (titleLower.includes('git') || titleLower.includes('github') || titleLower.includes('version control')) {
-      return [
-        {
-          id: 1,
-          description: 'Check the status of the local Git repository to see untracked or modified files.',
-          expectedCommand: 'git status',
-          hint: 'Type "git status" and press Enter.',
-          successMessage: 'Nice! There are 3 untracked files in the working directory.'
-        },
-        {
-          id: 2,
-          description: 'Stage all modified and untracked files for the next commit.',
-          expectedCommand: 'git add .',
-          hint: 'Use "git add" followed by a dot "." to stage all files.',
-          successMessage: 'Correct! All changes have been staged.'
-        },
-        {
-          id: 3,
-          description: 'Commit the staged changes with a commit message: "Initial commit".',
-          expectedCommand: 'git commit -m "Initial commit"',
-          hint: 'Use "git commit" with the "-m" flag and message in quotes.',
-          successMessage: 'Fantastic! Changes successfully committed to the main branch.'
-        }
-      ];
-    }
-    if (titleLower.includes('docker') || titleLower.includes('container')) {
-      return [
-        {
-          id: 1,
-          description: 'List all currently active / running Docker containers on the host.',
-          expectedCommand: 'docker ps',
-          hint: 'Type "docker ps" to show running containers.',
-          successMessage: 'Correct! There are no containers currently running.'
-        },
-        {
-          id: 2,
-          description: 'Pull the official "nginx" image from Docker Hub.',
-          expectedCommand: 'docker pull nginx',
-          hint: 'Use "docker pull" followed by "nginx".',
-          successMessage: 'Great! Successfully pulled the latest nginx image.'
-        },
-        {
-          id: 3,
-          description: 'Run the nginx container in detached mode (-d) mapping port 80:80.',
-          expectedCommand: 'docker run -d -p 80:80 nginx',
-          hint: 'Use "docker run" with flags "-d" and "-p 80:80" followed by "nginx".',
-          successMessage: 'Excellent! Nginx web server is now running in the background.'
-        }
-      ];
-    }
-    if (titleLower.includes('kubernetes') || titleLower.includes('k8s') || titleLower.includes('pod') || titleLower.includes('deployment')) {
-      return [
-        {
-          id: 1,
-          description: 'Retrieve a list of all active Pods in the default namespace.',
-          expectedCommand: 'kubectl get pods',
-          hint: 'Use "kubectl get pods" and press Enter.',
-          successMessage: 'Correct! No pods are currently active.'
-        },
-        {
-          id: 2,
-          description: 'Create a deployment named "nginx-app" using the "nginx" image.',
-          expectedCommand: 'kubectl create deployment nginx-app --image=nginx',
-          hint: 'Use "kubectl create deployment" with deployment name and "--image=nginx".',
-          successMessage: 'Nice! Deployment "nginx-app" created successfully.'
-        },
-        {
-          id: 3,
-          description: 'Expose the "nginx-app" deployment as a ClusterIP service on port 80.',
-          expectedCommand: 'kubectl expose deployment nginx-app --port=80',
-          hint: 'Use "kubectl expose deployment" with deployment name and "--port=80".',
-          successMessage: 'Fantastic! Service "nginx-app" exposed successfully.'
-        }
-      ];
-    }
-    return [
-      {
-        id: 1,
-        description: 'Initialize the DevOps local setup/workspace files.',
-        expectedCommand: 'devops init',
-        hint: 'Type "devops init" and press Enter.',
-        successMessage: 'Initialization successful! Workspace loaded.'
-      },
-      {
-        id: 2,
-        description: 'Validate configuration files for syntactical correctness.',
-        expectedCommand: 'devops validate',
-        hint: 'Type "devops validate" and press Enter.',
-        successMessage: 'Validation passed! Configurations are correct.'
-      },
-      {
-        id: 3,
-        description: 'Deploy the configuration stack to the virtual environment.',
-        expectedCommand: 'devops deploy',
-        hint: 'Type "devops deploy" and press Enter.',
-        successMessage: 'Deploy complete! Stack is live.'
-      }
-    ];
-  }, [topic]);
-
-  const handleTerminalSubmit = (e) => {
-    e.preventDefault();
-    const cmd = currentTerminalInput.trim();
-    if (!cmd) return;
-
-    const newHistory = [...terminalHistory, { type: 'input', text: `$ ${cmd}` }];
-    setCurrentTerminalInput('');
-
-    const cmdLower = cmd.toLowerCase();
-    if (cmdLower === 'help') {
-      newHistory.push(
-        { type: 'output', text: 'Available commands:' },
-        { type: 'output', text: '  clear  - Clear terminal screen' },
-        { type: 'output', text: '  help   - Show this help screen' },
-        { type: 'output', text: '  hint   - Get a hint for the current task' },
-        { type: 'output', text: '  tasks  - List task progress' },
-        { type: 'output', text: '  reset  - Reset current practice tasks' }
-      );
-      setTerminalHistory(newHistory);
-      return;
-    }
-
-    if (cmdLower === 'clear') {
-      setTerminalHistory([]);
-      return;
-    }
-
-    if (cmdLower === 'hint') {
-      const currentTask = terminalTasks[activeTaskIndex];
-      if (currentTask) {
-        newHistory.push({ type: 'output', text: `💡 Hint: ${currentTask.hint}` });
-      } else {
-        newHistory.push({ type: 'output', text: '🎉 All tasks completed!' });
-      }
-      setTerminalHistory(newHistory);
-      return;
-    }
-
-    if (cmdLower === 'tasks') {
-      newHistory.push({ type: 'output', text: '📝 DevOps Exercises Progress:' });
-      terminalTasks.forEach((t, idx) => {
-        const status = idx < activeTaskIndex ? '✅ Completed' : idx === activeTaskIndex ? '⏳ Active' : '🔒 Locked';
-        newHistory.push({ type: 'output', text: `  [Task ${idx + 1}] ${t.description} -- ${status}` });
-      });
-      setTerminalHistory(newHistory);
-      return;
-    }
-
-    if (cmdLower === 'reset') {
-      setActiveTaskIndex(0);
-      setIsTerminalPracticeDone(false);
-      newHistory.push({ type: 'system', text: 'Exercises reset. Start from Task 1!' });
-      setTerminalHistory(newHistory);
-      return;
-    }
-
-    const currentTask = terminalTasks[activeTaskIndex];
-    if (currentTask) {
-      const expected = currentTask.expectedCommand;
-      let isMatch = false;
-      
-      if (expected.includes('.*')) {
-        const regex = new RegExp(`^${expected}$`, 'i');
-        isMatch = regex.test(cmd);
-      } else {
-        isMatch = cmd.replace(/\s+/g, ' ').toLowerCase() === expected.replace(/\s+/g, ' ').toLowerCase();
-      }
-
-      if (isMatch) {
-        newHistory.push({ type: 'success', text: `🎉 ${currentTask.successMessage}` });
-        playSoundEffect('success');
-        
-        const nextIndex = activeTaskIndex + 1;
-        if (nextIndex < terminalTasks.length) {
-          setActiveTaskIndex(nextIndex);
-          newHistory.push(
-            { type: 'system', text: `--- Task ${nextIndex + 1} Unlocked ---` },
-            { type: 'output', text: terminalTasks[nextIndex].description }
-          );
-        } else {
-          setIsTerminalPracticeDone(true);
-          newHistory.push(
-            { type: 'system', text: '--- All Exercises Completed! ---' },
-            { type: 'success', text: '✅ Practice Terminal finished! You can now proceed to Step 2: Mini Assessment.' }
-          );
-          toast.success('Practice complete! Step 2 (Mini Assessment) is now unlocked! 🔓');
-        }
-      } else {
-        newHistory.push({ type: 'error', text: `❌ Command failed or incorrect. Type "hint" if you get stuck.` });
-        playSoundEffect('error');
-      }
-    } else {
-      newHistory.push({ type: 'output', text: 'bash: command not recognized. All tasks are already completed.' });
-    }
-
-    setTerminalHistory(newHistory);
-  };
-
-  useEffect(() => {
-    if (terminalBottomRef.current) {
-      terminalBottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [terminalHistory]);
-
-  useEffect(() => {
-    if (id) {
-      setActiveTaskIndex(0);
-      setIsTerminalPracticeDone(isCompleted);
-      setTerminalHistory([
-        { type: 'system', text: 'Welcome to CareerForge Interactive Terminal!' },
-        { type: 'system', text: `Topic: ${topic?.title || 'DevOps Practice'}` },
-        { type: 'system', text: 'Type "help" or look at the instructions on the left to begin.' },
-        { type: 'system', text: '---' }
-      ]);
-      setCurrentTerminalInput('');
-    }
-  }, [id, topic, isCompleted]);
-
   useEffect(() => {
     if (id) {
       setActiveDifficulty(localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
       setLessonAnswers({});
-      const passed = (roadmapType !== 'devops') || localStorage.getItem(`assessment_passed_${id}`) === 'true' || isCompleted;
-      setIsAssessmentPassed(passed);
-      setSelectedQuizAnswers({});
-      setQuizSubmitted(false);
     }
-  }, [id, isCompleted, topic, roadmapType]);
-
-  // Fetch DevOps assessment dynamically from the backend
-  useEffect(() => {
-    if (id && isDevOpsDomain) {
-      api.get(`/assessments/module/${id}`)
-        .then(res => {
-          setDevopsAssessment(res.data.data);
-          if (res.data.data.isPassed) {
-            setIsAssessmentPassed(true);
-            localStorage.setItem(`assessment_passed_${id}`, 'true');
-          } else {
-            setIsAssessmentPassed(isCompleted);
-          }
-          setQuizExplanations(null);
-          setQuizSubmissionResults(null);
-        })
-        .catch(err => {
-          console.error('Failed to load DevOps assessment:', err);
-          setDevopsAssessment(null);
-          setIsAssessmentPassed(isCompleted);
-        });
-    } else {
-      setDevopsAssessment(null);
-      setQuizExplanations(null);
-      setQuizSubmissionResults(null);
-    }
-  }, [id, isDevOpsDomain, isCompleted]);
+  }, [id]);
 
   // ─── CHECKPOINT MODULE STATE (for "Start Coding" Level 0 & "Arrays Explorer" Level 1) ────
   // Derived dynamically from database metadata
@@ -986,8 +242,15 @@ const TopicDetail = () => {
       const firstCp = (topic.checkpoints && topic.checkpoints.length > 0) ? topic.checkpoints[0].id : 'cp1';
       const saved = localStorage.getItem(`dsa_checkpoint_${id}`) || firstCp;
       
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCp = urlParams.get('cp');
+      
       const validCps = topic.checkpoints ? topic.checkpoints.map(cp => cp.id) : ['cp1', 'cp2', 'cp3'];
-      if (validCps.includes(saved)) {
+      
+      if (urlCp && validCps.includes(urlCp)) {
+        setActiveCheckpoint(urlCp);
+        localStorage.setItem(`dsa_checkpoint_${id}`, urlCp);
+      } else if (validCps.includes(saved)) {
         setActiveCheckpoint(saved);
       } else {
         setActiveCheckpoint(firstCp);
@@ -1059,7 +322,11 @@ const TopicDetail = () => {
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isDragging) return;
-      const percentage = (e.clientX / window.innerWidth) * 100;
+      const container = document.getElementById('workspace-split-container');
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const percentage = (relativeX / rect.width) * 100;
       if (percentage > 20 && percentage < 80) {
         setLeftWidth(percentage);
       }
@@ -1112,6 +379,10 @@ const TopicDetail = () => {
   useEffect(() => {
     localStorage.setItem('striver_advanced', useStriverAdvanced.toString());
   }, [useStriverAdvanced]);
+
+  useEffect(() => {
+    localStorage.setItem('dsa_course', dsaCourse);
+  }, [dsaCourse]);
 
   // Load topic & dependencies
   useEffect(() => {
@@ -1196,6 +467,11 @@ const TopicDetail = () => {
   };
 
   // Dynamic boilerplate loaders
+  const isDsaDomain = topic?.domainId?.slug === 'dsa' || topic?.domainId === 'dsa' || 
+                      (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
+  const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
+                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
+  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain;
 
   const availableLanguages = useMemo(() => {
     if (isWebDevDomain) {
@@ -1211,65 +487,45 @@ const TopicDetail = () => {
 
   const langContent = useMemo(() => {
     if (isDsaDomain) {
-      return getDsaLanguageContent(topic?.title, selectedLang, activeDifficulty, useStriverAdvanced, topic?.youtubeLink);
+      return getDsaLanguageContent(topic?.title, selectedLang, activeDifficulty, useStriverAdvanced, topic?.youtubeLink, dsaCourse);
     }
     if (isWebDevDomain) {
       return getWebDevLanguageContent(topic?.title, selectedLang, activeDifficulty, topic?.youtubeLink);
     }
     return null;
-  }, [isDsaDomain, isWebDevDomain, topic, selectedLang, activeDifficulty, useStriverAdvanced]);
+  }, [isDsaDomain, isWebDevDomain, topic, selectedLang, activeDifficulty, useStriverAdvanced, dsaCourse]);
 
-  const lessonAssessment = useMemo(() => {
-    if (isDevOpsDomain) {
-      return devopsAssessment?.questions || [];
-    }
-    if (topic && topic.miniAssessment && topic.miniAssessment.questions && topic.miniAssessment.questions.length > 0) {
-      return topic.miniAssessment.questions;
-    }
-    return shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
-  }, [topic, selectedLang, shouldSplitWorkspace, isDevOpsDomain, devopsAssessment]);
-
-  const passingPercentage = useMemo(() => {
-    if (isDevOpsDomain) return 70;
-    if (topic && topic.miniAssessment && typeof topic.miniAssessment.passingPercentage === 'number') {
-      return topic.miniAssessment.passingPercentage;
-    }
-    return 60;
-  }, [topic, isDevOpsDomain]);
+  const lessonAssessment = shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
+  const lessonAssessmentComplete = !shouldSplitWorkspace || lessonAssessment.every((_, index) => (lessonAnswers[index] || '').trim().length > 0);
 
   // Active checkpoint content (only relevant when isCheckpointModule)
   const activeCheckpointContent = useMemo(() => {
     if (!isCheckpointModule) return null;
     if (isDsaDomain) {
-      return getCheckpointContent(activeCheckpoint, selectedLang);
+      return getCheckpointContent(activeCheckpoint, selectedLang, dsaCourse);
     }
     if (isWebDevDomain) {
       return getWebDevCheckpointContent(activeCheckpoint, selectedLang);
     }
     return null;
-  }, [isCheckpointModule, isDsaDomain, isWebDevDomain, activeCheckpoint, selectedLang]);
+  }, [isCheckpointModule, isDsaDomain, isWebDevDomain, activeCheckpoint, selectedLang, dsaCourse]);
 
   // For checkpoint module: use the unique embed URL baked into each checkpoint
   // Each checkpoint has its own pre-built videoEmbedUrl — NEVER the same video twice
   const checkpointVideoEmbedUrl = useMemo(() => {
     if (!isCheckpointModule || !activeCheckpointContent?.videoEmbedUrl) return null;
-    let url = activeCheckpointContent.videoEmbedUrl;
-    if (!url.includes('enablejsapi=1')) {
-      const separator = url.includes('?') ? '&' : '?';
-      url = `${url}${separator}enablejsapi=1`;
-    }
-    return url;
+    return activeCheckpointContent.videoEmbedUrl;
   }, [isCheckpointModule, activeCheckpointContent]);
 
   const activeVideoEmbedUrl = useMemo(() => {
     if (langContent?.youtubeVideoId) {
       if (langContent.youtubeVideoId.length === 11) {
-        return `https://www.youtube.com/embed/${langContent.youtubeVideoId}?rel=0&modestbranding=1&showinfo=0&enablejsapi=1`;
+        return `https://www.youtube.com/embed/${langContent.youtubeVideoId}?rel=0&modestbranding=1&showinfo=0`;
       }
       return getYouTubeEmbedUrl(langContent.youtubeVideoId);
     }
     if (langContent?.youtubePlaylistId) {
-      return `https://www.youtube.com/embed/videoseries?list=${langContent.youtubePlaylistId}&enablejsapi=1`;
+      return `https://www.youtube.com/embed/videoseries?list=${langContent.youtubePlaylistId}`;
     }
     if (topic?.youtubeLink) {
       return getYouTubeEmbedUrl(topic.youtubeLink);
@@ -1287,9 +543,6 @@ const TopicDetail = () => {
         
         try {
           if (playerRef.current) {
-            if (playerRef.current.progressInterval) {
-              clearInterval(playerRef.current.progressInterval);
-            }
             playerRef.current.destroy();
             playerRef.current = null;
           }
@@ -1301,67 +554,21 @@ const TopicDetail = () => {
           playerRef.current = new window.YT.Player('tutorial-video-iframe', {
             events: {
               onStateChange: (event) => {
+                // 0 is YT.PlayerState.ENDED
                 if (event.data === 0) {
                   setIsVideoFinished(true);
                   toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
                 }
                 
-                if (event.data === 1) { // PLAYING
-                  if (!playerRef.current.progressInterval) {
-                    playerRef.current.progressInterval = setInterval(() => {
-                      try {
-                        const player = playerRef.current;
-                        if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
-                          const currentTime = player.getCurrentTime();
-                          const duration = player.getDuration();
-                          if (duration > 0) {
-                            const progressRatio = currentTime / duration;
-                            if (progressRatio >= 0.90 && !isVideoFinished) {
-                              setIsVideoFinished(true);
-                              toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
-                              clearInterval(player.progressInterval);
-                              player.progressInterval = null;
-                            }
-                            
-                            window.cf_videoAnalytics = {
-                              videoId: id,
-                              title: topic?.title || 'Video Tutorial',
-                              watchTime: (window.cf_videoAnalytics?.watchTime || 0) + 2,
-                              completionPercentage: Math.min(100, Math.round(progressRatio * 100))
-                            };
-
-                            api.post('/progress/video-progress', {
-                              checkpointId: `tutorial_${id}`,
-                              timestamp: Math.round(currentTime),
-                              currentCheckpoint: `tutorial_${id}`,
-                              lastOpenedTopic: id
-                            }).catch(e => console.warn("Failed to persist video progress", e));
-                          }
-                        }
-                      } catch (e) {
-                        console.warn("Error checking playback progress", e);
-                      }
-                    }, 2000);
-                  }
-                } else {
-                  if (playerRef.current && playerRef.current.progressInterval) {
-                    clearInterval(playerRef.current.progressInterval);
-                    playerRef.current.progressInterval = null;
-                  }
-                  
-                  if (event.data === 2) { // PAUSED
-                    try {
-                      const currentTime = Math.round(event.target.getCurrentTime());
-                      api.post('/progress/video-progress', {
-                        checkpointId: `tutorial_${id}`,
-                        timestamp: currentTime,
-                        currentCheckpoint: `tutorial_${id}`,
-                        lastOpenedTopic: id
-                      }).catch(e => console.warn("Failed to persist video progress", e));
-                    } catch (err) {
-                      // ignored
-                    }
-                  }
+                // Periodically save video progress
+                if (event.data === 1 || event.data === 2) {
+                  const currentTime = Math.round(event.target.getCurrentTime());
+                  api.post('/progress/video-progress', {
+                    checkpointId: `tutorial_${id}`,
+                    timestamp: currentTime,
+                    currentCheckpoint: `tutorial_${id}`,
+                    lastOpenedTopic: id
+                  }).catch(e => console.warn("Failed to persist video progress", e));
                 }
               },
               onReady: (event) => {
@@ -1383,18 +590,13 @@ const TopicDetail = () => {
     return () => {
       clearInterval(checkYTInterval);
       if (playerRef.current) {
-        if (playerRef.current.progressInterval) {
-          clearInterval(playerRef.current.progressInterval);
-        }
         try {
           playerRef.current.destroy();
           playerRef.current = null;
-        } catch (e) {
-          // ignored
-        }
+        } catch (e) {}
       }
     };
-  }, [activeVideoEmbedUrl, learningStep, user, id, isVideoFinished]);
+  }, [activeVideoEmbedUrl, learningStep, user, id]);
 
   // Hook up YouTube Player state listener for checkpoint videos
   useEffect(() => {
@@ -1406,9 +608,6 @@ const TopicDetail = () => {
         
         try {
           if (checkpointPlayerRef.current) {
-            if (checkpointPlayerRef.current.progressInterval) {
-              clearInterval(checkpointPlayerRef.current.progressInterval);
-            }
             checkpointPlayerRef.current.destroy();
             checkpointPlayerRef.current = null;
           }
@@ -1429,55 +628,15 @@ const TopicDetail = () => {
                   toast.success("Checkpoint tutorial video completed! challenge unlocked! 🔓");
                 }
                 
-                if (event.data === 1) { // PLAYING
-                  if (!checkpointPlayerRef.current.progressInterval) {
-                    checkpointPlayerRef.current.progressInterval = setInterval(() => {
-                      try {
-                        const player = checkpointPlayerRef.current;
-                        if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
-                          const currentTime = player.getCurrentTime();
-                          const duration = player.getDuration();
-                          if (duration > 0) {
-                            const progressRatio = currentTime / duration;
-                            if (progressRatio >= 0.90 && !checkpointVideoFinished) {
-                              setCheckpointVideoFinished(true);
-                              toast.success("Checkpoint tutorial video completed! challenge unlocked! 🔓");
-                              clearInterval(player.progressInterval);
-                              player.progressInterval = null;
-                            }
-                            
-                            api.post('/progress/video-progress', {
-                              checkpointId: activeCheckpoint,
-                              timestamp: Math.round(currentTime),
-                              currentCheckpoint: activeCheckpoint,
-                              lastOpenedTopic: id
-                            }).catch(e => console.warn("Failed to persist video progress", e));
-                          }
-                        }
-                      } catch (e) {
-                        console.warn("Error checking checkpoint video progress", e);
-                      }
-                    }, 2000);
-                  }
-                } else {
-                  if (checkpointPlayerRef.current && checkpointPlayerRef.current.progressInterval) {
-                    clearInterval(checkpointPlayerRef.current.progressInterval);
-                    checkpointPlayerRef.current.progressInterval = null;
-                  }
-
-                  if (event.data === 2) { // PAUSED
-                    try {
-                      const currentTime = Math.round(event.target.getCurrentTime());
-                      api.post('/progress/video-progress', {
-                        checkpointId: activeCheckpoint,
-                        timestamp: currentTime,
-                        currentCheckpoint: activeCheckpoint,
-                        lastOpenedTopic: id
-                      }).catch(e => console.warn("Failed to persist video progress", e));
-                    } catch (err) {
-                      // ignored
-                    }
-                  }
+                // Periodically save video progress
+                if (event.data === 1 || event.data === 2) {
+                  const currentTime = Math.round(event.target.getCurrentTime());
+                  api.post('/progress/video-progress', {
+                    checkpointId: activeCheckpoint,
+                    timestamp: currentTime,
+                    currentCheckpoint: activeCheckpoint,
+                    lastOpenedTopic: id
+                  }).catch(e => console.warn("Failed to persist video progress", e));
                 }
               },
               onReady: (event) => {
@@ -1499,18 +658,13 @@ const TopicDetail = () => {
     return () => {
       clearInterval(checkYTInterval);
       if (checkpointPlayerRef.current) {
-        if (checkpointPlayerRef.current.progressInterval) {
-          clearInterval(checkpointPlayerRef.current.progressInterval);
-        }
         try {
           checkpointPlayerRef.current.destroy();
           checkpointPlayerRef.current = null;
-        } catch (e) {
-          // ignored
-        }
+        } catch (e) {}
       }
     };
-  }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id, checkpointVideoFinished]);
+  }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id]);
 
   // Reset boilerplate when topic, language, or difficulty changes
   useEffect(() => {
@@ -1872,7 +1026,7 @@ const TopicDetail = () => {
         });
       } catch (err) {
         logs.push(`💥 Parsing Error: ${err.message}`);
-        throw new Error(`Parsing Error: ${err.message}`, { cause: err });
+        throw new Error(`Parsing Error: ${err.message}`);
       }
       
       return { results, logs };
@@ -1944,7 +1098,7 @@ const TopicDetail = () => {
       syntaxCheck(userCode, lang);
     } catch (syntaxErr) {
       logs.push(`💥 Compilation Error: ${syntaxErr.message}`);
-      throw new Error(`Compilation Error: ${syntaxErr.message}`, { cause: syntaxErr });
+      throw new Error(`Compilation Error: ${syntaxErr.message}`);
     }
 
     logs.push(`📦 Parsing AST and transpiling constructs...`);
@@ -1954,7 +1108,7 @@ const TopicDetail = () => {
       transpiled = transpileToJS(userCode, lang);
     } catch (e) {
       logs.push(`💥 Transpilation Error: ${e.message}`);
-      throw new Error(`Transpilation Error: ${e.message}`, { cause: e });
+      throw new Error(`Transpilation Error: ${e.message}`);
     }
 
     // Verify transpiled JS syntax first to catch early syntax/compilation errors
@@ -1964,7 +1118,7 @@ const TopicDetail = () => {
       logs.push(`✨ Syntax validation passed! No compilation errors detected.`);
     } catch (err) {
       logs.push(`💥 Compilation Syntax Error: ${err.message}`);
-      throw new Error(`Compilation Error: ${err.message}`, { cause: err });
+      throw new Error(`Compilation Error: ${err.message}`);
     }
 
     const normalizedTitle = (topic?.title || '').toLowerCase();
@@ -2270,10 +1424,6 @@ const TopicDetail = () => {
   // Submit topic complete manually
   const handleComplete = async (e) => {
     if (e) e.preventDefault();
-    if (topic.youtubeLink && !isVideoFinished && !isCompleted) {
-      toast.error('You must watch at least 90% of the video before completing this topic!');
-      return;
-    }
     setSubmitting(true);
     try {
       const res = await api.post('/progress/complete-topic', { 
@@ -2372,6 +1522,17 @@ const TopicDetail = () => {
 
     return (
       <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-[var(--bg-main)] relative">
+        {isDragging && (
+          <style>{`
+            iframe {
+              pointer-events: none !important;
+            }
+            body {
+              user-select: none !important;
+              -webkit-user-select: none !important;
+            }
+          `}</style>
+        )}
 
         {/* Backdrop overlay for Checkpoint sidebar on mobile */}
         {isMobile && isCpSidebarOpen && (
@@ -2438,6 +1599,37 @@ const TopicDetail = () => {
               })}
             </div>
           </div>
+
+          {/* C++ Playlist/Course Selector */}
+          {selectedLang === 'cpp' && (
+            <div className="px-4 py-2 border-b border-[var(--border)] shrink-0 bg-[var(--bg-sub)]/30">
+              <div className="text-[8px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2 flex items-center gap-1">
+                <FiYoutube className="text-red-500" /> C++ DSA Playlist Course
+              </div>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setDsaCourse('default')}
+                  className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                    dsaCourse === 'default'
+                      ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                      : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Love Babbar
+                </button>
+                <button
+                  onClick={() => setDsaCourse('striver')}
+                  className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                    dsaCourse === 'striver'
+                      ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                      : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Striver A2Z
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Checkpoint navigation list */}
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
@@ -2582,7 +1774,7 @@ const TopicDetail = () => {
             </div>
           )}
 
-          <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+          <div id="workspace-split-container" className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
 
             {/* LEFT: Video + Problem */}
             <div 
@@ -3091,6 +2283,17 @@ const TopicDetail = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-[var(--bg-main)] transition-colors duration-300 relative select-none">
+      {isDragging && (
+        <style>{`
+          iframe {
+            pointer-events: none !important;
+          }
+          body {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+          }
+        `}</style>
+      )}
       
       {/* Background Confetti Elements */}
 
@@ -3164,9 +2367,14 @@ const TopicDetail = () => {
                     {done ? <FiCheckCircle className="text-[10px]" /> : <span className="text-[8px] font-black">{index + 1}</span>}
                   </div>
                   <div>
-                    <span className={`text-xs font-bold ${active ? 'text-[var(--text-main)]' : 'text-[var(--text-muted)]'}`}>
+                    <span className={`text-[11px] font-black leading-tight block mb-0.5 ${active ? 'text-[var(--primary)]' : done ? 'text-[var(--text-main)]' : 'text-[var(--text-light)]'}`}>
                       {t.title}
                     </span>
+                    <div className="flex items-center gap-1.5 text-[8px] font-bold text-[var(--text-light)] uppercase tracking-tighter">
+                       <span>{t.difficulty}</span>
+                       <span>•</span>
+                       <span>{t.estimatedTime}</span>
+                    </div>
                   </div>
                 </Link>
               );
@@ -3176,1424 +2384,1066 @@ const TopicDetail = () => {
       </div>
 
       {/* DUAL-PANE Split Workspace Content */}
-      <div className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
-        {roadmapType === 'theory' ? (
-          /* THEORY ROADMAP LAYOUT: Full Width (No Split) */
-          <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar bg-[var(--bg-main)]">
-            <div className="max-w-4xl mx-auto space-y-6 pb-12">
-              {/* Header Info */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--border)] pb-4">
-                <div>
-                  <h2 className="text-2xl font-black text-[var(--text-main)] tracking-tight">
-                    {topic.title}
-                  </h2>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-black uppercase ${
-                      (topic.difficulty || 'medium').toLowerCase() === 'easy'
-                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                        : (topic.difficulty || 'medium').toLowerCase() === 'hard'
-                          ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                          : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                    }`}>
-                      {topic.difficulty || 'Medium'}
-                    </span>
-                    <span className="text-[10px] font-bold text-[var(--text-light)] uppercase tracking-wider">
-                      Est. {topic.estimatedTime || '15 mins'}
-                    </span>
-                  </div>
-                </div>
-                {isCompleted && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-lg text-xs font-bold border border-emerald-500/20">
-                    <FiCheckCircle /> Completed
-                  </div>
-                )}
-              </div>
+      <div id="workspace-split-container" className="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+        
+        {/* Mobile View Tab Switcher for non-checkpoint modules */}
+        {isMobile && shouldSplitWorkspace && (
+          <div className="flex p-2 bg-[#141416] border-b border-[var(--border)] shrink-0 gap-2">
+            <button
+              onClick={() => setActiveWorkspaceTab('learn')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase transition-all ${
+                activeWorkspaceTab === 'learn'
+                  ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                  : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border)]'
+              }`}
+            >
+              <FiBookOpen size={14} /> Learn
+            </button>
+            <button
+              onClick={() => setActiveWorkspaceTab('code')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase transition-all ${
+                activeWorkspaceTab === 'code'
+                  ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                  : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border)]'
+              }`}
+            >
+              <FiCode size={14} /> Code
+            </button>
+          </div>
+        )}
 
-              {/* Description */}
-              <div className="p-5 bg-[var(--bg-sub)] rounded-2xl border border-[var(--border)] text-sm text-[var(--text-muted)] leading-relaxed">
-                <div className="text-xs font-black text-[var(--text-light)] uppercase tracking-wider mb-2">About this Topic</div>
-                <p className="font-semibold">{topic.description}</p>
-              </div>
-
-              {/* Resource Tabs (Video, Docs, Practice Link, Notes) */}
-              <div className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm">
-                <ResourceTabs topic={topic} isCompleted={isCompleted} />
-              </div>
-
-              {/* Next Topic completion banner if completed */}
-              {isCompleted && nextTopic && (
-                <div className="p-6 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/25 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-                  <div className="text-left space-y-1">
-                    <h4 className="text-sm font-black text-[var(--text-main)] uppercase tracking-wider">Quest Accomplished!</h4>
-                    <p className="text-xs text-[var(--text-muted)] font-medium">Ready to unlock the next topic in this expedition:</p>
-                    <div className="text-sm font-black text-emerald-500 uppercase tracking-tight">{nextTopic.title}</div>
-                  </div>
-                  <Link
-                    to={`/topic/${nextTopic._id}`}
-                    className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-md transition-all hover:scale-105"
-                  >
-                    Unlock Next Topic →
-                  </Link>
+        {/* LEFT PANE: Details, Approach, and Submissions */}
+        <div 
+          style={{ width: isMobile ? '100%' : (shouldSplitWorkspace ? `${leftWidth}%` : '100%') }} 
+          className={`w-full lg:w-auto h-full flex-col border-r border-[var(--border)] bg-[var(--bg-card)] overflow-hidden shrink-0 ${isMobile && activeWorkspaceTab !== 'learn' && shouldSplitWorkspace ? 'hidden' : 'flex'}`}
+        >
+          {!shouldSplitWorkspace ? (
+            /* Unified DevOps / Non-Coding Layout */
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-[var(--bg-card)]">
+              {/* Tutorial Video */}
+              {activeVideoEmbedUrl && (
+                <div className="aspect-video bg-black rounded-xl overflow-hidden border border-[var(--border)] shadow-lg mb-6 max-w-4xl mx-auto w-full">
+                  <iframe
+                    id="tutorial-video-iframe"
+                    src={activeVideoEmbedUrl ? activeVideoEmbedUrl + (activeVideoEmbedUrl.includes('?') ? '&' : '?') + "enablejsapi=1" : "https://www.youtube.com/embed/EAR7De6Goz4"}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
               )}
 
-              {/* Manual Progress Form */}
-              <div className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] border-t-2 border-t-emerald-500/20 space-y-4 shadow-sm">
-                <h3 className="text-sm font-black text-[var(--text-main)] flex items-center gap-1.5 uppercase tracking-wider">
-                  <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
-                </h3>
-                <form onSubmit={handleComplete} className="space-y-4 text-xs">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Study Duration (mins)</label>
-                      <input
-                        type="number"
-                        value={studyTime}
-                        onChange={(e) => setStudyTime(e.target.value)}
-                        className="w-full px-3 py-2 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-                        required
-                      />
+              {/* Topic Info */}
+              <div className="max-w-4xl mx-auto w-full space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+                  <div>
+                    <h2 className="text-xl font-black text-[var(--text-main)] tracking-tight">{topic?.title}</h2>
+                    <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mt-1">
+                      Difficulty: <span className="text-[var(--primary)]">{topic?.difficulty || 'Beginner'}</span> • Duration: {topic?.estimatedTime || '1 hour'}
                     </div>
-                    
-                    <div>
-                      <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Confidence standing</label>
-                      <div className="flex gap-1 bg-[var(--bg-sub)] border border-[var(--border)] p-1 rounded-lg">
-                        {[1, 2, 3, 4, 5].map((lvl) => (
-                          <button
-                            type="button"
-                            key={lvl}
-                            onClick={() => setConfidenceLevel(lvl)}
-                            className={`flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all ${
-                              confidenceLevel === lvl
-                                ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
-                                : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] bg-[var(--bg-card)]'
-                            }`}
-                          >
-                            {lvl}
-                          </button>
-                        ))}
+                  </div>
+                  {isCompleted && (
+                    <div className="px-3 py-1 bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 rounded-lg text-xs font-black flex items-center gap-1.5 animate-bounce-subtle">
+                      <FiCheckCircle /> Completed
+                    </div>
+                  )}
+                </div>
+
+                <div className="prose dark:prose-invert max-w-none text-xs text-[var(--text-muted)] leading-relaxed whitespace-pre-line bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)] font-semibold">
+                  {topic?.description}
+                </div>
+
+                {/* Form (Log Revision & Notes) */}
+                <div className="card p-5 border-emerald-500/20 border-t-2 space-y-4">
+                  <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                    <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
+                  </h3>
+                  <form onSubmit={handleComplete} className="space-y-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Study Duration (mins)</label>
+                        <input
+                          type="number"
+                          value={studyTime}
+                          onChange={(e) => setStudyTime(e.target.value)}
+                          className="w-full px-3 py-2 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Confidence standing</label>
+                        <div className="flex gap-1 bg-[var(--bg-sub)] border border-[var(--border)] p-1 rounded-lg">
+                          {[1, 2, 3, 4, 5].map((lvl) => (
+                            <button
+                              type="button"
+                              key={lvl}
+                              onClick={() => setConfidenceLevel(lvl)}
+                              className={"flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all " + (
+                                confidenceLevel === lvl
+                                  ? "bg-emerald-500 text-[var(--text-main)] shadow-sm"
+                                  : "text-[var(--text-muted)] hover:bg-[var(--bg-card)] bg-[var(--bg-card)]"
+                              )}
+                            >
+                              {lvl}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Study takeaways / insights</label>
-                    <textarea
-                      rows={3}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Key notes, concepts learned..."
-                      className="w-full p-3 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Takeaways & notes</label>
+                      <textarea
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Key insights, runtime notes..."
+                        className="w-full p-3 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-semibold focus:outline-none"
+                      />
+                    </div>
 
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="revision-theory"
-                      checked={revisionNeeded}
-                      onChange={(e) => setRevisionNeeded(e.target.checked)}
-                      className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] h-3.5 w-3.5 bg-[var(--bg-sub)] cursor-pointer"
-                    />
-                    <label htmlFor="revision-theory" className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider cursor-pointer">
-                      Flag this topic for scheduled revision
-                    </label>
-                  </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="revision"
+                        checked={revisionNeeded}
+                        onChange={(e) => setRevisionNeeded(e.target.checked)}
+                        className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] h-3.5 w-3.5 bg-[var(--bg-sub)] cursor-pointer"
+                      />
+                      <label htmlFor="revision" className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider cursor-pointer">
+                        Flag this topic for scheduled revision
+                      </label>
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer rounded-xl text-xs"
-                  >
-                    {submitting ? 'Submitting...' : 'Save Notes & Complete Topic'} <FiChevronRight />
-                  </button>
-                </form>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? 'Submitting...' : 'Save Notes & Manual Complete'} <FiChevronRight />
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          /* DEVOPS & CODING SPLIT LAYOUT */
-          <>
-            {isMobile && (
-              <div className="flex p-2 bg-[#141416] border-b border-[var(--border)] shrink-0 gap-2 w-full">
-                <button
-                  onClick={() => setActiveWorkspaceTab('learn')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase transition-all ${
-                    activeWorkspaceTab === 'learn'
-                      ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
-                      : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border)]'
+          ) : (
+            <>
+{/* Tabs / Stepper Bar Header */}
+          {learningStep !== 1 && learningStep !== 'transition' && (
+            <div className="bg-[var(--bg-sub)] border-b border-[var(--border)] px-4 py-2 flex flex-col shrink-0 gap-2">
+              {/* Top Stepper Bar */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+                  {[
+                    { step: 1, label: '1. Watch & Code' },
+                    { step: 2, label: '2. Mini Assessment' }
+                  ].map(s => {
+                    const isLocked = s.step === 2 && !isCompleted && !isVideoFinished;
+                    return (
+                      <button
+                        key={s.step}
+                        onClick={() => {
+                          if (isLocked) {
+                            toast.error("Please watch the video tutorial to unlock the assessment!");
+                            return;
+                          }
+                          setLearningStep(s.step);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${
+                          learningStep === s.step
+                            ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
+                            : !isLocked
+                              ? 'bg-[var(--primary-light)] text-[var(--primary)] border border-transparent cursor-pointer hover:bg-[var(--primary)] hover:text-[var(--text-main)]'
+                              : 'text-[var(--text-muted)] opacity-50 cursor-pointer'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${learningStep > s.step || (s.step === 2 && isCompleted) ? 'bg-[var(--primary)] text-[var(--text-main)]' : 'border border-current'}`}>
+                          {learningStep > s.step || (s.step === 2 && isCompleted) ? <FiCheckCircle size={8} /> : s.step}
+                        </div>
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {learningStep === 1 ? (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-[var(--text-main)] rounded-lg text-[9px] font-black shadow-inner tracking-widest shrink-0">
+                    <FiBookOpen /> INTERACTIVE CLASSROOM
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-500 text-[var(--text-main)] rounded-lg text-[9px] font-black shadow-inner tracking-widest shrink-0">
+                    <FiZap /> +100 XP
+                  </div>
+                )}
+              </div>
+
+              {/* Tabs (only shown on step 2) */}
+              {learningStep >= 2 && (
+                <div className="flex gap-1.5 mt-1.5 pt-1.5 border-t border-[var(--border)]">
+                  {[
+                    { id: 'description', label: 'Description', icon: <FiBookOpen size={12} /> },
+                    { id: 'approach', label: 'Solution Guide', icon: <FiBook size={12} /> },
+                    { id: 'submissions', label: 'Submissions', icon: <FiClock size={12} />, badge: submissions.length }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setLeftTab(tab.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
+                        leftTab === tab.id
+                          ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      {tab.badge !== undefined && (
+                        <span className="w-4 h-4 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[8px] font-black flex items-center justify-center shadow-inner">
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Left Pane Scrollable Content */}
+          {learningStep === 1 ? (
+            <div className="flex-1 flex flex-col bg-black relative w-full h-full">
+              <iframe
+                id="tutorial-video-iframe"
+                src={activeVideoEmbedUrl ? `${activeVideoEmbedUrl}${activeVideoEmbedUrl.includes('?') ? '&' : '?'}enablejsapi=1` : "https://www.youtube.com/embed/EAR7De6Goz4"}
+                className="w-full flex-1"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+              <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-white text-lg font-bold">{topic?.title || "Coding Foundations"}</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-indigo-500">Video Tutorial</div>
+                    <span className="text-zinc-600 text-[10px]">•</span>
+                    <p className="text-zinc-400 text-xs">Learn the core concepts before practicing.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (isDsaDomain && !isCompleted && !isVideoFinished) {
+                      toast.error("Please watch the video tutorial to unlock the assessment!");
+                      return;
+                    }
+                    setLearningStep('transition');
+                  }}
+                  className={`font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 ${
+                    isDsaDomain && !isCompleted && !isVideoFinished
+                      ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                      : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20'
                   }`}
                 >
-                  <FiBookOpen size={14} /> Learn
-                </button>
-                <button
-                  onClick={() => setActiveWorkspaceTab('code')}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase transition-all ${
-                    activeWorkspaceTab === 'code'
-                      ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
-                      : 'bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border)]'
-                  }`}
-                >
-                  {isDevOpsDomain ? <FiTerminal size={14} /> : <FiCode size={14} />} {isDevOpsDomain ? 'Practice' : 'Code'}
+                  <FiCheckCircle size={16} />
+                  Ready For Assessment
                 </button>
               </div>
-            )}
+            </div>
+          ) : learningStep === 'transition' ? (
+            <div className="flex-1 flex items-center justify-center bg-black/80 backdrop-blur-md p-6 select-text w-full h-full absolute inset-0 z-[100]">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className={`max-w-md w-full rounded-3xl p-8 space-y-6 shadow-2xl border ${
+                  'bg-white border-slate-200 dark:bg-zinc-950 dark:border-zinc-800'
+                }`}
+              >
+                <div className="text-center space-y-2">
+                  <div className="text-5xl mb-4">✅</div>
+                  <h2 className="text-2xl font-black text-slate-800 dark:text-white">Tutorial Completed</h2>
+                  <p className="text-sm font-medium text-slate-500 dark:text-zinc-400">
+                    Great job completing the {topic?.title || 'Coding Foundations'} tutorial!
+                  </p>
+                </div>
 
-            {/* LEFT PANE: Video or Problem description/instructions */}
-            <div 
-              style={{ width: isMobile ? '100%' : `${leftWidth}%` }} 
-              className={`w-full lg:w-auto h-full flex flex-col border-r border-[var(--border)] bg-[var(--bg-card)] overflow-hidden shrink-0 ${isMobile && activeWorkspaceTab !== 'learn' ? 'hidden' : 'flex'}`}
-            >
-              {/* Stepper Header for DevOps or Coding */}
-              <div className="bg-[var(--bg-sub)] border-b border-[var(--border)] px-4 py-2.5 flex flex-col shrink-0 gap-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
-                    {isDevOpsDomain ? (
-                      /* DevOps Stepper: 2 steps */
-                      [
-                        { step: 1, label: '1. Watch & Practice' },
-                        { step: 2, label: '2. Mini Assessment' }
-                      ].map(s => {
-                        const isLocked = (s.step === 2 && !isCompleted && !isTerminalPracticeDone);
-                        return (
-                          <button
-                            key={s.step}
-                            onClick={() => {
-                              if (isLocked) {
-                                toast.error("Please complete all Practice Terminal exercises to unlock the Mini Assessment!");
-                                return;
-                              }
-                              setLearningStep(s.step);
-                            }}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-                              learningStep === s.step
-                                ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
-                                : !isLocked
-                                  ? 'bg-[var(--primary-light)] text-[var(--primary)] border border-transparent cursor-pointer hover:bg-[var(--primary)] hover:text-[var(--text-main)]'
-                                  : 'text-[var(--text-muted)] opacity-50 cursor-pointer'
-                            }`}
-                          >
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${
-                              learningStep > s.step || (s.step === 1 && isTerminalPracticeDone) || (s.step === 2 && isAssessmentPassed)
-                                ? 'bg-emerald-500 text-black shadow' 
-                                : 'border border-current'
-                            }`}>
-                              {learningStep > s.step || (s.step === 1 && isTerminalPracticeDone) || (s.step === 2 && isAssessmentPassed) ? <FiCheckCircle size={8} /> : s.step}
-                            </div>
-                            {s.label}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      /* Coding Stepper: 2 steps, both unlocked */
-                      [
-                        { step: 1, label: '1. Watch & Code' },
-                        { step: 2, label: '2. Solve Challenge' }
-                      ].map(s => (
-                        <button
-                          key={s.step}
-                          onClick={() => {
-                            setLearningStep(s.step);
-                            if (s.step === 2) {
-                              setLeftTab('description');
-                            }
-                          }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all whitespace-nowrap ${
-                            learningStep === s.step
-                              ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
-                              : 'bg-[var(--primary-light)] text-[var(--primary)] border border-transparent cursor-pointer hover:bg-[var(--primary)] hover:text-[var(--text-main)]'
-                          }`}
-                        >
-                          <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${
-                            learningStep > s.step || (s.step === 2 && isCompleted)
-                              ? 'bg-emerald-500 text-black shadow' 
-                              : 'border border-current'
-                          }`}>
-                            {learningStep > s.step || (s.step === 2 && isCompleted) ? <FiCheckCircle size={8} /> : s.step}
-                          </div>
-                          {s.label}
-                        </button>
-                      ))
-                    )}
+                <div className="bg-slate-50 dark:bg-zinc-900 rounded-xl p-4 border border-slate-100 dark:border-zinc-800 space-y-3">
+                  <div className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-zinc-500 mb-2">Topics Covered</div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-zinc-300">
+                    <FiCheckCircle size={16} className="text-emerald-500" /> Basic Syntax
                   </div>
-
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-[9px] font-black shadow-inner tracking-widest shrink-0 uppercase">
-                    {isDevOpsDomain ? 'DevOps Path' : 'Interactive Playground'}
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-zinc-300">
+                    <FiCheckCircle size={16} className="text-emerald-500" /> Structure & Logic
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-zinc-300">
+                    <FiCheckCircle size={16} className="text-emerald-500" /> Hands-on Example
                   </div>
                 </div>
 
-                {/* Sub-tabs for Coding Step 2 (Description, Approach, Submissions) */}
-                {!isDevOpsDomain && learningStep === 2 && (
-                  <div className="flex gap-1.5 mt-1.5 pt-1.5 border-t border-[var(--border)]">
-                    {[
-                      { id: 'description', label: 'Description', icon: <FiBookOpen size={12} /> },
-                      { id: 'approach', label: 'Solution Guide', icon: <FiBook size={12} /> },
-                      { id: 'submissions', label: 'Submissions', icon: <FiClock size={12} />, badge: submissions.length }
-                    ].map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setLeftTab(tab.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                          leftTab === tab.id
-                            ? 'bg-[var(--bg-card)] text-[var(--primary)] border border-[var(--border)] shadow-sm'
-                            : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                        }`}
-                      >
-                        {tab.icon}
-                        <span>{tab.label}</span>
-                        {tab.badge !== undefined && (
-                          <span className="w-4 h-4 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[8px] font-black flex items-center justify-center shadow-inner">
-                            {tab.badge}
-                          </span>
-                        )}
-                      </button>
-                    ))}
+                <button
+                  onClick={() => {
+                    setLearningStep(2);
+                    setLeftTab('description');
+                    toast.success('Mini Assessment Unlocked! 🚀');
+                  }}
+                  className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95"
+                >
+                  Start Assessment
+                </button>
+              </motion.div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-[var(--bg-card)]">
+            
+            {/* --- END OF GUIDED LEARNING STEPS --- */}
+
+            {/* --- ORIGINAL CODING CHALLENGE TABS (Shown only on Step 2) --- */}
+            {learningStep >= 2 && (
+              <>
+                {/* TAB 1: PROBLEM DESCRIPTION */}
+                {leftTab === 'description' && (
+                  <div className="space-y-6 animate-fade-in">
+                    {/* Meta details header */}
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
+                  <div>
+                    <h2 className="text-lg font-black text-[var(--text-main)] tracking-tight">
+                      {topic.title}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                        (topic.difficulty || 'medium').toLowerCase() === 'easy'
+                          ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                          : (topic.difficulty || 'medium').toLowerCase() === 'hard'
+                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                            : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                      }`}>
+                        {topic.difficulty || 'Medium'}
+                      </span>
+                      <span className="text-[9px] font-bold text-[var(--text-light)] uppercase tracking-wider">
+                        Est. {topic.estimatedTime || '15 mins'}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Left Pane Main Scrollable Content Area */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--bg-card)] relative flex flex-col h-full">
-                
-                {learningStep === 1 ? (
-                  isDevOpsDomain ? (
-                    /* DEVOPS Step 1: Practice Terminal Exercises & Interactive Terminal stacked */
-                    <div className="flex-grow flex flex-col overflow-hidden h-full">
-                      {/* Tasks List Panel */}
-                      <div className="p-5 bg-[var(--bg-card)] border-b border-[var(--border)] shrink-0 space-y-4 max-h-[45%] overflow-y-auto custom-scrollbar">
-                        <div className="space-y-1">
-                          <h2 className="text-sm font-black text-[var(--text-main)] tracking-tight">Practice Exercises</h2>
-                          <p className="text-[10px] text-[var(--text-muted)] leading-relaxed font-semibold">
-                            Complete the interactive terminal exercises below to build practical DevOps skills. Type commands into the terminal.
-                          </p>
+                    {/* Difficulty Progression Map */}
+                    {isDsaDomain && (
+                      <div className="bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)] space-y-3">
+                        <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider flex items-center justify-between">
+                          <span>Topic Progression Ladder</span>
+                          <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                            Rank: {activeDifficulty.toUpperCase()}
+                          </span>
                         </div>
-
-                        <div className="space-y-2">
-                          {terminalTasks.map((task, idx) => {
-                            const isTaskDone = idx < activeTaskIndex;
-                            const isTaskActive = idx === activeTaskIndex;
+                        <div className="grid grid-cols-4 gap-2">
+                          {['beginner', 'easy', 'medium', 'challenge'].map((diff, idx) => {
+                            const isUnlocked = idx === 0 || localStorage.getItem(`dsa_completed_${id}_${['beginner', 'easy', 'medium', 'challenge'][idx - 1]}`) === 'true';
+                            const isCompleted = localStorage.getItem(`dsa_completed_${id}_${diff}`) === 'true';
+                            const isActive = activeDifficulty === diff;
+                            
                             return (
-                              <div 
-                                key={task.id} 
-                                className={`p-2.5 rounded-xl border transition-all text-xs ${
-                                  isTaskActive
-                                    ? 'bg-[var(--primary-light)] border-[var(--primary)] text-[var(--text-main)] shadow-sm'
-                                    : isTaskDone
-                                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                      : 'opacity-40 bg-[var(--bg-sub)]/10 border-transparent text-[var(--text-muted)]'
+                              <button
+                                key={diff}
+                                disabled={!isUnlocked}
+                                onClick={() => setActiveDifficulty(diff)}
+                                className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all relative ${
+                                  isActive 
+                                    ? 'bg-[var(--bg-card)] border-[var(--primary)] shadow-sm ring-1 ring-[var(--primary)] text-[var(--primary)]' 
+                                    : isUnlocked 
+                                      ? 'hover:bg-[var(--bg-card)] border-[var(--border)] cursor-pointer text-[var(--text-main)]' 
+                                      : 'opacity-40 cursor-not-allowed border-dashed bg-[var(--bg-sub)]/10 text-[var(--text-muted)]'
                                 }`}
                               >
-                                <div className="flex items-start gap-3">
-                                  <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${
-                                    isTaskDone
-                                      ? 'bg-emerald-500 text-black shadow'
-                                      : isTaskActive
-                                        ? 'bg-[var(--primary)] text-white shadow'
-                                        : 'bg-[var(--bg-sub)] text-[var(--text-light)] border border-[var(--border)]'
-                                  }`}>
-                                    {isTaskDone ? '✓' : idx + 1}
-                                  </div>
-                                  <div className="space-y-1">
-                                    <div className="font-bold leading-tight">{task.description}</div>
-                                    {isTaskActive && (
-                                      <div className="text-[9px] font-semibold text-[var(--primary)] bg-[var(--primary-light)] border border-[var(--primary)]/10 px-2 py-0.5 rounded inline-block">
-                                        Expected: <code className="font-mono">{task.expectedCommand}</code>
-                                      </div>
-                                    )}
-                                  </div>
+                                <div className={`text-[8px] font-black uppercase tracking-wider mb-1 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
+                                  {diff}
                                 </div>
-                              </div>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${
+                                  isCompleted 
+                                    ? 'bg-emerald-500 text-[var(--text-main)] shadow' 
+                                    : isActive 
+                                      ? 'bg-[var(--primary)] text-[var(--text-main)] shadow' 
+                                      : 'bg-[var(--bg-sub)] text-[var(--text-light)] border border-[var(--border)]'
+                                }`}>
+                                  {isCompleted ? '✓' : idx + 1}
+                                </div>
+                              </button>
                             );
                           })}
                         </div>
                       </div>
+                    )}
 
-                      {/* Interactive Practice Terminal */}
-                      <div className="flex-grow flex flex-col bg-zinc-950 font-mono text-xs text-zinc-300 overflow-hidden">
-                        {/* Terminal Header */}
-                        <div className="bg-zinc-900 px-4 py-2 flex items-center justify-between border-b border-zinc-800 shrink-0">
-                          <div className="flex items-center gap-2">
-                            <FiTerminal className="text-emerald-400" />
-                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">Practice Terminal</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                              Task {activeTaskIndex + 1} of {terminalTasks.length}
-                            </span>
-                            <button
-                              onClick={() => {
-                                setActiveTaskIndex(0);
-                                setIsTerminalPracticeDone(false);
-                                setTerminalHistory([
-                                  { type: 'system', text: 'Terminal reset. Start from Task 1!' }
-                                ]);
-                              }}
-                              className="text-[8px] font-bold text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 uppercase transition-all"
-                            >
-                              Reset ↺
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Terminal History */}
-                        <div className="flex-1 p-4 overflow-y-auto space-y-2 select-text custom-scrollbar">
-                          {terminalHistory.map((item, idx) => (
-                            <div 
-                              key={idx} 
-                              className={`leading-relaxed whitespace-pre-wrap ${
-                                item.type === 'input' ? 'text-white font-bold' :
-                                item.type === 'success' ? 'text-emerald-400' :
-                                item.type === 'error' ? 'text-rose-400' :
-                                item.type === 'system' ? 'text-indigo-400 italic' :
-                                'text-zinc-400'
-                              }`}
-                            >
-                              {item.text}
-                            </div>
-                          ))}
-                          <div ref={terminalBottomRef} />
-                        </div>
-
-                        {/* Terminal Input */}
-                        <form onSubmit={handleTerminalSubmit} className="bg-zinc-900 border-t border-zinc-800 p-2.5 flex items-center gap-2 shrink-0">
-                          <span className="text-emerald-400 font-bold">$</span>
-                          <input
-                            type="text"
-                            value={currentTerminalInput}
-                            onChange={(e) => setCurrentTerminalInput(e.target.value)}
-                            placeholder='Type command here (e.g. "docker ps") and press Enter...'
-                            className="flex-1 bg-transparent border-none outline-none text-white font-mono placeholder-zinc-600 focus:ring-0 focus:outline-none py-0.5"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            autoCapitalize="off"
-                            spellCheck="false"
-                          />
-                        </form>
-                      </div>
+                    {/* Challenge description Panel */}
+                    <div className="prose dark:prose-invert max-w-none text-xs text-[var(--text-muted)] leading-relaxed font-semibold p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-sub)]">
+                      <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">Problem Statement</div>
+                      <p className="whitespace-pre-line leading-relaxed">
+                        {langContent?.challengeDescription || topic.description}
+                      </p>
                     </div>
-                  ) : (
-                    /* STEP 1: WATCH VIDEO/LEARN (Non-DevOps paths) */
-                    <div className="flex-1 flex flex-col bg-black relative w-full h-full min-h-[300px]">
-                      <iframe
-                        id="tutorial-video-iframe"
-                        src={topic.youtubeLink ? `${getYouTubeEmbedUrl(topic.youtubeLink)}` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
-                        className="w-full flex-1"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                      <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <h2 className="text-white text-lg font-bold">{topic.title}</h2>
-                          <p className="text-zinc-400 text-xs">
-                            Watch the concepts video. You can write and test code on the right at any time.
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            setLearningStep(2);
-                            setLeftTab('description');
-                          }}
-                          className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white shadow-indigo-500/20"
-                        >
-                          <FiCheckCircle size={16} />
-                          Go to Challenge
-                        </button>
+
+                    {/* Constraints Section */}
+                    {langContent?.constraints && (
+                      <div className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] text-xs">
+                        <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">Constraints</div>
+                        <div className="font-mono text-[10px] text-[var(--text-main)]">{langContent.constraints}</div>
                       </div>
-                    </div>
-                  )
-                ) : isDevOpsDomain ? (
-                  /* DEVOPS SPECIFIC STEPS */
-                  learningStep === 2 ? (
-                    /* DEVOPS Step 2: Mini Assessment instructions (previously step 3) */
-                    <div className="p-5 space-y-5">
+                    )}
+
+                    {/* Hints Section */}
+                    {langContent?.hints && langContent.hints.length > 0 && (
                       <div className="space-y-2">
-                        <h2 className="text-lg font-black text-[var(--text-main)] tracking-tight">Mini Assessment</h2>
-                        <p className="text-xs text-[var(--text-muted)] leading-relaxed font-semibold">
-                          Complete the MCQ quiz on the right to pass this topic. You must pass with at least {passingPercentage}% score.
-                        </p>
-                      </div>
-
-                      <div className="p-5 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/20 rounded-2xl space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl shadow-inner">📝</div>
-                          <div>
-                            <h3 className="text-sm font-black text-[var(--text-main)] uppercase tracking-wide">
-                              {isAssessmentPassed ? "Assessment Passed!" : "Quiz Instructions"}
-                            </h3>
-                            <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-0.5">
-                              {isAssessmentPassed ? "You can now log notes and finish this topic." : "Answer the questions on the right."}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="h-px bg-indigo-500/15" />
-                        <div className="space-y-2.5 text-xs font-semibold text-[var(--text-muted)] leading-relaxed">
-                          <div className="flex items-center gap-2 text-indigo-400">
-                            <FiCheckCircle size={14} className="text-indigo-400" /> <span>{passingPercentage}% Score Required to Pass</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-indigo-400">
-                            <FiCheckCircle size={14} className="text-indigo-400" /> <span>Covers core concepts: containers, command usage, configurations.</span>
-                          </div>
-                          {isAssessmentPassed && (
-                            <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                              <FiCheckCircle size={14} /> <span>Assessment Completed & Unlocked!</span>
-                            </div>
-                          )}
+                        <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                          💡 Dynamic Clues & Hints
+                        </h3>
+                        <div className="space-y-1.5">
+                          {langContent.hints.map((hint, hidx) => (
+                            <details key={hidx} className="group border border-[var(--border)] bg-[var(--bg-sub)] rounded-lg p-2.5 transition-all text-xs">
+                              <summary className="font-bold text-[10px] text-[var(--text-main)] cursor-pointer select-none flex items-center justify-between">
+                                <span>Clue {hidx + 1}</span>
+                                <span className="text-[var(--text-light)] group-open:rotate-180 transition-transform">▼</span>
+                              </summary>
+                              <p className="mt-2 text-[10px] text-[var(--text-muted)] font-medium leading-relaxed">
+                                {hint}
+                              </p>
+                            </details>
+                          ))}
                         </div>
                       </div>
+                    )}
 
-                      <div className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)]">
-                        <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">Topic Synopsis</div>
-                        <p className="text-[11px] text-[var(--text-muted)] leading-relaxed font-semibold">{topic.description}</p>
-                      </div>
-                    </div>
-                  ) : null
-                ) : (
-                  /* CODING SPECIFIC STEP 2 */
-                  <div className="p-5 space-y-6">
-                    {leftTab === 'description' && (
-                      <div className="space-y-6 animate-fade-in">
-                        {/* Meta Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
-                          <div>
-                            <h2 className="text-lg font-black text-[var(--text-main)] tracking-tight">
-                              {topic.title}
-                            </h2>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                                (topic.difficulty || 'medium').toLowerCase() === 'easy'
-                                  ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                                  : (topic.difficulty || 'medium').toLowerCase() === 'hard'
-                                    ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                                    : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                              }`}>
-                                {topic.difficulty || 'Medium'}
-                              </span>
-                              <span className="text-[9px] font-bold text-[var(--text-light)] uppercase tracking-wider">
-                                Est. {topic.estimatedTime || '15 mins'}
-                              </span>
-                            </div>
-                          </div>
+                    {/* Video tutorial embed card */}
+                    {langContent?.youtubeVideoId && (
+                      <div className="space-y-2">
+                        <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                          <FiYoutube className="text-red-500" /> Dynamic Lecture Video
+                        </h3>
+                        <div className="aspect-video bg-black shadow rounded-xl overflow-hidden border border-[var(--border)]">
+                          <iframe
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${langContent.youtubeVideoId}?rel=0&modestbranding=1&showinfo=0`}
+                            title={topic.title}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          ></iframe>
                         </div>
+                      </div>
+                    )}
 
-                        {/* Progression Ladder for DSA */}
-                        {isDsaDomain && (
-                          <div className="bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)] space-y-3">
-                            <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider flex items-center justify-between">
-                              <span>Topic Progression Ladder</span>
-                              <span className="text-[8px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                                Rank: {activeDifficulty.toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-4 gap-2">
-                              {['beginner', 'easy', 'medium', 'challenge'].map((diff, idx) => {
-                                const isUnlocked = idx === 0 || localStorage.getItem(`dsa_completed_${id}_${['beginner', 'easy', 'medium', 'challenge'][idx - 1]}`) === 'true';
-                                const isCompletedDiff = localStorage.getItem(`dsa_completed_${id}_${diff}`) === 'true';
-                                const isActive = activeDifficulty === diff;
-                                
-                                return (
-                                  <button
-                                    key={diff}
-                                    disabled={!isUnlocked}
-                                    onClick={() => setActiveDifficulty(diff)}
-                                    className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all relative ${
-                                      isActive 
-                                        ? 'bg-[var(--bg-card)] border-[var(--primary)] shadow-sm ring-1 ring-[var(--primary)] text-[var(--primary)]' 
-                                        : isUnlocked 
-                                          ? 'hover:bg-[var(--bg-card)] border-[var(--border)] cursor-pointer text-[var(--text-main)]' 
-                                          : 'opacity-40 cursor-not-allowed border-dashed bg-[var(--bg-sub)]/10 text-[var(--text-muted)]'
-                                    }`}
-                                  >
-                                    <div className={`text-[8px] font-black uppercase tracking-wider mb-1 ${isActive ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}>
-                                      {diff}
-                                    </div>
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black ${
-                                      isCompletedDiff 
-                                        ? 'bg-emerald-500 text-[var(--text-main)] shadow' 
-                                        : isActive 
-                                          ? 'bg-[var(--primary)] text-[var(--text-main)] shadow' 
-                                          : 'bg-[var(--bg-sub)] text-[var(--text-light)] border border-[var(--border)]'
-                                    }`}>
-                                      {isCompletedDiff ? '✓' : idx + 1}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Problem Statement */}
-                        <div className="prose dark:prose-invert max-w-none text-xs text-[var(--text-muted)] leading-relaxed font-semibold p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-sub)]">
-                          <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">Problem Statement</div>
-                          <p className="whitespace-pre-line leading-relaxed">
-                            {langContent?.challengeDescription || topic.description}
+                    {/* Completion Banners */}
+                    {isCompleted && nextTopic && (
+                      <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-emerald-500/5 animate-fade-in">
+                        <div className="w-12 h-12 bg-emerald-500 text-[var(--text-main)] rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
+                          🎉
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black text-[var(--text-main)] uppercase tracking-widest">Quest Accomplished!</h4>
+                          <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-1">
+                            You have successfully unlocked the next topic in this expedition:
                           </p>
+                          <div className="text-xs font-black text-emerald-500 mt-1.5 uppercase tracking-tight">
+                            {nextTopic.title}
+                          </div>
                         </div>
-
-                        {/* Constraints */}
-                        {langContent?.constraints && (
-                          <div className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] text-xs">
-                            <div className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider mb-2">Constraints</div>
-                            <div className="font-mono text-[10px] text-[var(--text-main)]">{langContent.constraints}</div>
-                          </div>
-                        )}
-
-                        {/* Hints */}
-                        {langContent?.hints && langContent.hints.length > 0 && (
-                          <div className="space-y-2">
-                            <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
-                              💡 Dynamic Clues & Hints
-                            </h3>
-                            <div className="space-y-1.5">
-                              {langContent.hints.map((hint, hidx) => (
-                                <details key={hidx} className="group border border-[var(--border)] bg-[var(--bg-sub)] rounded-lg p-2.5 transition-all text-xs">
-                                  <summary className="font-bold text-[10px] text-[var(--text-main)] cursor-pointer select-none flex items-center justify-between">
-                                    <span>Clue {hidx + 1}</span>
-                                    <span className="text-[var(--text-light)] group-open:rotate-180 transition-transform">▼</span>
-                                  </summary>
-                                  <p className="mt-2 text-[10px] text-[var(--text-muted)] font-medium leading-relaxed">
-                                    {hint}
-                                  </p>
-                                </details>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Completion Banners */}
-                        {isCompleted && nextTopic && (
-                          <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-emerald-500/5 animate-fade-in">
-                            <div className="w-12 h-12 bg-emerald-500 text-[var(--text-main)] rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
-                              🎉
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-black text-[var(--text-main)] uppercase tracking-widest">Quest Accomplished!</h4>
-                              <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-1">
-                                You have successfully unlocked the next topic in this expedition:
-                              </p>
-                              <div className="text-xs font-black text-emerald-500 mt-1.5 uppercase tracking-tight">
-                                {nextTopic.title}
-                              </div>
-                            </div>
-                            <Link
-                              to={`/topic/${nextTopic._id}`}
-                              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-[var(--text-main)] rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300 animate-pulse"
-                            >
-                              Unlock Next Topic <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                          </div>
-                        )}
-
-                        {isCompleted && !nextTopic && (
-                          <div className="p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-amber-500/5 animate-fade-in">
-                            <div className="w-12 h-12 bg-amber-500 text-[var(--text-main)] rounded-full flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
-                              🏆
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-black text-[var(--text-main)] uppercase tracking-widest">Phase Mastered!</h4>
-                              <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-1">
-                                Outstanding! You have conquered every single topic in this active phase.
-                              </p>
-                            </div>
-                            <Link
-                              to="/roadmap"
-                              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-[var(--text-main)] rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300"
-                            >
-                              Go to Roadmap <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                          </div>
-                        )}
-
-                        {/* Completion Logging Form */}
-                        <div className="card p-5 border-emerald-500/20 border-t-2 space-y-4">
-                          <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
-                            <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
-                          </h3>
-                          <form onSubmit={handleComplete} className="space-y-4 text-xs">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Study Duration (mins)</label>
-                                <input
-                                  type="number"
-                                  value={studyTime}
-                                  onChange={(e) => setStudyTime(e.target.value)}
-                                  className="w-full px-3 py-2 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-                                  required
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Confidence standing</label>
-                                <div className="flex gap-1 bg-[var(--bg-sub)] border border-[var(--border)] p-1 rounded-lg">
-                                  {[1, 2, 3, 4, 5].map((lvl) => (
-                                    <button
-                                      type="button"
-                                      key={lvl}
-                                      onClick={() => setConfidenceLevel(lvl)}
-                                      className={`flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all ${
-                                        confidenceLevel === lvl
-                                          ? 'bg-emerald-500 text-[var(--text-main)] shadow-sm'
-                                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] bg-[var(--bg-card)]'
-                                      }`}
-                                    >
-                                      {lvl}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Algorithmic findings / takeaways</label>
-                              <textarea
-                                rows={2}
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Key insights, runtime notes..."
-                                className="w-full p-3 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
-                              />
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                id="revision-coding"
-                                checked={revisionNeeded}
-                                onChange={(e) => setRevisionNeeded(e.target.checked)}
-                                className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] h-3.5 w-3.5 bg-[var(--bg-sub)] cursor-pointer"
-                              />
-                              <label htmlFor="revision-coding" className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider cursor-pointer">
-                                Flag this topic for scheduled revision
-                              </label>
-                            </div>
-
-                            <button
-                              type="submit"
-                              disabled={submitting}
-                              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                            >
-                              {submitting ? 'Submitting...' : 'Save Notes & Manual Complete'} <FiChevronRight />
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                    )}
-
-                    {leftTab === 'approach' && (
-                      <div className="space-y-5 animate-fade-in">
-                        <div className="flex justify-between items-center border-b border-[var(--border)] pb-2.5">
-                          <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
-                            <FiBook className="text-amber-500" /> Concept Approach
-                          </h3>
-                          <span className="text-[8px] font-bold text-[var(--text-light)] uppercase tracking-wider">Hinglish Mentorship Guide</span>
-                        </div>
-                        
-                        <p className="text-[11px] text-[var(--text-muted)] font-semibold whitespace-pre-line leading-relaxed bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)]">
-                          {langContent?.approach || topic.description || 'Optimal concept guide loading...'}
-                        </p>
-
-                        {langContent && (
-                          <div className="space-y-4 pt-2">
-                            <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
-                              <FiCode className="text-emerald-500" /> Optimal Solution Reference
-                            </h3>
-                            
-                            <pre className="p-3.5 rounded-xl border border-[var(--border)] bg-[#0f172a] text-emerald-400 font-mono text-[10px] overflow-x-auto shadow-inner leading-relaxed select-text">
-                              <code>{langContent.code}</code>
-                            </pre>
-
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="p-3 bg-[var(--bg-sub)] border border-[var(--border)] rounded-xl text-center">
-                                <div className="text-[8px] font-black text-[var(--text-light)] uppercase tracking-wider mb-0.5">Time Complexity</div>
-                                <span className="text-emerald-500 font-black text-xs font-mono">{langContent.timeComplexity}</span>
-                              </div>
-                              <div className="p-3 bg-[var(--bg-sub)] border border-[var(--border)] rounded-xl text-center">
-                                <div className="text-[8px] font-black text-[var(--text-light)] uppercase tracking-wider mb-0.5">Space Complexity</div>
-                                <span className="text-emerald-500 font-black text-xs font-mono">{langContent.spaceComplexity}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {leftTab === 'submissions' && (
-                      <div className="space-y-4 animate-fade-in">
-                        <div className="border-b border-[var(--border)] pb-2.5">
-                          <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
-                            <FiClock className="text-purple-500" /> Submission Logs
-                          </h3>
-                        </div>
-
-                        {submissions.length === 0 ? (
-                          <div className="text-center py-10 text-[var(--text-light)]">
-                            <FiTerminal className="mx-auto text-3xl mb-3 text-[var(--text-muted)] animate-pulse" />
-                            <p className="text-xs font-bold">No submissions yet.</p>
-                            <p className="text-[9px] mt-1">Develop code and click "Submit Code" to save history!</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2.5">
-                            {submissions.map((sub, idx) => {
-                              const isAccepted = sub.status === 'Accepted';
-                              const isRuntimeErr = sub.status === 'Runtime Error';
-                              return (
-                                <div key={sub._id || idx} className="p-3 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] flex justify-between items-center hover:border-[var(--primary)] transition-all">
-                                  <div>
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                                        isAccepted 
-                                          ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
-                                          : isRuntimeErr
-                                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                                            : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
-                                      }`}>
-                                        {sub.status}
-                                      </span>
-                                      <span className="text-[9px] font-black text-[var(--text-muted)] uppercase">
-                                        {sub.language === 'cpp' ? 'C++' : sub.language === 'javascript' ? 'JS' : sub.language}
-                                      </span>
-                                    </div>
-                                    <div className="text-[9px] font-bold text-[var(--text-light)] mt-0.5">
-                                      {new Date(sub.submittedAt).toLocaleString()} • {sub.runtime} ms
-                                    </div>
-                                  </div>
-                                  
-                                  <button
-                                    onClick={() => setSelectedSubCode(sub)}
-                                    className="px-2.5 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] border border-[var(--border)] rounded-lg text-[9px] font-black uppercase transition-all shadow-sm shrink-0"
-                                  >
-                                    View Details
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Resizable Divider Bar */}
-            <div 
-              onMouseDown={startResize}
-              className={`hidden lg:flex w-1 hover:w-1.5 bg-[var(--border-light)] hover:bg-[var(--primary)] cursor-col-resize transition-all shrink-0 items-center justify-center relative group ${isDragging ? 'bg-[var(--primary)] w-1.5' : ''}`}
-            >
-              <div className="absolute h-10 w-0.5 bg-gray-400 rounded-full group-hover:bg-[var(--bg-card)]" />
-            </div>
-
-            {/* RIGHT PANE: Monaco Editor + Console or Practice Terminal or DevOps Assessment */}
-            <div 
-              style={{ width: isFullscreen ? '100%' : `${100 - leftWidth}%` }} 
-              className={`flex-grow h-full flex flex-col overflow-hidden bg-[#09090b] transition-all duration-150 shrink-0 ${
-                isFullscreen ? 'fixed inset-0 z-50 w-screen h-screen' : 'relative'
-              } ${isMobile && activeWorkspaceTab !== 'code' ? 'hidden' : 'flex'}`}
-            >
-              {isDevOpsDomain ? (
-                /* DEVOPS RIGHT PANE RENDERING */
-                learningStep === 1 ? (
-                  <div className="flex-grow h-full flex flex-col bg-black relative w-full overflow-hidden">
-                    <iframe
-                      id="tutorial-video-iframe"
-                      src={topic.youtubeLink ? `${getYouTubeEmbedUrl(topic.youtubeLink)}` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
-                      className="w-full flex-grow"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                    <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4 shrink-0">
-                      <div className="space-y-1 text-left">
-                        <h2 className="text-white text-lg font-bold">{topic.title}</h2>
-                        <p className="text-zinc-400 text-xs">
-                          Watch the tutorial video and practice DevOps commands in the terminal on the left panel.
-                        </p>
-                      </div>
-                      {isTerminalPracticeDone ? (
-                        <button 
-                          onClick={() => setLearningStep(2)}
-                          className="font-bold py-2.5 px-6 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 text-sm shrink-0 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-indigo-500/20"
+                         <Link
+                          to={`/topic/${nextTopic._id}`}
+                          className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-[var(--text-main)] rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300 animate-pulse"
                         >
-                          <FiCheckCircle size={16} />
-                          Proceed to Mini Assessment
-                        </button>
-                      ) : (
-                        <div className="text-zinc-500 text-xs font-semibold py-2 px-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-                          Complete Terminal Tasks on the left to unlock Quiz
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  /* DevOps Step 3: MCQ Assessment or Completion Form */
-                  !isAssessmentPassed ? (
-                    <div className="flex-grow h-full flex flex-col overflow-y-auto p-6 md:p-8 bg-[#09090b] justify-center items-center custom-scrollbar">
-                      <div className="max-w-xl w-full bg-[#18181b] rounded-2xl border border-zinc-800 p-6 md:p-8 space-y-6 shadow-2xl">
-                        <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-lg text-emerald-400 font-bold">📝</div>
-                          <div>
-                            <h3 className="text-base font-black text-white uppercase tracking-wider">Mini Assessment</h3>
-                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Test your understanding from the tutorial</p>
-                          </div>
-                        </div>
+                          Unlock Next Topic <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </div>
+                    )}
 
-                        <div className="space-y-6">
-                          {lessonAssessment.map((q, qIdx) => {
-                            const qPrompt = q.question || q.prompt;
-                            return (
-                              <div key={qIdx} className="space-y-3">
-                                <div className="text-xs font-black text-white flex items-start gap-2">
-                                  <span className="text-emerald-500 font-mono mt-0.5">{qIdx + 1}.</span>
-                                  <span>{qPrompt}</span>
-                                </div>
-                                <div className="grid grid-cols-1 gap-2 pl-4">
-                                  {q.options.map((opt, optIdx) => {
-                                    const isSelected = selectedQuizAnswers[qIdx] === opt;
-                                    return (
-                                      <button
-                                        key={optIdx}
-                                        type="button"
-                                        disabled={quizSubmitted}
-                                        onClick={() => {
-                                          setSelectedQuizAnswers(prev => ({
-                                            ...prev,
-                                            [qIdx]: opt
-                                          }));
-                                        }}
-                                        className={`text-left px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all duration-200 ${
-                                          quizSubmitted ? 'cursor-not-allowed' : 'cursor-pointer'
-                                        } ${
-                                          isSelected
-                                            ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-bold shadow-md shadow-emerald-500/5'
-                                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                                        }`}
-                                      >
-                                        {opt}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                {quizSubmitted && (
-                                  quizExplanations?.[qIdx]?.isCorrect ? (
-                                    <div className="pl-4 text-[10px] text-emerald-400 font-bold flex flex-col gap-1">
-                                      <span className="flex items-center gap-1.5">✓ Correct</span>
-                                      <span className="text-[9px] text-zinc-500 font-medium whitespace-pre-line italic bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800/50">
-                                        💡 Explanation: {quizExplanations[qIdx].explanation}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="pl-4 text-[10px] text-rose-400 font-bold flex flex-col gap-1">
-                                      <span className="flex items-center gap-1.5">❌ Incorrect. Correct Answer: <span className="underline">{quizExplanations?.[qIdx]?.correctAnswer}</span></span>
-                                      <span className="text-[9px] text-zinc-500 font-medium whitespace-pre-line italic bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800/50">
-                                        💡 Explanation: {quizExplanations?.[qIdx]?.explanation}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            );
-                          })}
+                    {isCompleted && !nextTopic && (
+                      <div className="p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-amber-500/5 animate-fade-in">
+                        <div className="w-12 h-12 bg-amber-500 text-[var(--text-main)] rounded-full flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
+                          🏆
                         </div>
-
-                        <div className="border-t border-zinc-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <p className="text-[10px] text-zinc-500 font-semibold italic">
-                            Achieve at least {passingPercentage}% to unlock the completion form.
+                        <div>
+                          <h4 className="text-xs font-black text-[var(--text-main)] uppercase tracking-widest">Phase Mastered!</h4>
+                          <p className="text-[10px] text-[var(--text-muted)] font-semibold mt-1">
+                            Outstanding! You have conquered every single topic in this active phase.
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              toast.loading('Submitting answers...', { id: 'submit-quiz' });
-                              api.post('/assessments/submit', {
-                                moduleId: id,
-                                answers: selectedQuizAnswers
-                              }).then(res => {
-                                const { score, passed, explanations } = res.data.data;
-                                setQuizSubmissionResults(res.data.data);
-                                setQuizExplanations(explanations);
-                                setQuizSubmitted(true);
-                                
-                                window.cf_assessmentAnalytics = {
-                                  assessmentId: id,
-                                  title: topic?.title || 'DevOps Assessment',
-                                  score: score,
-                                  passed: passed,
-                                  timeSpent: 30
-                                };
-                                
-                                if (passed) {
-                                  setIsAssessmentPassed(true);
-                                  localStorage.setItem(`assessment_passed_${id}`, 'true');
-                                  playSoundEffect('success');
-                                  triggerConfettiExplosion();
-                                  toast.success(`🎉 Mini Assessment Passed with ${score}%! Level is now unlocked!`, { id: 'submit-quiz', duration: 4000 });
-                                } else {
-                                  playSoundEffect('error');
-                                  toast.error(`You scored ${score}%, which is below the passing score of ${passingPercentage}%. Review explanations below and try again!`, { id: 'submit-quiz' });
-                                }
-                                refreshUser();
-                              }).catch(err => {
-                                console.error('Failed to submit DevOps assessment:', err);
-                                toast.error(err.response?.data?.message || 'Failed to submit assessment', { id: 'submit-quiz' });
-                              });
-                            }}
-                            className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer text-xs"
-                          >
-                            Submit Answers
-                          </button>
                         </div>
+                        <Link
+                          to="/roadmap"
+                          className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-[var(--text-main)] rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300"
+                        >
+                          Go to Roadmap <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                        </Link>
                       </div>
-                    </div>
-                  ) : (
-                    /* DevOps Completion Form */
-                    <div className="flex-grow h-full flex flex-col justify-center items-center p-6 md:p-8 bg-[#09090b] overflow-y-auto custom-scrollbar">
-                      <div className="max-w-xl w-full bg-[#18181b] rounded-2xl border border-zinc-800 p-6 md:p-8 space-y-6 shadow-2xl">
-                        {/* Completion Banners */}
-                        {isCompleted && nextTopic && (
-                          <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-emerald-500/5 animate-fade-in">
-                            <div className="w-12 h-12 bg-emerald-500 text-black rounded-full flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20">
-                              🎉
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-black text-white uppercase tracking-widest">Quest Accomplished!</h4>
-                              <p className="text-[10px] text-zinc-400 font-semibold mt-1">
-                                You have successfully unlocked the next topic in this expedition:
-                              </p>
-                              <div className="text-xs font-black text-emerald-500 mt-1.5 uppercase tracking-tight">
-                                {nextTopic.title}
-                              </div>
-                            </div>
-                            <Link
-                              to={`/topic/${nextTopic._id}`}
-                              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-black rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300 animate-pulse"
-                            >
-                              Unlock Next Topic <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                          </div>
-                        )}
+                    )}
 
-                        {isCompleted && !nextTopic && (
-                          <div className="p-5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-md shadow-amber-500/5 animate-fade-in">
-                            <div className="w-12 h-12 bg-amber-500 text-black rounded-full flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
-                              🏆
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-black text-white uppercase tracking-widest">Phase Mastered!</h4>
-                              <p className="text-[10px] text-zinc-400 font-semibold mt-1">
-                                Outstanding! You have conquered every single topic in this active phase.
-                              </p>
-                            </div>
-                            <Link
-                              to="/roadmap"
-                              className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group cursor-pointer hover:scale-105 duration-300"
-                            >
-                              Go to Roadmap <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                          </div>
-                        )}
-
-                        <div className="p-5 bg-zinc-900/40 rounded-2xl border border-zinc-800 space-y-4">
-                          <h3 className="text-sm font-black text-white flex items-center gap-1.5 uppercase tracking-wider">
-                            <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
-                          </h3>
-                          <form onSubmit={handleComplete} className="space-y-4 text-xs text-zinc-300">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">Study Duration (mins)</label>
-                                <input
-                                  type="number"
-                                  value={studyTime}
-                                  onChange={(e) => setStudyTime(e.target.value)}
-                                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 text-white rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                                  required
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">Confidence standing</label>
-                                <div className="flex gap-1 bg-zinc-950 border border-zinc-800 p-1 rounded-lg">
-                                  {[1, 2, 3, 4, 5].map((lvl) => (
-                                    <button
-                                      type="button"
-                                      key={lvl}
-                                      onClick={() => setConfidenceLevel(lvl)}
-                                      className={`flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all ${
-                                        confidenceLevel === lvl
-                                          ? 'bg-emerald-500 text-black shadow-sm'
-                                          : 'text-zinc-400 hover:bg-zinc-900 bg-zinc-900'
-                                      }`}
-                                    >
-                                      {lvl}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div>
-                              <label className="block text-[9px] font-black text-zinc-400 uppercase tracking-wider mb-1">DevOps insights / takeaways</label>
-                              <textarea
-                                rows={4}
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Key architectural designs, CLI commands, config notes..."
-                                className="w-full p-3 bg-zinc-950 border border-zinc-800 text-white rounded-lg font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                              />
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                id="revision-devops"
-                                checked={revisionNeeded}
-                                onChange={(e) => setRevisionNeeded(e.target.checked)}
-                                className="rounded border-zinc-800 text-emerald-500 focus:ring-emerald-500 h-3.5 w-3.5 bg-zinc-950 cursor-pointer"
-                              />
-                              <label htmlFor="revision-devops" className="text-[10px] font-black text-zinc-400 uppercase tracking-wider cursor-pointer">
-                                Flag this topic for scheduled revision
-                              </label>
-                            </div>
-
-                            <button
-                              type="submit"
-                              disabled={submitting}
-                              className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                            >
-                              {submitting ? 'Submitting...' : 'Save Notes & Complete'} <FiChevronRight />
-                            </button>
-                          </form>
-                        </div>
+                {/* Study Quest Complete Form (so they can manual complete or log time spent) */}
+                <div className="card p-5 border-emerald-500/20 border-t-2 space-y-4">
+                  <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                    <FiCheckCircle className="text-emerald-500" /> Log Revision & Notes
+                  </h3>
+                  <form onSubmit={handleComplete} className="space-y-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Study Duration (mins)</label>
+                        <input
+                          type="number"
+                          value={studyTime}
+                          onChange={(e) => setStudyTime(e.target.value)}
+                          className="w-full px-3 py-2 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-bold focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                          required
+                        />
                       </div>
-                    </div>
-                  )
-                )) : isWebDevDomain ? (
-                  /* WEB DEV RIGHT PANE: Playground */
-                  <WebDevPlayground 
-                    topicId={id} 
-                    boilerplate={{
-                      html: langContent?.editorBoilerplate || '',
-                      css: '',
-                      js: ''
-                    }} 
-                    editorTheme={editorTheme} 
-                  />
-                ) : (
-                  /* DSA/CODING RIGHT PANE: Monaco Editor + Console Output */
-                  <>
-                    {/* Editor Header Controller panel */}
-                    <div className="bg-[#141416] px-4 py-2 border-b border-[var(--border)] flex justify-between items-center text-xs text-[var(--text-muted)] shrink-0">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 bg-[var(--bg-sub)] p-0.5 rounded-lg border border-[var(--border)]">
-                          {availableLanguages.map((lang) => (
+                      
+                      <div>
+                        <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Confidence standing</label>
+                        <div className="flex gap-1 bg-[var(--bg-sub)] border border-[var(--border)] p-1 rounded-lg">
+                          {[1, 2, 3, 4, 5].map((lvl) => (
                             <button
-                              key={lang}
-                              onClick={() => setSelectedLang(lang)}
-                              className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${
-                                selectedLang === lang 
-                                  ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm' 
-                                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                              type="button"
+                              key={lvl}
+                              onClick={() => setConfidenceLevel(lvl)}
+                              className={`flex-1 h-7 rounded text-[10px] font-black flex items-center justify-center transition-all ${
+                                confidenceLevel === lvl
+                                  ? 'bg-emerald-500 text-[var(--text-main)] shadow-sm'
+                                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] bg-[var(--bg-card)]'
                               }`}
                             >
-                              {lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JS' : lang.toUpperCase()}
+                              {lvl}
                             </button>
                           ))}
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={toggleWorkspaceTheme}
-                          className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black transition-all uppercase cursor-pointer"
-                        >
-                          Theme: {editorTheme === 'vs-dark' ? 'DARK 🌙' : 'LIGHT ☀️'}
-                        </button>
-
-                        <button
-                          onClick={() => setIsFullscreen(!isFullscreen)}
-                          className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black transition-all uppercase flex items-center gap-1 cursor-pointer"
-                          title="Maximize code playground workspace"
-                        >
-                          {isFullscreen ? <FiMinimize2 size={10} /> : <FiMaximize2 size={10} />}
-                          <span>{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            if (langContent?.editorBoilerplate) {
-                              setEditorCode(langContent.editorBoilerplate);
-                              toast.success("Editor code reset to default boilerplate!");
-                            }
-                          }}
-                          className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-rose-400 hover:text-rose-300 text-[9px] font-black transition-all uppercase cursor-pointer"
-                        >
-                          Reset
-                        </button>
-                      </div>
                     </div>
 
-                    {/* Monaco Editor Container */}
-                    <div className="flex-1 min-h-[250px] relative overflow-hidden bg-[#1e1e1e]">
-                      <Editor
-                        height="100%"
-                        language={selectedLang === 'js' ? 'javascript' : selectedLang}
-                        value={editorCode}
-                        beforeMount={handleEditorWillMount}
-                        onChange={(val) => setEditorCode(val || '')}
-                        theme={editorTheme}
-                        options={{
-                          fontSize: 13,
-                          fontFamily: 'Fira Code, monospace',
-                          minimap: { enabled: false },
-                          scrollBeyondLastLine: false,
-                          lineNumbers: 'on',
-                          cursorBlinking: 'smooth',
-                          automaticLayout: true
-                        }}
+                    <div>
+                      <label className="block text-[9px] font-black text-[var(--text-light)] uppercase tracking-wider mb-1">Algorithmic findings / takeaways</label>
+                      <textarea
+                        rows={2}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Key insights, runtime notes..."
+                        className="w-full p-3 bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] rounded-lg font-semibold focus:outline-none"
                       />
                     </div>
 
-                    {/* BOTTOM PANEL: Console Terminal & Runner Results */}
-                    <div className="h-[38%] min-h-[200px] border-t border-[var(--border)] bg-[#09090b] flex flex-col justify-between overflow-hidden shrink-0">
-                      <div className="bg-[#111113] px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setActiveConsoleTab('testcase')}
-                            className={`flex items-center gap-1 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
-                              activeConsoleTab === 'testcase'
-                                ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
-                                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                            }`}
-                          >
-                            Test Cases
-                          </button>
-                          <button
-                            onClick={() => setActiveConsoleTab('result')}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
-                              activeConsoleTab === 'result'
-                                ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
-                                : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                            }`}
-                          >
-                            Run Result
-                            {compilerStatus !== 'idle' && (
-                              <span className={`w-1.5 h-1.5 rounded-full ${
-                                compilerStatus === 'running' ? 'bg-amber-400 animate-ping' : compilerStatus === 'passed' ? 'bg-emerald-400' : 'bg-rose-400'
-                              }`} />
-                            )}
-                          </button>
-                          {selectedLang === 'html' && (
-                            <button
-                              onClick={() => setActiveConsoleTab('preview')}
-                              className={`flex items-center gap-1 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
-                                activeConsoleTab === 'preview'
-                                  ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
-                                  : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
-                              }`}
-                            >
-                              Live Preview 👁️
-                            </button>
-                          )}
-                        </div>
-                        
-                        <div className="text-[8px] font-mono text-[var(--text-light)] uppercase">
-                          {compilerStatus === 'running' ? 'Sandbox Busy...' : 'Console Ready'}
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="revision"
+                        checked={revisionNeeded}
+                        onChange={(e) => setRevisionNeeded(e.target.checked)}
+                        className="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)] h-3.5 w-3.5 bg-[var(--bg-sub)] cursor-pointer"
+                      />
+                      <label htmlFor="revision" className="text-[10px] font-black text-[var(--text-light)] uppercase tracking-wider cursor-pointer">
+                        Flag this topic for scheduled revision
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      {submitting ? 'Submitting...' : 'Save Notes & Manual Complete'} <FiChevronRight />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: OPTIMAL SOLUTION */}
+            {leftTab === 'approach' && (
+              <div className="space-y-5 animate-fade-in">
+                <div className="flex justify-between items-center border-b border-[var(--border)] pb-2.5">
+                  <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                    <FiBook className="text-amber-500" /> Concept Approach
+                  </h3>
+                  <span className="text-[8px] font-bold text-[var(--text-light)] uppercase tracking-wider">Hinglish Mentorship Guide</span>
+                </div>
+                
+                <p className="text-[11px] text-[var(--text-muted)] font-semibold whitespace-pre-line leading-relaxed bg-[var(--bg-sub)] p-4 rounded-xl border border-[var(--border)]">
+                  {langContent?.approach || topic.description || 'Optimal concept guide loading...'}
+                </p>
+
+                {langContent && (
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                      <FiCode className="text-emerald-500" /> Optimal Solution Reference
+                    </h3>
+                    
+                    <pre className="p-3.5 rounded-xl border border-[var(--border)] bg-[#0f172a] text-emerald-400 font-mono text-[10px] overflow-x-auto shadow-inner leading-relaxed select-text">
+                      <code>{langContent.code}</code>
+                    </pre>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-[var(--bg-sub)] border border-[var(--border)] rounded-xl text-center">
+                        <div className="text-[8px] font-black text-[var(--text-light)] uppercase tracking-wider mb-0.5">Time Complexity</div>
+                        <span className="text-emerald-500 font-black text-xs font-mono">{langContent.timeComplexity}</span>
                       </div>
-
-                      {/* Console Body Area */}
-                      <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] text-[var(--text-muted)] custom-scrollbar select-text">
-                        {activeConsoleTab === 'testcase' && langContent && langContent.testCases && (
-                          <div className="space-y-3">
-                            <div className="text-[var(--text-light)] uppercase text-[8px] font-black tracking-widest mb-2">Sample Test Cases (Vetted Inputs)</div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              {langContent.testCases.slice(0, 2).map((tc, idx) => (
-                                <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-sub)] border border-[var(--border)] flex flex-col justify-between gap-1.5">
-                                  <div>
-                                    <div className="text-[7px] font-black text-[var(--text-muted)] uppercase">Input Case {idx + 1}</div>
-                                    <div className="text-[10px] font-bold text-[var(--text-main)] select-all truncate">{tc.input}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-[7px] font-black text-[var(--text-muted)] uppercase">Expected Output</div>
-                                    <div className="text-[9px] font-black text-emerald-400 select-all truncate">{tc.expected}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="text-[8.5px] text-[var(--text-muted)] italic mt-1 font-bold uppercase tracking-wider">
-                              🔒 Hidden Test Cases are active and will run on "Submit Code" to verify optimality.
-                            </div>
-                          </div>
-                        )}
-
-                        {activeConsoleTab === 'result' && (
-                          <div className="space-y-3.5">
-                            {compilerStatus === 'compile_error' ? (
-                              <div className="p-4 bg-red-950/20 border border-red-900/50 rounded-xl text-red-300 font-mono text-xs space-y-2">
-                                <div className="flex items-center gap-2 text-red-400 font-black uppercase text-sm">
-                                  ⚠️ Compilation Error
-                                </div>
-                                <div className="bg-black/40 p-3 rounded-lg border border-red-950 text-[10px] leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap select-text scrollbar-thin font-mono">
-                                  {consoleLogs[consoleLogs.length - 1]}
-                                </div>
-                              </div>
-                            ) : consoleLogs.length === 0 ? (
-                              <div className="text-[var(--text-light)] italic py-5 text-center">
-                                No compilation outputs logged yet. Click "Run Code" or "Submit Code" below!
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <div className="border-b border-[var(--border)] pb-1 flex justify-between items-center text-[8px] font-black text-[var(--text-muted)] uppercase tracking-widest">
-                                  <span>Compiler Console Logs</span>
-                                  <span className={compilerStatus === 'passed' ? 'text-emerald-500' : compilerStatus === 'failed' ? 'text-rose-500' : 'text-amber-500'}>
-                                    Status: {compilerStatus.toUpperCase()}
-                                  </span>
-                                </div>
-                                
-                                {testResults.length > 0 && (
-                                  <div className="space-y-3">
-                                    {compilerStatus === 'passed' && (
-                                      <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-xl text-emerald-300 font-mono text-xs space-y-2">
-                                        <div className="flex items-center gap-2 text-emerald-400 font-black uppercase text-sm">
-                                          🏆 Accepted! All test cases passed! +100 XP 🏆
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {compilerStatus === 'failed' && (
-                                      <div className="p-4 bg-rose-950/20 border border-rose-900/40 rounded-xl text-rose-300 font-mono text-xs space-y-2">
-                                        <div className="flex items-center gap-2 text-rose-400 font-black uppercase text-sm">
-                                          ❌ Solution Rejected (Wrong Answer)
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                      {testResults.map((tr, idx) => (
-                                        <div key={idx} className={`p-2.5 rounded-lg border flex flex-col justify-between ${
-                                          tr.status === 'passed'
-                                            ? 'bg-emerald-950/15 border-emerald-900/40 text-emerald-300'
-                                            : 'bg-rose-950/15 border-rose-900/40 text-rose-300'
-                                        }`}>
-                                          <div>
-                                            <div className="text-[7px] font-black uppercase text-[var(--text-muted)] flex justify-between">
-                                              <span>{tr.isHidden ? `Hidden Case ${idx + 1}` : `Sample Case ${idx + 1}`}</span>
-                                              <span className={tr.status === 'passed' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                                                {tr.status.toUpperCase()}
-                                              </span>
-                                            </div>
-                                            <div className="text-[9px] font-bold text-[var(--text-muted)] select-all truncate mt-0.5">
-                                              Input: {tr.isHidden ? '[Hidden Test Case]' : tr.input}
-                                            </div>
-                                            <div className="text-[9px] font-bold text-[var(--text-muted)] select-all truncate">
-                                              Expected: {tr.expected}
-                                            </div>
-                                          </div>
-                                          <div className="border-t border-zinc-800/60 pt-1.5 mt-1.5">
-                                            <div className="text-[7px] font-black uppercase text-[var(--text-muted)]">Actual Output</div>
-                                            <div className="text-[9px] font-mono truncate">{tr.actual}</div>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                <div className="bg-[#050505] p-3 rounded-lg border border-zinc-950 space-y-1 overflow-y-auto max-h-[100px] scrollbar-thin">
-                                  {consoleLogs.map((log, idx) => (
-                                    <div key={idx} className={`leading-relaxed ${
-                                      log.startsWith('🟢') 
-                                        ? 'text-emerald-400' 
-                                        : log.startsWith('❌') || log.startsWith('💥') 
-                                          ? 'text-rose-400' 
-                                          : 'text-[var(--text-muted)]'
-                                    }`}>
-                                      {log}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {activeConsoleTab === 'preview' && selectedLang === 'html' && (
-                          <div className="w-full h-full min-h-[160px] bg-[var(--bg-card)] rounded-lg overflow-hidden border border-[var(--border)] relative group">
-                            <iframe
-                              title="live-preview"
-                              srcDoc={editorCode}
-                              sandbox="allow-scripts"
-                              className="w-full h-full bg-[var(--bg-card)] border-none min-h-[160px]"
-                            />
-                            <button
-                              onClick={handleOpenInNewTab}
-                              className="absolute top-2 right-2 px-3 py-1.5 bg-black/70 hover:bg-black text-white text-[10px] font-black uppercase tracking-wider rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-all shadow-lg backdrop-blur-sm"
-                            >
-                              Open in Local Host
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Terminal Actions Bottom sticky bar */}
-                      <div className="bg-[#0b0b0d] border-t border-[var(--border)] px-4 py-3 flex justify-between items-center shrink-0">
-                        <Link to="/roadmap" className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black uppercase tracking-wider transition-colors shrink-0">
-                          <FiArrowLeft size={10} /> Roadmap
-                        </Link>
-                        
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (window.confirm("Skip this challenge and mark it as passed?")) {
-                                setCompilerStatus('passed');
-                                setChallengePassed(true);
-                                handleGamificationUpdate();
-                                const isAlreadyCompleted = activeDomainProgress.completedTopics?.some(t => t.topicId === id || t.topicId?._id === id);
-                                if (!isAlreadyCompleted) {
-                                  try {
-                                    await api.post('/progress/complete-topic', { 
-                                      topicId: id,
-                                      studyTimeMinutes: 10,
-                                      notes: 'Skipped coding challenge.',
-                                      difficultyFeedback: 'easy',
-                                      confidenceLevel: 3,
-                                      revisionNeeded: false
-                                    });
-                                    await refreshUser();
-                                  } catch (autoErr) {
-                                    console.error('Failed to auto-complete topic:', autoErr);
-                                  }
-                                }
-                                toast.success('Challenge skipped and marked as complete! 🚀');
-                              }
-                            }}
-                            className="px-3 py-2 bg-[var(--bg-sub)] hover:bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-dashed border-[var(--border)] rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer"
-                          >
-                            ⏭️ Skip Challenge
-                          </button>
-                          <button
-                            onClick={handleRunCode}
-                            disabled={compilerStatus === 'running'}
-                            className="px-4 py-2 bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-main)] rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                          >
-                            <FiTerminal size={10} /> Run Code
-                          </button>
-                          <button
-                            onClick={handleSubmitCode}
-                            disabled={compilerStatus === 'running'}
-                            className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg text-[9px] font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                          >
-                            <FiCheckCircle size={10} /> Submit Code
-                          </button>
-                        </div>
+                      <div className="p-3 bg-[var(--bg-sub)] border border-[var(--border)] rounded-xl text-center">
+                        <div className="text-[8px] font-black text-[var(--text-light)] uppercase tracking-wider mb-0.5">Space Complexity</div>
+                        <span className="text-emerald-500 font-black text-xs font-mono">{langContent.spaceComplexity}</span>
                       </div>
                     </div>
-                  </>
-                )
-              }
-            </div>
-          </>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: SUBMISSIONS HISTORY */}
+            {leftTab === 'submissions' && (
+              <div className="space-y-4 animate-fade-in">
+                <div className="border-b border-[var(--border)] pb-2.5">
+                  <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                    <FiClock className="text-purple-500" /> Submission Logs
+                  </h3>
+                </div>
+
+                {submissions.length === 0 ? (
+                  <div className="text-center py-10 text-[var(--text-light)]">
+                    <FiTerminal className="mx-auto text-3xl mb-3 text-[var(--text-muted)] animate-pulse" />
+                    <p className="text-xs font-bold">No submissions yet.</p>
+                    <p className="text-[9px] mt-1">Develop code and click "Submit Code" to save history!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {submissions.map((sub, idx) => {
+                      const isAccepted = sub.status === 'Accepted';
+                      const isRuntimeErr = sub.status === 'Runtime Error';
+                      return (
+                        <div key={sub._id || idx} className="p-3 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] flex justify-between items-center hover:border-[var(--primary)] transition-all">
+                          <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                isAccepted 
+                                  ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                                  : isRuntimeErr
+                                    ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                    : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                              }`}>
+                                {sub.status}
+                              </span>
+                              <span className="text-[9px] font-black text-[var(--text-muted)] uppercase">
+                                {sub.language === 'cpp' ? 'C++' : sub.language === 'javascript' ? 'JS' : sub.language}
+                              </span>
+                            </div>
+                            <div className="text-[9px] font-bold text-[var(--text-light)] mt-0.5">
+                              {new Date(sub.submittedAt).toLocaleString()} • {sub.runtime} ms
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => setSelectedSubCode(sub)}
+                            className="px-2.5 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] border border-[var(--border)] rounded-lg text-[9px] font-black uppercase transition-all shadow-sm shrink-0"
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            </>
+          )}
+          </div>
+          )}
+            </>
+          )}
+</div>
+
+        {/* Resizable Divider Bar */}
+        {shouldSplitWorkspace && (
+          <div 
+            onMouseDown={startResize}
+            className={`hidden lg:flex w-1 hover:w-1.5 bg-[var(--border-light)] hover:bg-[var(--brand-green)] cursor-col-resize transition-all shrink-0 items-center justify-center relative group ${isDragging ? 'bg-[var(--brand-green)] w-1.5' : ''}`}
+          >
+            <div className="absolute h-10 w-0.5 bg-gray-400 rounded-full group-hover:bg-[var(--bg-card)]" />
+          </div>
         )}
+
+        {/* RIGHT PANE: Code Monaco Editor & Console Terminal */}
+        {shouldSplitWorkspace && (
+        <div 
+          style={{ width: isFullscreen ? '100%' : (isMobile ? '100%' : `${100 - leftWidth}%`) }} 
+          className={`flex-1 h-full flex-col overflow-hidden bg-[#09090b] shrink-0 ${
+            isFullscreen ? 'fixed inset-0 z-50 w-screen h-screen' : 'relative'
+          } ${isMobile && activeWorkspaceTab !== 'code' ? 'hidden' : 'flex'}`}
+        >
+          {isWebDevDomain ? (
+            <WebDevPlayground 
+              topicId={id} 
+              boilerplate={{
+                html: langContent?.editorBoilerplate || '',
+                css: '',
+                js: ''
+              }} 
+              editorTheme={editorTheme} 
+            />
+          ) : (
+            <>
+          {/* Editor Header Controller panel */}
+          <div className="bg-[#141416] px-4 py-2 border-b border-[var(--border)] flex justify-between items-center text-xs text-[var(--text-muted)] shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Language selection selector */}
+              <div className="flex items-center gap-1 bg-[var(--bg-sub)] p-0.5 rounded-lg border border-[var(--border)]">
+                {availableLanguages.map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setSelectedLang(lang)}
+                    className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${
+                      selectedLang === lang 
+                        ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm' 
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    {lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JS' : lang.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+
+              {/* C++ Playlist/Course Selector */}
+              {selectedLang === 'cpp' && (
+                <div className="flex items-center gap-1 bg-[var(--bg-sub)] p-0.5 rounded-lg border border-[var(--border)]">
+                  <button
+                    onClick={() => setDsaCourse('default')}
+                    className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all ${
+                      dsaCourse === 'default'
+                        ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    Love Babbar
+                  </button>
+                  <button
+                    onClick={() => setDsaCourse('striver')}
+                    className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase transition-all ${
+                      dsaCourse === 'striver'
+                        ? 'bg-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    Striver
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleWorkspaceTheme}
+                className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black transition-all uppercase cursor-pointer"
+              >
+                Theme: {editorTheme === 'vs-dark' ? 'DARK 🌙' : 'LIGHT ☀️'}
+              </button>
+
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black transition-all uppercase flex items-center gap-1 cursor-pointer"
+                title="Maximize code playground workspace"
+              >
+                {isFullscreen ? <FiMinimize2 size={10} /> : <FiMaximize2 size={10} />}
+                <span>{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  if (langContent?.editorBoilerplate) {
+                    setEditorCode(langContent.editorBoilerplate);
+                    toast.success("Editor code reset to default boilerplate!");
+                  }
+                }}
+                className="px-2.5 py-1 rounded bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-rose-400 hover:text-rose-300 text-[9px] font-black transition-all uppercase cursor-pointer"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* Monaco Editor Container */}
+          <div className="flex-1 min-h-[250px] relative overflow-hidden bg-[#1e1e1e]">
+            <Editor
+              height="100%"
+              language={selectedLang === 'js' ? 'javascript' : selectedLang}
+              value={editorCode}
+              beforeMount={handleEditorWillMount}
+              onChange={(val) => setEditorCode(val || '')}
+              theme={editorTheme}
+              options={{
+                fontSize: 13,
+                fontFamily: 'Fira Code, monospace',
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                lineNumbers: 'on',
+                cursorBlinking: 'smooth',
+                automaticLayout: true
+              }}
+            />
+          </div>
+
+          {/* BOTTOM PANEL: Console Terminal & Runner Results */}
+          <div className="h-[38%] min-h-[200px] border-t border-[var(--border)] bg-[#09090b] flex flex-col justify-between overflow-hidden shrink-0">
+            
+            {/* Console Tab header selectors */}
+            <div className="bg-[#111113] px-4 py-2 border-b border-[var(--border)] flex items-center justify-between shrink-0">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveConsoleTab('testcase')}
+                  className={`flex items-center gap-1 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
+                    activeConsoleTab === 'testcase'
+                      ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Test Cases
+                </button>
+                <button
+                  onClick={() => setActiveConsoleTab('result')}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
+                    activeConsoleTab === 'result'
+                      ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                  }`}
+                >
+                  Run Result
+                  {compilerStatus !== 'idle' && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      compilerStatus === 'running' ? 'bg-amber-400 animate-ping' : compilerStatus === 'passed' ? 'bg-emerald-400' : 'bg-rose-400'
+                    }`} />
+                  )}
+                </button>
+                {selectedLang === 'html' && (
+                  <button
+                    onClick={() => setActiveConsoleTab('preview')}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-[9px] font-black uppercase transition-all ${
+                      activeConsoleTab === 'preview'
+                        ? 'bg-[var(--bg-sub)] border border-[var(--border)] text-[var(--text-main)] shadow-sm'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                    }`}
+                  >
+                    Live Preview 👁️
+                  </button>
+                )}
+              </div>
+              
+              <div className="text-[8px] font-mono text-[var(--text-light)] uppercase">
+                {compilerStatus === 'running' ? 'Sandbox Busy...' : 'Console Ready'}
+              </div>
+            </div>
+
+            {/* Console Body Area */}
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-[10px] text-[var(--text-muted)] custom-scrollbar select-text">
+              
+              {/* Active Tab: Testcases list display (Masking hidden test cases) */}
+              {activeConsoleTab === 'testcase' && langContent && langContent.testCases && (
+                <div className="space-y-3">
+                  <div className="text-[var(--text-light)] uppercase text-[8px] font-black tracking-widest mb-2">Sample Test Cases (Vetted Inputs)</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {langContent.testCases.slice(0, 2).map((tc, idx) => (
+                      <div key={idx} className="p-2.5 rounded-lg bg-[var(--bg-sub)] border border-[var(--border)] flex flex-col justify-between gap-1.5">
+                        <div>
+                          <div className="text-[7px] font-black text-[var(--text-muted)] uppercase">Input Case {idx + 1}</div>
+                          <div className="text-[10px] font-bold text-[var(--text-main)] select-all truncate">{tc.input}</div>
+                        </div>
+                        <div>
+                          <div className="text-[7px] font-black text-[var(--text-muted)] uppercase">Expected Output</div>
+                          <div className="text-[9px] font-black text-emerald-400 select-all truncate">{tc.expected}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-[8.5px] text-[var(--text-muted)] italic mt-1 font-bold uppercase tracking-wider">
+                    🔒 Hidden Test Cases are active and will run on "Submit Code" to verify optimality.
+                  </div>
+                </div>
+              )}
+
+              {/* Active Tab: Execution Logs Terminal */}
+              {activeConsoleTab === 'result' && (
+                <div className="space-y-3.5">
+                  {compilerStatus === 'compile_error' ? (
+                    <div className="p-4 bg-red-950/20 border border-red-900/50 rounded-xl text-red-300 font-mono text-xs space-y-2">
+                      <div className="flex items-center gap-2 text-red-400 font-black uppercase text-sm">
+                        ⚠️ Compilation Error
+                      </div>
+                      <div className="bg-black/40 p-3 rounded-lg border border-red-950 text-[10px] leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap select-text scrollbar-thin">
+                        {consoleLogs[consoleLogs.length - 1]}
+                      </div>
+                      <div className="text-[10px] text-[var(--text-muted)] italic mt-2">
+                        Tip: Check your brackets, semicolons, and variable types. Make sure your syntax matches standard implementations.
+                      </div>
+                    </div>
+                  ) : consoleLogs.length === 0 ? (
+                    <div className="text-[var(--text-light)] italic py-5 text-center">
+                      No compilation outputs logged yet. Click "Run Code" or "Submit Code" below!
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="border-b border-[var(--border)] pb-1 flex justify-between items-center text-[8px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                        <span>Compiler Console Logs</span>
+                        <span className={compilerStatus === 'passed' ? 'text-emerald-500' : compilerStatus === 'failed' ? 'text-rose-500' : 'text-amber-500'}>
+                          Status: {compilerStatus.toUpperCase()}
+                        </span>
+                      </div>
+                      
+                      {/* Detailed comparison metrics */}
+                      {testResults.length > 0 && (
+                        <div className="space-y-3">
+                          {compilerStatus === 'passed' && (
+                            <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-xl text-emerald-300 font-mono text-xs space-y-2">
+                              <div className="flex items-center gap-2 text-emerald-400 font-black uppercase text-sm">
+                                🏆 Accepted! All test cases passed! +100 XP 🏆
+                              </div>
+                              <p className="text-[10px] font-bold text-emerald-200">
+                                Congratulations! All sample and hidden test cases passed perfectly. Your solution is highly optimal! 🚀
+                              </p>
+                            </div>
+                          )}
+
+                          {compilerStatus === 'failed' && (
+                            <div className="p-4 bg-rose-950/20 border border-rose-900/40 rounded-xl text-rose-300 font-mono text-xs space-y-2">
+                              <div className="flex items-center gap-2 text-rose-400 font-black uppercase text-sm">
+                                ❌ Solution Rejected (Wrong Answer)
+                              </div>
+                              <p className="text-[10px] font-bold text-rose-200">
+                                Some test cases returned incorrect outputs. Review your loop bounds, base cases, and return types, and try again!
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            {testResults.map((tr, idx) => (
+                              <div key={idx} className={`p-2.5 rounded-lg border flex flex-col justify-between ${
+                                tr.status === 'passed'
+                                  ? 'bg-emerald-950/15 border-emerald-900/40 text-emerald-300'
+                                  : 'bg-rose-950/15 border-rose-900/40 text-rose-300'
+                              }`}>
+                                <div>
+                                  <div className="text-[7px] font-black uppercase text-[var(--text-muted)] flex justify-between">
+                                    <span>{tr.isHidden ? `Hidden Case ${idx + 1}` : `Sample Case ${idx + 1}`}</span>
+                                    <span className={tr.status === 'passed' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
+                                      {tr.status.toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="text-[9px] font-bold text-[var(--text-muted)] select-all truncate mt-0.5">
+                                    Input: {tr.isHidden ? '[Hidden Test Case]' : tr.input}
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-1 mt-1 pt-1.5 border-t border-[var(--border)] font-mono text-[8px]">
+                                  <div>
+                                    <div className="text-[6px] font-black text-[var(--text-light)] uppercase">Expected</div>
+                                    <div className="text-[9px] font-bold truncate text-emerald-400">
+                                      {tr.isHidden ? '[Hidden]' : tr.expected}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[6px] font-black text-[var(--text-light)] uppercase">Actual</div>
+                                    <div className={`text-[9px] font-bold truncate ${tr.status === 'passed' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                      {tr.isHidden ? '[Hidden]' : tr.actual}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Log stream printing */}
+                      <div className="bg-[#050505] p-3 rounded-lg border border-zinc-950 space-y-1 overflow-y-auto max-h-[100px] scrollbar-thin">
+                        {consoleLogs.map((log, idx) => (
+                          <div key={idx} className={`leading-relaxed ${
+                            log.startsWith('🟢') 
+                              ? 'text-emerald-400' 
+                              : log.startsWith('❌') || log.startsWith('💥') 
+                                ? 'text-rose-400' 
+                                : 'text-[var(--text-muted)]'
+                          }`}>
+                            {log}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {activeConsoleTab === 'preview' && selectedLang === 'html' && (
+                <div className="w-full h-full min-h-[160px] bg-[var(--bg-card)] rounded-lg overflow-hidden border border-[var(--border)] relative group">
+                  <iframe
+                    title="live-preview"
+                    srcDoc={editorCode}
+                    sandbox="allow-scripts"
+                    className="w-full h-full bg-[var(--bg-card)] border-none min-h-[160px]"
+                  />
+                  <button
+                    onClick={handleOpenInNewTab}
+                    className="absolute top-2 right-2 px-3 py-1.5 bg-black/70 hover:bg-black text-white text-[10px] font-black uppercase tracking-wider rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-all shadow-lg backdrop-blur-sm"
+                  >
+                    Open in Local Host
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Terminal Actions Bottom sticky bar */}
+            <div className="bg-[#0b0b0d] border-t border-[var(--border)] px-4 py-3 flex justify-between items-center shrink-0">
+              <Link to="/roadmap" className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] text-[9px] font-black uppercase tracking-wider transition-colors shrink-0">
+                <FiArrowLeft size={10} /> Roadmap
+              </Link>
+              
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm("Skip this challenge and mark it as passed?")) {
+                      setCompilerStatus('passed');
+                      setChallengePassed(true);
+                      handleGamificationUpdate();
+                      const isAlreadyCompleted = activeDomainProgress.completedTopics?.some(t => t.topicId === id || t.topicId?._id === id);
+                      if (!isAlreadyCompleted) {
+                        try {
+                          const res = await api.post('/progress/complete-topic', { 
+                            topicId: id,
+                            studyTimeMinutes: 10,
+                            notes: 'Skipped coding challenge.',
+                            difficultyFeedback: 'easy',
+                            confidenceLevel: 3,
+                            revisionNeeded: false
+                          });
+                          await refreshUser();
+                        } catch (autoErr) {
+                          console.error('Failed to auto-complete topic:', autoErr);
+                        }
+                      }
+                      toast.success('Challenge skipped and marked as complete! 🚀');
+                    }
+                  }}
+                  className="px-3 py-2 bg-[var(--bg-sub)] hover:bg-[var(--bg-sub)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-dashed border-[var(--border)] rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  ⏭️ Skip Challenge
+                </button>
+                <button
+                  onClick={handleRunCode}
+                  disabled={compilerStatus === 'running'}
+                  className="px-4 py-2 bg-[var(--bg-sub)] border border-[var(--border)] hover:bg-[var(--border-light)] text-[var(--text-main)] rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <FiTerminal size={10} /> Run Code
+                </button>
+                <button
+                  onClick={handleSubmitCode}
+                  disabled={compilerStatus === 'running'}
+                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-[var(--text-main)] rounded-lg text-[9px] font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <FiCheckCircle size={10} /> Submit Code
+                </button>
+              </div>
+            </div>
+          </div>
+          </>
+          )}
+        </div>
+        )}
+
       </div>
 
       {/* Submissions historical details modal dialog */}
@@ -4699,17 +3549,21 @@ const TopicDetail = () => {
 
               {/* Newly Earned Badges Section */}
               {celebrationData.newlyEarnedBadges && celebrationData.newlyEarnedBadges.length > 0 && (
-                <div className="w-full p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl text-center space-y-3 relative z-10">
+                <div className="w-full p-4 bg-slate-900/60 border border-white/5 rounded-2xl text-center space-y-3 relative z-10">
                   <div className="text-[9px] text-amber-500 font-black uppercase tracking-widest">
                     🎉 New Badges Unlocked!
                   </div>
                   <div className="flex flex-wrap justify-center gap-3">
-                    {celebrationData.newlyEarnedBadges.map((badge, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-0.5 max-w-[85px] bg-[var(--bg-sub)] p-2 rounded-xl border border-[var(--border)]">
-                        <div className="text-3xl filter drop-shadow animate-pulse">{badge.icon || '🏅'}</div>
-                        <div className="text-[8px] font-black text-[var(--text-main)] truncate w-full mt-1">{badge.name}</div>
-                      </div>
-                    ))}
+                    {celebrationData.newlyEarnedBadges.map((badge, idx) => {
+                      const metadata = getBadgeMetadata(badge);
+                      return (
+                        <div key={idx} className="flex flex-col items-center gap-1 p-2 rounded-xl bg-slate-950/45 border border-white/5 max-w-[90px] text-center">
+                          <BadgeVisual badge={badge} size="sm" />
+                          <div className="text-[8px] font-black text-white truncate w-full mt-1">{badge.name}</div>
+                          <div className={`text-[6px] font-black tracking-wider uppercase ${metadata.rarity.textColor}`}>{metadata.rarity.name}</div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -4780,16 +3634,6 @@ const TopicDetail = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Phase Topics Navigation */}
-      {allTopics.length > 0 && (
-        <PhaseTopicsSidebar
-          allTopics={allTopics}
-          currentTopicId={id}
-          phaseInfo={topic?.phaseId}
-          isTopicCompleted={isTopicCompleted}
-        />
-      )}
     </div>
   );
 };

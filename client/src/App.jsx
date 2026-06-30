@@ -22,9 +22,12 @@ import Resources from './pages/Resources';
 import CareerGuide from './pages/CareerGuide';
 import ZeroToCoding from './pages/ZeroToCoding';
 import Profile from './pages/Profile';
-import Blog from './pages/Blog';
-import PremiumPortal from './pages/PremiumPortal';
-import Leaderboard from './pages/Leaderboard';
+import Feedback from './pages/Feedback';
+import About from './pages/About';
+import Careers from './pages/Careers';
+import Jobs from './pages/Jobs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Contact from './pages/Contact';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -34,19 +37,23 @@ import EditProblem from './pages/admin/EditProblem';
 import ManageSubmissions from './pages/admin/ManageSubmissions';
 import ManageTestCases from './pages/admin/ManageTestCases';
 import ManageTopics from './pages/admin/ManageTopics';
-import ActivityTracker from './components/ActivityTracker';
+import InstallPrompt from './components/InstallPrompt';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <ActivityTracker />
         <Toaster position="top-right" toastOptions={{ className: 'premium-toast', style: { background: '#ffffff', color: '#101828', border: '1px solid #eaecf0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(16, 24, 40, 0.1)' } }} />
+        <InstallPrompt />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/contact" element={<Contact />} />
 
           {/* Protected Student Routes */}
           <Route element={<ProtectedRoute allowedRoles={['student', 'admin']} />}>
@@ -60,11 +67,10 @@ function App() {
               <Route path="/code-guru" element={<AiChat />} />
               <Route path="/resources" element={<Resources />} />
               <Route path="/career-guide" element={<CareerGuide />} />
+              <Route path="/jobs" element={<Jobs />} />
               <Route path="/zero-to-coding" element={<ZeroToCoding />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/premium-portal" element={<PremiumPortal />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/feedback" element={<Feedback />} />
             </Route>
           </Route>
 

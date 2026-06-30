@@ -459,50 +459,11 @@ h1, h2, h3, h4, h5, h6 {
   100% { left: 200%; }
 }
 
-/* Resource Tabs Animations */
-.resource-tabs-container {
-  width: 100%;
-}
-
-/* Smooth scroll for mobile tabs */
-.resource-tabs-container > div:first-child {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.resource-tabs-container > div:first-child::-webkit-scrollbar {
-  display: none;
-}
-
-/* Resource Card Hover Effect */
-.resource-card {
-  transition: all 0.3s ease;
-}
-
-.resource-card:hover {
-  transform: translateY(-4px);
-}
-
-/* Phase Sidebar Scrollbar */
-.overflow-y-auto {
-  scrollbar-width: thin;
-  scrollbar-color: var(--primary) var(--bg-sub);
-}
-
-.overflow-y-auto::-webkit-scrollbar {
-  width: 8px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-  background-color: var(--bg-sub);
-  border-radius: 8px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background-color: var(--primary);
-  border-radius: 8px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background-color: var(--primary-hover);
+/* Color-shaded Logo Text Gradient */
+.text-logo-gradient {
+  background: linear-gradient(135deg, var(--brand-green) 0%, var(--brand-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
 }

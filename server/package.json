@@ -21,7 +21,8 @@
     "check:progress": "node scripts/checkUserProgress.js",
     "verify:phases": "node scripts/verifyAllPhases.js",
     "test:progression": "node scripts/testPhaseProgression.js",
-    "check:xp": "node scripts/checkXP.js"
+    "check:xp": "node scripts/checkXP.js",
+    "report:invalid-emails": "node scripts/reportInvalidEmails.js"
   },
   "keywords": [
     "careerforge",
@@ -39,6 +40,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "google-auth-library": "^10.7.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb-memory-server": "^11.1.0",

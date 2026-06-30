@@ -2,16 +2,17 @@ import React from 'react';
 
 const blankCase = { input: '', expectedOutput: '', explanation: '' };
 
-const TestCaseEditor = ({ label, value = [], onChange }) => {
+const TestCaseEditor = ({ label, value, onChange }) => {
+  const safeValue = value || [];
   const updateCase = (index, field, nextValue) => {
-    const nextCases = value.map((testCase, caseIndex) =>
+    const nextCases = safeValue.map((testCase, caseIndex) =>
       caseIndex === index ? { ...testCase, [field]: nextValue } : testCase
     );
     onChange(nextCases);
   };
 
-  const addCase = () => onChange([...(value || []), { ...blankCase }]);
-  const removeCase = (index) => onChange(value.filter((_, caseIndex) => caseIndex !== index));
+  const addCase = () => onChange([...safeValue, { ...blankCase }]);
+  const removeCase = (index) => onChange(safeValue.filter((_, caseIndex) => caseIndex !== index));
 
   return (
     <div className="space-y-4">
@@ -22,7 +23,7 @@ const TestCaseEditor = ({ label, value = [], onChange }) => {
         </button>
       </div>
 
-      {(value || []).map((testCase, index) => (
+      {safeValue.map((testCase, index) => (
         <div key={`${label}-${index + 1}`} className="rounded-2xl border border-[#e5e7eb] p-4 space-y-3 bg-[#f8fafc]">
           <div className="flex items-center justify-between">
             <div className="text-[10px] font-black uppercase tracking-widest text-[#667085]">

@@ -162,217 +162,140 @@ const AiChat = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6 lg:px-10 transition-colors duration-300">
+    <div className="max-w-4xl mx-auto h-[calc(100vh-100px)] flex flex-col px-4 py-4 transition-colors duration-300">
       
       {/* Page Header */}
-      <div className="flex justify-between items-center mb-8 border-b border-[var(--border)] pb-5">
+      <div className="flex justify-between items-center pb-4 border-b border-[var(--border)] shrink-0">
         <div>
-          <h1 className="text-3xl font-black text-[var(--text-main)] flex items-center gap-2.5">
-            <span className="bg-gradient-to-r from-violet-500 to-indigo-500 text-white p-2 rounded-xl text-lg shadow-md shrink-0">🤖</span>
-            <span className="text-gradient">Code Guru</span> AI Chat
+          <h1 className="text-xl sm:text-2xl font-black text-[var(--text-main)] flex items-center gap-2">
+            <span className="bg-gradient-to-r from-violet-500 to-indigo-500 text-white p-1.5 rounded-lg text-sm shadow-md shrink-0">🤖</span>
+            <span className="text-logo-gradient">Code Guru</span> AI Chat
           </h1>
-          <p className="text-xs text-[var(--text-light)] font-bold uppercase tracking-wider mt-1">Your premium personal coding mentor, career coach, and assistant</p>
         </div>
         <button 
           onClick={handleClear} 
-          className="p-3 text-[var(--text-light)] hover:text-red-500 hover:bg-red-500/5 rounded-xl border border-[var(--border)] transition-all shrink-0"
+          className="p-2 text-[var(--text-light)] hover:text-red-500 hover:bg-red-500/5 rounded-xl border border-[var(--border)] transition-all shrink-0"
           title="Clear History"
         >
-          <FiTrash2 size={16} />
+          <FiTrash2 size={14} />
         </button>
       </div>
 
-      {/* Main Workspace - Grid layout split panel */}
-      <div className="grid lg:grid-cols-3 gap-8 items-start h-[calc(100vh-230px)] min-h-[500px]">
-        
-        {/* Left Side: Real-time Mentor Insights Dashboard */}
-        <div className="space-y-6 lg:col-span-1 h-full overflow-y-auto pr-2 custom-scrollbar hidden lg:block">
-          
-          {/* Readiness Meter Card */}
-          {insights && (
-            <div className="card p-6 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 border-[var(--primary)]/10 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
-                <FiAward className="text-7xl text-[var(--primary)]" />
-              </div>
-              <h3 className="text-xs font-black text-[var(--text-light)] uppercase tracking-wider mb-4">Internship Readiness Audit</h3>
-              
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-full border-4 border-[var(--primary)]/15 border-t-[var(--primary)] flex flex-col items-center justify-center shrink-0 shadow-md">
-                  <span className="text-lg font-black text-[var(--text-main)]">{insights.readinessPercent}%</span>
-                </div>
-                <div>
-                  <div className="font-extrabold text-[var(--text-main)] text-sm">Almost Interview Ready!</div>
-                  <p className="text-[10px] text-[var(--text-light)] font-medium mt-0.5">Solve lessons and score in assessments to cross the 85% benchmark.</p>
-                </div>
-              </div>
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto py-6 space-y-6 custom-scrollbar px-1">
+        {messages.length <= 1 ? (
+          <div className="flex flex-col items-center justify-center my-auto py-10 text-center animate-fade-in max-w-2xl mx-auto h-full">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-violet-500 to-indigo-500 text-white flex items-center justify-center text-3xl shadow-lg mb-6 animate-pulse shrink-0">
+              🤖
             </div>
-          )}
-
-          {/* Diagnostic Strengths & Weaknesses */}
-          <div className="card p-6 space-y-5">
-            <h3 className="text-xs font-black text-[var(--text-light)] uppercase tracking-wider border-b border-[var(--border)] pb-2">Diagnostic Metrics</h3>
+            <h2 className="text-3xl font-black text-[var(--text-main)] mb-2">
+              How can I help you today, {user.fullName.split(' ')[0]}?
+            </h2>
+            <p className="text-sm text-[var(--text-muted)] font-bold mb-10 max-w-md">
+              Ask Code Guru anything about coding roadmaps, domain selection, weak topics, or technical interview prep.
+            </p>
             
-            {insights ? (
-              <div className="space-y-4 text-xs font-semibold">
-                <div className="flex justify-between items-center bg-[var(--bg-sub)] p-3 rounded-xl border border-[var(--border)]">
-                  <div>
-                    <div className="text-[9px] text-[var(--text-light)] uppercase font-black">Domain</div>
-                    <span className="text-[var(--text-main)] font-black text-sm">{insights.domain}</span>
+            {/* Grid of suggested prompts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full text-left">
+              {suggestedPrompts.slice(0, 4).map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(prompt.text)}
+                  disabled={sending}
+                  className="bg-[var(--bg-card)] border border-[var(--border)] hover:border-[var(--primary)] hover:bg-[var(--bg-sub)] p-5 rounded-2xl transition-all shadow-sm flex flex-col justify-between group cursor-pointer text-[var(--text-main)]"
+                >
+                  <div className="font-extrabold text-sm mb-1 text-[var(--text-main)] flex items-center justify-between w-full">
+                    <span>{prompt.label}</span>
+                    <FiArrowRight className="text-[var(--text-light)] group-hover:text-[var(--primary)] group-hover:translate-x-1 transition-transform" />
                   </div>
-                  <span className="text-xl">🚀</span>
-                </div>
-
-                <div className="flex justify-between items-center bg-[var(--bg-sub)] p-3 rounded-xl border border-[var(--border)]">
-                  <div>
-                    <div className="text-[9px] text-[var(--text-light)] uppercase font-black">Strongest Concept</div>
-                    <span className="text-emerald-500 font-black text-sm">{insights.strongestTopic}</span>
-                  </div>
-                  <span className="text-xl">🏆</span>
-                </div>
-
-                <div className="flex justify-between items-center bg-[var(--bg-sub)] p-3 rounded-xl border border-[var(--border)]">
-                  <div>
-                    <div className="text-[9px] text-[var(--text-light)] uppercase font-black">Flagged for Revision</div>
-                    <span className="text-amber-500 font-black text-sm">{insights.weakestTopic}</span>
-                  </div>
-                  <span className="text-xl">⚠️</span>
-                </div>
-
-                <div className="flex justify-between items-center bg-[var(--bg-sub)] p-3 rounded-xl border border-[var(--border)]">
-                  <div>
-                    <div className="text-[9px] text-[var(--text-light)] uppercase font-black">Coding Consistency</div>
-                    <span className="text-[var(--primary)] font-black text-sm">{insights.consistency}</span>
-                  </div>
-                  <span className="text-xl">🔥</span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4 text-[var(--text-light)] italic">Loading metrics...</div>
-            )}
-          </div>
-
-          {/* Mentor Smart Recommendations */}
-          <div className="card p-6">
-            <h3 className="text-xs font-black text-[var(--text-light)] uppercase tracking-wider mb-4 border-b border-[var(--border)] pb-2">Coach Actionables</h3>
-            <ul className="space-y-3.5">
-              {insights && insights.recommendations?.map((rec, i) => (
-                <li key={i} className="flex gap-2.5 items-start text-xs font-semibold text-[var(--text-muted)] leading-relaxed">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] shrink-0 mt-1.5"></span>
-                  <span>{rec}</span>
-                </li>
+                  <div className="text-xs text-[var(--text-light)] font-bold">{prompt.text}</div>
+                </button>
               ))}
-              {!insights && <li className="text-center py-4 text-[var(--text-light)] italic">Loading recommendations...</li>}
-            </ul>
+            </div>
           </div>
-        </div>
-
-        {/* Right Side: High-End Chat Stream Container */}
-        <div className="lg:col-span-2 h-full flex flex-col bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
-          
-          {/* Chat Bubble Stream */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+        ) : (
+          <div className="space-y-6">
             {messages.map((msg) => (
               <div key={msg._id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                
-                {/* Bubble Header */}
-                <div className={`flex items-center gap-1.5 mb-1.5 px-1 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs shadow-sm ${
-                    msg.role === 'user' 
-                      ? 'bg-[var(--primary)] text-white' 
-                      : 'bg-gradient-to-tr from-violet-500 to-indigo-500 text-white'
-                  }`}>
-                    {msg.role === 'user' ? <FiUser size={12} /> : <FiCpu size={12} />}
+                {msg.role === 'user' ? (
+                  // User Message: neat right-aligned bubble
+                  <div className="flex flex-col items-end w-full">
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-slate-100 dark:bg-zinc-800 text-[var(--text-main)] rounded-2xl rounded-tr-sm px-4.5 py-3 max-w-[75%] shadow-sm font-bold text-sm leading-relaxed whitespace-pre-wrap"
+                    >
+                      {msg.content}
+                    </motion.div>
                   </div>
-                  <span className="text-[9px] text-[var(--text-light)] font-black uppercase tracking-wider">{msg.role === 'user' ? 'You' : 'Code Guru'}</span>
-                </div>
-                
-                {/* Bubble Container */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`text-sm max-w-[85%] rounded-2xl p-4 md:p-5 shadow-sm leading-relaxed ${
-                    msg.role === 'user' 
-                      ? 'bg-[var(--primary-light)] text-[var(--text-main)] rounded-tr-none border border-[var(--primary)]/10 font-semibold' 
-                      : 'bg-[var(--bg-sub)] text-[var(--text-main)] rounded-tl-none border border-[var(--border)]'
-                  }`}
-                >
-                  {msg.role === 'user' ? (
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
-                  ) : (
-                    <SafeMarkdown className="markdown-prose text-[var(--text-main)]" content={msg.content} />
-                  )}
-                </motion.div>
+                ) : (
+                  // Assistant Message: flat left-aligned block with avatar
+                  <div className="flex gap-4 items-start w-full py-4 border-t border-[var(--border)]/30 first:border-t-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 text-white flex items-center justify-center text-sm shadow-md shrink-0">
+                      🤖
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-[var(--text-light)] font-black uppercase tracking-wider mb-1">Code Guru</div>
+                      <SafeMarkdown className="markdown-prose text-[var(--text-main)] text-sm leading-relaxed" content={msg.content} />
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 
             {/* Typing Indicator */}
             {sending && (
-              <div className="flex flex-col items-start">
-                <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs bg-gradient-to-tr from-violet-500 to-indigo-500 text-white">
-                    <FiCpu size={12} />
-                  </div>
-                  <span className="text-[9px] text-[var(--text-light)] font-black uppercase tracking-wider">Code Guru typing</span>
+              <div className="flex gap-4 items-start w-full py-4 border-t border-[var(--border)]/30">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 text-white flex items-center justify-center text-sm shadow-md shrink-0">
+                  🤖
                 </div>
-                
-                <div className="bg-[var(--bg-sub)] rounded-2xl rounded-tl-none border border-[var(--border)] p-4 flex items-center gap-1.5 shadow-sm">
-                  <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0"></div>
-                  <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0" style={{animationDelay: '0.15s'}}></div>
-                  <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0" style={{animationDelay: '0.3s'}}></div>
+                <div className="flex-1">
+                  <div className="text-xs text-[var(--text-light)] font-black uppercase tracking-wider mb-2">Code Guru is thinking</div>
+                  <div className="flex items-center gap-1.5 py-1">
+                    <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0"></div>
+                    <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0" style={{animationDelay: '0.15s'}}></div>
+                    <div className="w-2.5 h-2.5 bg-[var(--primary)] rounded-full animate-bounce shrink-0" style={{animationDelay: '0.3s'}}></div>
+                  </div>
                 </div>
               </div>
             )}
-            
-            <div ref={messagesEndRef} />
           </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-          {/* Quick reply actions/Prompts */}
-          <div className="px-6 py-3 border-t border-[var(--border)] bg-[var(--bg-sub)]/50 flex flex-wrap gap-2">
-            {suggestedPrompts.map((prompt, i) => (
-              <button 
-                key={i} 
-                onClick={() => handleSend(prompt.text)}
-                disabled={sending}
-                className="text-[10px] font-black uppercase bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)] border border-[var(--border)] px-3 py-1.5 rounded-full transition-all flex items-center gap-1 shadow-sm shrink-0"
-              >
-                <FiCompass size={12} /> {prompt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat Interactive Input Bar */}
-          <div className="p-4 bg-[var(--bg-card)] border-t border-[var(--border)]">
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }} 
-              className="flex gap-3"
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Code Guru anything about code syntax, domain choices, career prep..."
-                className="flex-1 bg-[var(--bg-sub)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--text-main)] placeholder-[var(--text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all font-semibold"
-                disabled={sending}
-              />
-              <button 
-                type="submit" 
-                disabled={!input.trim() || sending}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 ${
-                  !input.trim() || sending 
-                    ? 'bg-[var(--bg-sub)] text-[var(--text-light)] border border-[var(--border)] cursor-not-allowed' 
-                    : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-md shadow-indigo-500/20'
-                }`}
-              >
-                <FiSend size={16} />
-              </button>
-            </form>
-          </div>
-
-        </div>
-
+      {/* Input Bar */}
+      <div className="pt-4 pb-2 bg-[var(--bg-main)] shrink-0">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSend();
+          }} 
+          className="max-w-3xl mx-auto w-full relative"
+        >
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Code Guru anything about code, domain choices, career prep..."
+            className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-full pl-6 pr-14 py-4 text-sm text-[var(--text-main)] placeholder-[var(--text-light)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all font-semibold shadow-md"
+            disabled={sending}
+          />
+          <button 
+            type="submit" 
+            disabled={!input.trim() || sending}
+            className={`absolute right-2 top-2 w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${
+              !input.trim() || sending 
+                ? 'bg-transparent text-[var(--text-light)] cursor-not-allowed' 
+                : 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-md shadow-indigo-500/10'
+            }`}
+          >
+            <FiSend size={14} />
+          </button>
+        </form>
+        <p className="text-[9px] text-center text-[var(--text-light)] font-bold mt-3 uppercase tracking-wider">
+          Code Guru can make mistakes. Verify important info.
+        </p>
       </div>
 
     </div>

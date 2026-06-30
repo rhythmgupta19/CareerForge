@@ -1,6 +1,13 @@
 const User = require('../models/User');
-const axios = require('axios');
-const { recordLogin } = require('./activityController');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const validateEmailFormat = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -8,20 +15,29 @@ exports.register = async (req, res) => {
   try {
     const { fullName, email, password, role } = req.body;
     
-    const existingUser = await User.findOne({ email });
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide an email address' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!validateEmailFormat(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
     const user = await User.create({
       fullName,
-      email,
+      email: normalizedEmail,
       password,
-      role: email === 'omshivhare666@gmail.com' ? 'admin' : (role === 'admin' ? 'student' : (role || 'student')) // Grant admin only to specific email
+      role: normalizedEmail === 'omshivhare666@gmail.com' ? 'admin' : (role === 'admin' ? 'student' : (role || 'student')) // Grant admin only to specific email
     });
 
     const token = user.generateToken();
-    recordLogin(user._id, req);
     
     res.status(201).json({
       success: true,
@@ -49,9 +65,15 @@ exports.login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!validateEmailFormat(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials' }); 
     }
 
     const isMatch = await user.matchPassword(password);
@@ -66,7 +88,6 @@ exports.login = async (req, res) => {
     }
 
     const token = user.generateToken();
-    recordLogin(user._id, req);
 
     res.json({
       success: true,
@@ -88,6 +109,84 @@ exports.login = async (req, res) => {
   }
 };
 
+// @desc    Google Login / Registration
+// @route   POST /api/auth/google
+exports.googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Google token is required' });
+    }
+
+    // Verify Google ID Token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google token payload is missing email' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user already exists with this googleId
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Check if user already exists with this email (to link local account)
+      user = await User.findOne({ email: normalizedEmail });
+      if (user) {
+        user.googleId = googleId;
+        user.provider = 'google';
+        if (picture && !user.avatar) {
+          user.avatar = picture;
+        }
+        await user.save();
+      } else {
+        // Auto-create new student account
+        user = await User.create({
+          fullName: name || 'Google User',
+          email: normalizedEmail,
+          googleId,
+          provider: 'google',
+          avatar: picture || '',
+          role: normalizedEmail === 'omshivhare666@gmail.com' ? 'admin' : 'student'
+        });
+      }
+    }
+
+    // Force admin approval for specific email
+    if (user.email === 'omshivhare666@gmail.com' && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+
+    const jwtToken = user.generateToken();
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        profile: user.profile,
+        activeDomain: user.activeDomain,
+        selectedDomain: user.activeDomain,
+        domainsProgress: user.domainsProgress,
+        dailyStreak: user.dailyStreak
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 // @desc    Get current user
 // @route   GET /api/auth/me
 exports.getMe = async (req, res) => {
@@ -95,7 +194,7 @@ exports.getMe = async (req, res) => {
     const user = await User.findById(req.user._id)
       .select('-password')
       .populate('activeDomain')
-      .populate('earnedBadges.badgeId')
+      .populate({ path: 'earnedBadges.badgeId', populate: { path: 'domainId' } })
       .populate('assignedMentor', 'fullName email');
 
     res.json({ success: true, user });
@@ -104,27 +203,29 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Update profile
+// @desc    Update user profile details
 // @route   PUT /api/auth/profile
 exports.updateProfile = async (req, res) => {
   try {
-    const updates = req.body;
+    const { fullName, phone, profile } = req.body;
+    
     const user = await User.findById(req.user._id);
-
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (updates.fullName) user.fullName = updates.fullName;
-    if (updates.phone !== undefined) user.phone = updates.phone;
-    if (updates.isPaidSubscriber !== undefined) user.isPaidSubscriber = updates.isPaidSubscriber;
-
-    if (updates.profile) {
-      user.profile = { ...(user.profile?.toObject ? user.profile.toObject() : (user.profile || {})), ...updates.profile };
+    if (fullName) user.fullName = fullName;
+    if (phone !== undefined) user.phone = phone; // Allow empty string to clear phone
+    
+    if (profile) {
+      user.profile = { 
+        ...(user.profile?.toObject ? user.profile.toObject() : (user.profile || {})), 
+        ...profile 
+      };
       // Check if profile is complete
       const p = user.profile;
-      if (updates.profile.isProfileComplete !== undefined) {
-        user.profile.isProfileComplete = updates.profile.isProfileComplete;
+      if (profile.isProfileComplete !== undefined) {
+        user.profile.isProfileComplete = profile.isProfileComplete;
       } else {
         user.profile.isProfileComplete = !!(p.currentSkillLevel && p.goal);
       }
@@ -140,7 +241,6 @@ exports.updateProfile = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        isPaidSubscriber: user.isPaidSubscriber,
         profile: user.profile,
         currentPhase: user.currentPhase,
         overallProgress: user.overallProgress
@@ -148,86 +248,6 @@ exports.updateProfile = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Google login / signup
-// @route   POST /api/auth/google
-exports.googleLogin = async (req, res) => {
-  try {
-    const { credential } = req.body;
-    if (!credential) {
-      return res.status(400).json({ success: false, message: 'Google credential is required' });
-    }
-
-    // Verify token with Google API
-    const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-    const payload = response.data;
-
-    const googleClientId = process.env.GOOGLE_CLIENT_ID;
-    if (googleClientId && payload.aud !== googleClientId) {
-      return res.status(400).json({ success: false, message: 'Audience mismatch. Invalid Google token.' });
-    }
-
-    const { sub: googleId, email, name, picture } = payload;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email address not provided by Google' });
-    }
-
-    // Try to find user by googleId or email
-    let user = await User.findOne({ $or: [{ googleId }, { email: email.toLowerCase() }] });
-
-    if (user) {
-      // User exists, link googleId if it wasn't set
-      let modified = false;
-      if (!user.googleId) {
-        user.googleId = googleId;
-        modified = true;
-      }
-      if (!user.avatar && picture) {
-        user.avatar = picture;
-        modified = true;
-      }
-      if (modified) {
-        await user.save();
-      }
-    } else {
-      // Create new user (password is not required)
-      user = await User.create({
-        fullName: name || 'Google User',
-        email: email.toLowerCase(),
-        googleId,
-        avatar: picture || '',
-        role: 'student'
-      });
-    }
-
-    // Force admin approval for specific email
-    if (user.email === 'omshivhare666@gmail.com' && user.role !== 'admin') {
-      user.role = 'admin';
-      await user.save();
-    }
-
-    const token = user.generateToken();
-    recordLogin(user._id, req);
-
-    res.json({
-      success: true,
-      token,
-      user: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        profile: user.profile,
-        activeDomain: user.activeDomain,
-        selectedDomain: user.activeDomain,
-        domainsProgress: user.domainsProgress,
-        dailyStreak: user.dailyStreak
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.response?.data?.error_description || error.message });
   }
 };
 

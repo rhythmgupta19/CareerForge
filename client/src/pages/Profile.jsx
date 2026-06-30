@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
-import StudentActivity from '../components/StudentActivity';
-import { FiEdit2, FiMapPin, FiLink, FiGithub, FiTwitter, FiStar, FiAward, FiActivity, FiEye } from 'react-icons/fi';
+import { FiEdit2, FiMapPin, FiLink, FiGithub, FiTwitter, FiStar, FiAward, FiActivity, FiEye, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import BadgeVisual, { getBadgeMetadata } from '../components/BadgeVisual';
 
 const Profile = () => {
   const [data, setData] = useState(null);
@@ -11,6 +12,11 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({ fullName: '', phone: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
 
   const fetchProfileData = async () => {
     try {
@@ -27,10 +33,6 @@ const Profile = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
 
   const handleSaveProfile = async () => {
     try {
@@ -237,11 +239,14 @@ const Profile = () => {
               {totalBadges > 0 ? (
                 <div className="flex flex-wrap gap-4">
                   {user.earnedBadges?.slice(0, 3).map((b, i) => (
-                    <div key={i} className="flex flex-col items-center">
-                      <div className="w-16 h-16 rounded-full bg-[var(--bg-sub)] border border-[var(--border)] flex items-center justify-center text-3xl shadow-sm mb-2 medal-badge relative z-10">
-                        <span className="relative z-10">{b.badgeId?.icon || '🏅'}</span>
-                      </div>
-                      <span className="text-[9px] font-bold text-[var(--text-muted)] text-center w-16 truncate">{b.badgeId?.name}</span>
+                    <div 
+                      key={i} 
+                      onClick={() => setSelectedBadge({ ...b.badgeId, earnedAt: b.earnedAt })}
+                      className="flex flex-col items-center group cursor-pointer" 
+                      title={b.badgeId?.description}
+                    >
+                      <BadgeVisual badge={b.badgeId} size="sm" />
+                      <span className="text-[9px] font-bold text-slate-400 group-hover:text-white transition-colors text-center w-16 truncate mt-1">{b.badgeId?.name}</span>
                     </div>
                   ))}
                 </div>
@@ -253,9 +258,6 @@ const Profile = () => {
               )}
             </div>
           </div>
-
-          {/* Student activity metrics */}
-          <StudentActivity />
 
           {/* Activity Heatmap */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
@@ -303,6 +305,95 @@ const Profile = () => {
           </div>
 
         </div>
+
+        {/* Badge Showcase Modal */}
+        <AnimatePresence>
+          {selectedBadge && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[110] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-slate-950/90 border border-white/5 rounded-3xl p-8 max-w-sm w-full shadow-2xl relative text-center space-y-6 overflow-hidden"
+              >
+                {/* Outer decorative glowing background */}
+                {(() => {
+                  const metadata = getBadgeMetadata(selectedBadge);
+                  return (
+                    <div 
+                      className="absolute -inset-10 rounded-full blur-3xl opacity-30 pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle, ${metadata.rarity.ringColor} 0%, transparent 65%)`
+                      }}
+                    />
+                  );
+                })()}
+
+                <button 
+                  onClick={() => setSelectedBadge(null)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-900 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all cursor-pointer z-20"
+                >
+                  <FiX />
+                </button>
+
+                <div className="flex flex-col items-center gap-2 relative z-10 pt-4">
+                  <div className="animate-[bounce_3s_ease-in-out_infinite]">
+                    <BadgeVisual badge={selectedBadge} size="lg" locked={!selectedBadge.earnedAt} />
+                  </div>
+                  
+                  {/* Rarity & Category Pill */}
+                  {(() => {
+                    const metadata = getBadgeMetadata(selectedBadge);
+                    return (
+                      <div className="flex flex-col items-center gap-1.5 mt-4">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black tracking-widest uppercase border ${metadata.rarity.borderClass} ${metadata.rarity.textColor} ${metadata.rarity.badgeBg}`}>
+                          ✨ {metadata.rarity.name} Rank
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                          Category: {metadata.category}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="space-y-2 relative z-10">
+                  <h3 className="text-xl font-black text-white tracking-tight uppercase">{selectedBadge.name}</h3>
+                  <p className="text-slate-300 text-xs font-semibold leading-relaxed max-w-[280px] mx-auto">
+                    {selectedBadge.description || 'No description available for this achievement.'}
+                  </p>
+
+                  {selectedBadge.unlockCondition && !selectedBadge.earnedAt && (
+                    <div className="mt-4 p-3 rounded-xl bg-slate-900/60 border border-white/5 text-[10px] text-slate-400 font-semibold leading-relaxed max-w-[280px] mx-auto">
+                      <span className="text-amber-500 font-black uppercase tracking-wider block mb-0.5">Required to Unlock:</span>
+                      {selectedBadge.unlockCondition}
+                    </div>
+                  )}
+
+                  {selectedBadge.earnedAt && (
+                    <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest pt-2">
+                      Earned on {new Date(selectedBadge.earnedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2 relative z-10">
+                  <button
+                    onClick={() => setSelectedBadge(null)}
+                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-white/5 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Close Detail View
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

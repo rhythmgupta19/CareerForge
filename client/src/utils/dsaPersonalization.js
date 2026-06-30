@@ -3,6 +3,7 @@ export const DSA_LEVELS = [
   'Arrays Explorer',
   'Hashing Hunter',
   'Recursion Survivor',
+  'OOPs Master',
   'Linked List Warrior',
   'Stack & Queue Master',
   'Tree Master',
@@ -11,7 +12,7 @@ export const DSA_LEVELS = [
   'Greedy Strategist',
   'Placement Challenger'
 ];
-
+ 
 export const DSA_LANGUAGE_LABELS = {
   cpp: 'C++',
   java: 'Java',
@@ -19,15 +20,16 @@ export const DSA_LANGUAGE_LABELS = {
   javascript: 'JavaScript',
   js: 'JavaScript'
 };
-
+ 
 export const DSA_BADGES = [
   { minLevel: 0, name: 'Beginner Warrior' },
   { minLevel: 1, name: 'Array Rookie' },
   { minLevel: 3, name: 'Recursion Survivor' },
-  { minLevel: 6, name: 'Tree Explorer' },
-  { minLevel: 7, name: 'Graph Master' },
-  { minLevel: 8, name: 'DP Beast' },
-  { minLevel: 10, name: 'Placement Ready' }
+  { minLevel: 4, name: 'OOPs Master' },
+  { minLevel: 7, name: 'Tree Explorer' },
+  { minLevel: 8, name: 'Graph Master' },
+  { minLevel: 9, name: 'DP Beast' },
+  { minLevel: 11, name: 'Placement Ready' }
 ];
 
 export const normalizeDsaLanguage = (language) => {

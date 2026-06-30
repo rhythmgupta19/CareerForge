@@ -53,9 +53,6 @@ const getSafeDomainProgress = (user, key) => {
   if (!user.domainsProgress[key].testResults) {
     user.domainsProgress[key].testResults = [];
   }
-  if (!user.domainsProgress[key].miniAssessmentResults) {
-    user.domainsProgress[key].miniAssessmentResults = [];
-  }
   if (!user.domainsProgress[key].codeSubmissions) {
     user.domainsProgress[key].codeSubmissions = [];
   }
@@ -111,46 +108,6 @@ const updateDSAStats = (user) => {
   dsaProgress.dsaStats.totalProblemsSolved = dsaTopics.length;
 };
 
-const checkAndAdvancePhase = async (user, domainId, key) => {
-  const domainProgress = getSafeDomainProgress(user, key);
-  const currentPhaseNum = domainProgress.currentPhase || 0;
-  
-  const currentPhase = await Phase.findOne({ domainId, phaseNumber: currentPhaseNum });
-  if (!currentPhase) return null;
-
-  // Find active and required topics in the current phase
-  const topicsInPhase = await Topic.find({ phaseId: currentPhase._id, isActive: true, isRequired: true });
-  const topicsToCheck = topicsInPhase.length > 0 
-    ? topicsInPhase 
-    : await Topic.find({ phaseId: currentPhase._id, isActive: true });
-
-  if (topicsToCheck.length === 0) return null;
-
-  const completedTopicIds = domainProgress.completedTopics.map(ct => ct.topicId.toString());
-  const allTopicsCompleted = topicsToCheck.every(tp => completedTopicIds.includes(tp._id.toString()));
-
-  if (!allTopicsCompleted) return null;
-
-  domainProgress.currentPhase = currentPhaseNum + 1;
-  domainProgress.xp = (domainProgress.xp || 0) + 500;
-
-  const newlyEarnedBadges = [];
-  const badge = await Badge.findOne({ phaseId: currentPhase._id });
-  if (badge) {
-    const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
-    if (!alreadyEarned) {
-      user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
-      newlyEarnedBadges.push(badge);
-    }
-  }
-
-  return {
-    advanced: true,
-    newPhase: domainProgress.currentPhase,
-    newlyEarnedBadges
-  };
-};
-
 // @desc    Select domain for student
 // @route   POST /api/progress/select-domain
 exports.selectDomain = async (req, res) => {
@@ -162,18 +119,14 @@ exports.selectDomain = async (req, res) => {
     if (!domain) return res.status(404).json({ success: false, message: 'Domain not found' });
 
     user.activeDomain = domainId;
-    const key = getProgressKey(domain.slug);
     if (user.profile) {
-      const hasOnboarding = (user.domainsProgress && user.domainsProgress[key] && 
-        (user.domainsProgress[key].hasCompletedOnboarding === true || 
-         user.domainsProgress[key].completedTopics?.length > 0 || 
-         user.domainsProgress[key].currentPhase > 0)) || false;
-      user.profile.isProfileComplete = hasOnboarding;
+      user.profile.isProfileComplete = false;
     }
 
     // Initialize domain-specific phase if not set
+    const key = getProgressKey(domain.slug);
     if (user.domainsProgress && user.domainsProgress[key]) {
-      if (user.domainsProgress[key].currentPhase === undefined || user.domainsProgress[key].currentPhase === null) {
+      if (user.domainsProgress[key].currentPhase === -1 || user.domainsProgress[key].currentPhase === undefined) {
         user.domainsProgress[key].currentPhase = 0;
         domain.enrolledCount = (domain.enrolledCount || 0) + 1;
         await domain.save();
@@ -231,39 +184,11 @@ exports.completeTopic = async (req, res) => {
     const key = getProgressKey(user.activeDomain.slug);
     const domainProgress = getSafeDomainProgress(user, key);
 
-    if (user.activeDomain?.roadmapType === 'devops') {
-      const UserAssessmentProgress = require('../models/UserAssessmentProgress');
-      const passedAssessment = await UserAssessmentProgress.findOne({ userId: req.user._id, moduleId: topicId, passed: true });
-      if (!passedAssessment) {
-        return res.status(400).json({
-          success: false,
-          message: 'You must pass the mini assessment for this topic before completing it.'
-        });
-      }
-    }
-
     const alreadyCompleted = domainProgress.completedTopics.find(t => t.topicId.toString() === topicId);
     if (alreadyCompleted) {
-      alreadyCompleted.notes = notes || alreadyCompleted.notes;
-      if (studyTimeMinutes !== undefined) {
-        alreadyCompleted.studyTimeMinutes = Number(studyTimeMinutes) || alreadyCompleted.studyTimeMinutes;
-      }
-      if (confidenceLevel !== undefined) {
-        alreadyCompleted.confidenceLevel = Number(confidenceLevel) || alreadyCompleted.confidenceLevel;
-      }
-      if (revisionNeeded !== undefined) {
-        alreadyCompleted.revisionNeeded = !!revisionNeeded;
-      }
-      if (difficultyFeedback !== undefined) {
-        alreadyCompleted.difficultyFeedback = difficultyFeedback;
-      }
-      
-      user.markModified(`domainsProgress.${key}`);
-      await user.save();
-
       return res.json({ 
         success: true, 
-        message: 'Topic completion logs updated successfully',
+        message: 'Topic already completed',
         data: {
           overallProgress: domainProgress.overallProgress,
           dailyStreak: user.dailyStreak,
@@ -370,15 +295,23 @@ exports.completeTopic = async (req, res) => {
         ? completedInPhase.reduce((acc, curr) => acc + (curr.confidenceLevel || 3), 0) / completedInPhase.length 
         : 0;
 
-      if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
+      if (completedInPhase.length === topicsInPhase.length && topicsInPhase.length > 0) {
+        // Phase complete! Advance to next phase
+        domainProgress.currentPhase += 1;
+        domainProgress.xp = (domainProgress.xp || 0) + 500; // Bonus XP for phase completion
+        
+        // Award phase badge if exists
+        const badge = await Badge.findOne({ phaseId: currentPhase._id });
+        if (badge) {
+          const alreadyEarned = user.earnedBadges.some(b => b.badgeId.toString() === badge._id.toString());
+          if (!alreadyEarned) {
+            user.earnedBadges.push({ badgeId: badge._id, earnedAt: new Date() });
+            newlyEarnedBadges.push(badge);
+          }
+        }
+      } else if (averageConfidence >= 4.5 && completedInPhase.length >= topicsInPhase.length * 0.7) {
         domainProgress.xp = (domainProgress.xp || 0) + 100; // Fast-track bonus
       }
-    }
-
-    // Call checkAndAdvancePhase to see if user has passed assessment AND completed all topics
-    const advanceResult = await checkAndAdvancePhase(user, user.activeDomain._id, key);
-    if (advanceResult && advanceResult.newlyEarnedBadges) {
-      newlyEarnedBadges.push(...advanceResult.newlyEarnedBadges);
     }
 
     // Check if domain is fully completed (overallProgress === 100)
@@ -403,14 +336,6 @@ exports.completeTopic = async (req, res) => {
 
     user.markModified(`domainsProgress.${key}`);
     await user.save();
-
-    // Trigger Gamification points for completing roadmap module
-    try {
-      const { awardPoints } = require('../services/gamificationService');
-      await awardPoints(user._id, 'module', topicId);
-    } catch (gamiErr) {
-      console.error('Failed to award complete topic points:', gamiErr.message);
-    }
 
     res.json({ 
       success: true, 
@@ -462,45 +387,10 @@ exports.submitAssessment = async (req, res) => {
       user.activityLog.push({ date: today, minutes: 0, topicsCompleted: 0, assessmentsPassed: 1 });
     }
 
-    let newlyEarnedBadges = [];
-    let advanced = false;
-    let newPhase = domainProgress.currentPhase;
-
-    if (passed) {
-      const advanceResult = await checkAndAdvancePhase(user, user.activeDomain._id, key);
-      if (advanceResult) {
-        advanced = advanceResult.advanced;
-        newPhase = advanceResult.newPhase;
-        if (advanceResult.newlyEarnedBadges) {
-          newlyEarnedBadges = advanceResult.newlyEarnedBadges;
-        }
-      }
-    }
-
     user.markModified(`domainsProgress.${key}`);
     await user.save();
 
-    // Trigger Gamification points for passing assessment
-    if (passed) {
-      try {
-        const { awardPoints } = require('../services/gamificationService');
-        await awardPoints(user._id, 'assessment', assessmentId, score);
-      } catch (gamiErr) {
-        console.error('Failed to award assessment points:', gamiErr.message);
-      }
-    }
-
-    res.json({ 
-      success: true, 
-      message: passed ? 'Assessment passed!' : 'Keep trying!', 
-      data: { 
-        passed, 
-        score,
-        advanced,
-        newPhase,
-        newlyEarnedBadges
-      } 
-    });
+    res.json({ success: true, message: passed ? 'Assessment passed!' : 'Keep trying!', data: { passed, score } });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -513,41 +403,9 @@ exports.getDashboard = async (req, res) => {
     const user = await User.findById(req.user._id)
       .select('-password')
       .populate('activeDomain')
-      .populate('earnedBadges.badgeId');
+      .populate({ path: 'earnedBadges.badgeId', populate: { path: 'domainId' } });
 
     const activeDomain = user.activeDomain;
-    
-    // Auto-sync DevOps assessment progress for existing completed topics
-    if (activeDomain && activeDomain.roadmapType === 'devops') {
-      try {
-        const UserAssessmentProgress = require('../models/UserAssessmentProgress');
-        const Topic = require('../models/Topic');
-        const devopsProgress = user.domainsProgress?.devops;
-        if (devopsProgress && devopsProgress.completedTopics && devopsProgress.completedTopics.length > 0) {
-          for (const completedTopic of devopsProgress.completedTopics) {
-            const topicId = completedTopic.topicId;
-            const progressExists = await UserAssessmentProgress.findOne({ userId: user._id, moduleId: topicId });
-            if (!progressExists) {
-              const topicObj = await Topic.findById(topicId);
-              if (topicObj) {
-                await UserAssessmentProgress.create({
-                  userId: user._id,
-                  roadmapId: activeDomain._id,
-                  levelId: topicObj.phaseId,
-                  moduleId: topicId,
-                  score: 100,
-                  passed: true,
-                  attempts: 1,
-                  completedAt: completedTopic.completedAt || new Date()
-                });
-              }
-            }
-          }
-        }
-      } catch (syncErr) {
-        console.error('DevOps progress sync failed:', syncErr.message);
-      }
-    }
     const key = activeDomain ? getProgressKey(activeDomain.slug) : 'dsa';
     const domainProgress = user.domainsProgress[key] || {
       xp: 0,
@@ -578,10 +436,9 @@ exports.getDashboard = async (req, res) => {
     let upcomingAssessment = null;
 
     if (activeDomain) {
-      const pNum = (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 0;
       currentPhaseData = await Phase.findOne({ 
         domainId: activeDomain._id, 
-        phaseNumber: pNum
+        phaseNumber: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== -1) ? domainProgress.currentPhase : 0
       });
 
       upcomingAssessment = await require('../models/Assessment').findOne({
@@ -602,7 +459,7 @@ exports.getDashboard = async (req, res) => {
           profile: user.profile,
           selectedDomain: activeDomain,
           activeDomain: activeDomain,
-          currentPhase: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== null) ? domainProgress.currentPhase : 0,
+          currentPhase: (domainProgress.currentPhase !== undefined && domainProgress.currentPhase !== -1) ? domainProgress.currentPhase : 0,
           overallProgress: domainProgress.overallProgress || 0,
           dailyStreak: user.dailyStreak,
           totalStudyMinutes: user.totalStudyMinutes,
@@ -711,18 +568,6 @@ exports.submitCode = async (req, res) => {
           domainProgress.dsaStats.lastSolvedAt = new Date();
         }
         domainProgress.xp = (domainProgress.xp || 0) + 100; // 100 XP coding award!
-
-        // Recalculate overall progress
-        const totalTopicsInDomain = await Topic.countDocuments({ domainId: user.activeDomain._id, isActive: true });
-        const completedTopicsInDomain = await Topic.countDocuments({
-          _id: { $in: domainProgress.completedTopics.map(t => t.topicId) },
-          domainId: user.activeDomain._id,
-          isActive: true
-        });
-        domainProgress.overallProgress = totalTopicsInDomain > 0 ? Math.round((completedTopicsInDomain / totalTopicsInDomain) * 100) : 0;
-
-        // Auto-advance phase checks!
-        await checkAndAdvancePhase(user, user.activeDomain._id, key);
       } else {
         // Just add 10 XP for re-submitting correct solution
         domainProgress.xp = (domainProgress.xp || 0) + 10;
@@ -735,17 +580,6 @@ exports.submitCode = async (req, res) => {
 
     user.markModified(`domainsProgress.${key}`);
     await user.save();
-
-    // Trigger Gamification points for solving coding problem
-    if (status === 'Accepted') {
-      try {
-        const { awardPoints } = require('../services/gamificationService');
-        await awardPoints(user._id, 'coding', topicId);
-      } catch (gamiErr) {
-        console.error('Failed to award coding points:', gamiErr.message);
-      }
-    }
-
     res.json({ success: true, message: status === 'Accepted' ? 'Expedition Mastered!' : 'Keep refining your code!', data: newSubmission });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -784,12 +618,6 @@ exports.skipPhase = async (req, res) => {
     }
 
     const key = getProgressKey(user.activeDomain.slug);
-    if (user.activeDomain?.roadmapType === 'devops') {
-      return res.status(400).json({
-        success: false,
-        message: 'Skipping levels is not allowed for the DevOps roadmap. You must complete the topic mini assessments.'
-      });
-    }
     const domainProgress = getSafeDomainProgress(user, key);
 
     const phase = await Phase.findById(phaseId);
@@ -961,49 +789,6 @@ exports.getWebDevProject = async (req, res) => {
     });
     
     res.json({ success: true, data: project || null });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// @desc    Submit topic mini-assessment results
-// @route   POST /api/progress/submit-mini-assessment
-exports.submitMiniAssessment = async (req, res) => {
-  try {
-    const { topicId, score, passed } = req.body;
-    const user = await User.findById(req.user._id).populate('activeDomain');
-    if (!user.activeDomain) {
-      return res.status(400).json({ success: false, message: 'No active domain selected' });
-    }
-
-    const key = getProgressKey(user.activeDomain.slug);
-    const domainProgress = getSafeDomainProgress(user, key);
-
-    if (!domainProgress.miniAssessmentResults) {
-      domainProgress.miniAssessmentResults = [];
-    }
-
-    const existingIndex = domainProgress.miniAssessmentResults.findIndex(r => r.topicId.toString() === topicId);
-    if (existingIndex > -1) {
-      domainProgress.miniAssessmentResults[existingIndex] = {
-        topicId,
-        score,
-        passed,
-        attemptedAt: new Date()
-      };
-    } else {
-      domainProgress.miniAssessmentResults.push({
-        topicId,
-        score,
-        passed,
-        attemptedAt: new Date()
-      });
-    }
-
-    user.markModified(`domainsProgress.${key}`);
-    await user.save();
-
-    res.json({ success: true, message: 'Mini assessment results stored' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

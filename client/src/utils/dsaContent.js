@@ -7,16 +7,48 @@ import { getTreesCheckpointContent } from './treesContent';
 import { getGraphCheckpointContent } from './graphContent';
 import { getDPCheckpointContent } from './dpContent';
 import { getGreedyCheckpointContent } from './greedyContent';
+import { getDsaSheetCheckpointContent } from './dsaSheetContent';
+import { getOopsCheckpointContent } from './oopsContent';
 
 // DSA Content Engine - Striver A2Z Aligned with 4 Unlockable Difficulty Levels per Topic
 // Boilerplates are strictly minimal starters (only imports + class/function signatures) - NO solutions/loops prefilled.
 
-export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficulty = 'beginner', useStriverAdvanced = false, dbYoutubeLink = '') => {
+export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficulty = 'beginner', useStriverAdvanced = false, dbYoutubeLink = '', dsaCourse = 'default') => {
   const t = (topicTitle || '').toLowerCase();
   const lang = (languageKey || 'cpp').toLowerCase() === 'js' ? 'javascript' : (languageKey || 'cpp').toLowerCase();
   const diff = (difficulty || 'beginner').toLowerCase();
 
-  // â”€â”€â”€ LOVE BABBAR VIDEO MAPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── STRIVER C++ VIDEO MAP ───
+  const striverCppVideos = {
+    overview:      'yVdKa8dnKiE', // Introduction to A2Z DSA
+    basics:        'EAR7De6Goz4', // C++ Basics
+    first_program: 'EAR7De6Goz4',
+    conditionals:  'EAR7De6Goz4',
+    patterns:      'tNm_NNSB3_w', // Patterns
+    bitwise:       '5754S_j31A8', // Bit Manipulation Intro
+    switch_case:   'EAR7De6Goz4',
+    functions:     'EAR7De6Goz4',
+    math:          'm8QD7aC4Fk0', // Basic Maths for DSA
+    stl:           'okhdtEk1iKk', // C++ STL
+    array:         '37E9ckMDdTk', // Intro to Arrays
+    array_easy:    '37E9ckMDdTk',
+    array_med:     'NWg38xWYzEg',
+    array_hard:    'NWg38xWYzEg',
+    hashing:       'm8QD7aC4Fk0', // Hashing L1
+    recursion:     'yVdKa8dnKiE', // Recursion L1
+    backtrack:     'Fg5x5y5D5yE', // N-Queens Recursion
+    ll:            'LyuuqCVkP5I', // Linked List L1
+    stack_q:       '0X-fV-1ir9c', // Stack & Queue L1
+    tree:          'eKJrXBCRuNQ', // Tree Traversals
+    bst:           'RuF7dPfj27Q', // BST Intro
+    heap:          'HqPJF2L5h9U', // Heaps Intro (Babbar/General)
+    trie:          'dBGUmUQhjaM', // Trie Intro
+    graph:         'RpgyCJBbl5E', // Graph Intro
+    dp:            'tyB0ztf0DNY', // DP Intro
+    greedy:        'SmTow5Ht4iU'  // Greedy Intro
+  };
+
+  // ─── LOVE BABBAR VIDEO MAPS ──────────────────────────────────────────────────
   const babbarCppVideos = {
     overview:      'WQoB2z67hvY', // Course Overview
     basics:        'Pg3Z5Yps5pI', // Flowcharts
@@ -94,6 +126,13 @@ export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficult
                      normalizedTitle.includes('logical pattern printing');
 
     if (isLevel0) {
+      if (languageKey === 'cpp' && dsaCourse === 'striver') {
+        if (normalizedTitle.includes('introduction') || normalizedTitle.includes('variables') || normalizedTitle.includes('start coding')) return 'EAR7De6Goz4';
+        if (normalizedTitle.includes('conditionals') || normalizedTitle.includes('loops')) return 'EAR7De6Goz4';
+        if (normalizedTitle.includes('functions')) return 'EAR7De6Goz4';
+        if (normalizedTitle.includes('pattern')) return 'tNm_NNSB3_w';
+        return 'EAR7De6Goz4';
+      }
       const vids = {
         cpp: 'EAR7De6Goz4',       // Mike Dane C++
         java: 'A74TOX803D0',      // Mike Dane Java
@@ -101,6 +140,38 @@ export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficult
         javascript: 'W6NZfCO5SIk' // Mosh JavaScript
       };
       return vids[lang] || vids.cpp;
+    }
+
+    if (languageKey === 'cpp' && dsaCourse === 'striver') {
+      const videoMap = striverCppVideos;
+      if (t.includes('overview') || t.includes('setup') || t.includes('announcement') || t.includes('introductory')) return videoMap.overview;
+      if (t.includes('flowchart') || t.includes('programming & flowcharts')) return videoMap.basics;
+      if (t.includes('first program') || t.includes('variables') || t.includes('data type')) return videoMap.first_program;
+      if (t.includes('conditional') || t.includes('loop')) return videoMap.conditionals;
+      if (t.includes('bitwise')) return videoMap.bitwise;
+      if (t.includes('switch')) return videoMap.switch_case;
+      if (t.includes('function') || t.includes('method')) return videoMap.functions;
+      if (t.includes('basics') || t.includes('foundation') || t.includes('thinking') || t.includes('print')) return videoMap.basics;
+      if (t.includes('pattern')) return videoMap.patterns;
+      if (t.includes('math')) return videoMap.math;
+      if (t.includes('stl') || t.includes('collection')) return videoMap.stl;
+      if (t.includes('easy array') || (t.includes('array') && t.includes('easy'))) return videoMap.array_easy;
+      if (t.includes('medium array') || (t.includes('array') && t.includes('medium'))) return videoMap.array_med;
+      if (t.includes('hard array') || (t.includes('array') && t.includes('hard'))) return videoMap.array_hard;
+      if (t.includes('array')) return videoMap.array;
+      if (t.includes('hash')) return videoMap.hashing;
+      if (t.includes('backtrack')) return videoMap.backtrack;
+      if (t.includes('recursion') || t.includes('fibonacci') || t.includes('subsequence')) return videoMap.recursion;
+      if (t.includes('linked list') || t.includes('introduction to ll') || t.includes('singly') || t.includes('doubly') || t.includes('circular')) return videoMap.ll;
+      if (t.includes('stack') || t.includes('queue')) return videoMap.stack_q;
+      if (t.includes('binary tree') || t.includes('tree traversal')) return videoMap.tree;
+      if (t.includes('bst') || t.includes('binary search tree')) return videoMap.bst;
+      if (t.includes('heap')) return videoMap.heap;
+      if (t.includes('trie')) return videoMap.trie;
+      if (t.includes('graph') || t.includes('bfs') || t.includes('dfs') || t.includes('cycle') || t.includes('topo') || t.includes('shortest')) return videoMap.graph;
+      if (t.includes('dp') || t.includes('dynamic') || t.includes('knapsack') || t.includes('coin')) return videoMap.dp;
+      if (t.includes('greedy')) return videoMap.greedy;
+      return videoMap.basics;
     }
 
     if (languageKey === 'cpp' && dbYoutubeLink) {
@@ -142,10 +213,13 @@ export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficult
   };
 
   const getPlaylist = () => {
+    if (languageKey === 'cpp' && dsaCourse === 'striver') {
+      return 'PLgUwDviBIf0oF6QL8m22w1hIDC1vJ_BHz';
+    }
     return (languageKey === 'java') ? babbarJavaPlaylists.default : babbarCppPlaylists.default;
   };
 
-  // â”€â”€â”€ MASTER CATALOG OF GRADUAL QUESTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── MASTER CATALOG OF GRADUAL QUESTIONS ──────────────────────────────────────
   const catalog = {
     // 1. LEARN THE BASICS (Programming Foundations)
     basics: {
@@ -1426,33 +1500,583 @@ export const getDsaLanguageContent = (topicTitle, languageKey = 'cpp', difficult
 // Video 3: tNm_NNSB3_w  (Checkpoint 3 - Loops, Logic)
 // Each video is used EXACTLY ONCE. No repetition.
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-export const getCheckpointContent = (checkpointId, lang = 'cpp') => {
-  if (checkpointId && checkpointId.startsWith('arr_cp')) {
-    return getArraysCheckpointContent(checkpointId, lang);
+const babbarCheckpointVideos = {
+  // Start Coding Foundations
+  cp1: 'Pg3Z5Yps5pI', // Lecture 2 Flowcharts
+  cp2: 't_1RndyN6U8', // Lecture 3 First Program
+  cp3: 'WR31y7559Pg', // Lecture 4 Loops
+  cp4: '3wK530Vqi3Y', // Lecture 19 STL
+
+  // Arrays Explorer
+  arr_cp1: 'sEj993vN7gY',
+  arr_cp2: 'eQ5u5W4G_04',
+  arr_cp3: 'eQ5u5W4G_04',
+  arr_cp4: 'eQ5u5W4G_04',
+  arr_cp5: 'eQ5u5W4G_04',
+  arr_cp6: 'eQ5u5W4G_04',
+  arr_cp7: 'eQ5u5W4G_04',
+  arr_cp8: 'eQ5u5W4G_04',
+  arr_cp9: 'eQ5u5W4G_04',
+  arr_cp10: 'eQ5u5W4G_04',
+  arr_cp11: 'eQ5u5W4G_04',
+  arr_cp12: 'eQ5u5W4G_04',
+  arr_cp13: 'eQ5u5W4G_04',
+  arr_cp14: 's8q_J87L4vI', // Lecture 23 2D Arrays
+  arr_cp15: 's8q_J87L4vI',
+  arr_cp16: 's8q_J87L4vI',
+  arr_cp17: 'eQ5u5W4G_04',
+  arr_cp18: 'eQ5u5W4G_04',
+  arr_cp19: 'eQ5u5W4G_04',
+  arr_cp20: 'eQ5u5W4G_04',
+  arr_cp21: 'eQ5u5W4G_04',
+  arr_cp22: 'eQ5u5W4G_04',
+  arr_cp23: 'eQ5u5W4G_04',
+  arr_cp24: 'eQ5u5W4G_04',
+  arr_cp25: 'eQ5u5W4G_04',
+  arr_cp26: 'eQ5u5W4G_04',
+  arr_cp27: 'eQ5u5W4G_04',
+  arr_cp28: 'eQ5u5W4G_04',
+
+  // Hashing Explorer
+  hash_cp1: 'KEs5UyBJ39g',
+  hash_cp2: 'KEs5UyBJ39g',
+  hash_cp3: 'KEs5UyBJ39g',
+
+  // Recursion
+  rec_cp1: 'B34KqZ4uN6Q',
+  rec_cp2: 'B34KqZ4uN6Q',
+  rec_cp3: 'B34KqZ4uN6Q',
+  rec_cp4: 'B34KqZ4uN6Q',
+  rec_cp5: 'Kmh3rhyEtB8', // climbing stairs
+  rec_cp6: 'pNzljlzDCiI',
+  rec_cp7: 'pNzljlzDCiI',
+  rec_cp8: 'ynnWDBTdVi0', // merge sort
+  rec_cp9: '8ocB7a_c-Cc', // quick sort
+  rec_cp10: 'pNzljlzDCiI',
+  rec_cp11: 'pNzljlzDCiI',
+  rec_cp12: 'pNzljlzDCiI',
+  rec_cp13: 'pNzljlzDCiI',
+  rec_cp14: 'nwjZ24S_ueM', // permutations
+  rec_cp15: 'nwjZ24S_ueM',
+  rec_cp16: 'nwjZ24S_ueM', // N-Queens
+  rec_cp17: 'nwjZ24S_ueM',
+  rec_cp18: 'nwjZ24S_ueM',
+  rec_cp19: 'nwjZ24S_ueM',
+  rec_cp20: 'nwjZ24S_ueM', // Rat in a Maze
+  rec_cp21: 'nwjZ24S_ueM',
+  rec_cp22: 'ynnWDBTdVi0',
+
+  // OOPs Master
+  oops_cp1: 'BS9nCj391r8', // OOPs Part 1
+  oops_cp2: 'V1P9wX8sZ0Q', // OOPs Part 2 - 4 Pillars
+
+  // Linked List
+  ll_cp1: 'q8gipE-hy80',
+  ll_cp2: 'q8gipE-hy80',
+  ll_cp3: 'q8gipE-hy80',
+  ll_cp4: 'q8gipE-hy80',
+  ll_cp5: 'q8gipE-hy80',
+  ll_cp6: 'q8gipE-hy80',
+  ll_cp7: 'q8gipE-hy80',
+  ll_cp8: 'q8gipE-hy80',
+  ll_cp9: 'q8gipE-hy80',
+  ll_cp10: 'q570bKdrnlw',
+  ll_cp11: 'q8gipE-hy80',
+  ll_cp12: 'q8gipE-hy80',
+  ll_cp13: 'q8gipE-hy80',
+  ll_cp14: 'q570bKdrnlw',
+  ll_cp15: '2Kd0KKmmHFc',
+  ll_cp16: '2Kd0KKmmHFc',
+  ll_cp17: 'q570bKdrnlw',
+  ll_cp18: '2Kd0KKmmHFc',
+  ll_cp19: 'q8gipE-hy80',
+  ll_cp20: 'q8gipE-hy80',
+  ll_cp21: 'q8gipE-hy80',
+  ll_cp22: 'lIar1skcQYI',
+  ll_cp23: 'q8gipE-hy80',
+  ll_cp24: 'jXu-H7XuClE',
+  ll_cp25: 'jXu-H7XuClE',
+  ll_cp26: 'jXu-H7XuClE',
+  ll_cp27: '8ocB7a_c-Cc',
+  ll_cp28: 'q570bKdrnlw',
+  ll_cp29: 'q8gipE-hy80',
+
+  // Stack & Queue
+  sq_cp1: 'gyPa_m8fW-w',
+  sq_cp2: 'gyPa_m8fW-w',
+  sq_cp3: 'gyPa_m8fW-w',
+  sq_cp4: 'gyPa_m8fW-w',
+  sq_cp5: 'gyPa_m8fW-w',
+  sq_cp6: 'gyPa_m8fW-w',
+  sq_cp7: 'gyPa_m8fW-w',
+  sq_cp8: 'gyPa_m8fW-w',
+  sq_cp9: 'gyPa_m8fW-w',
+  sq_cp10: 'gyPa_m8fW-w',
+  sq_cp11: 'gyPa_m8fW-w',
+  sq_cp12: 'Bzat9vgD0fs',
+  sq_cp13: 'Bzat9vgD0fs',
+  sq_cp14: 'gyPa_m8fW-w',
+  sq_cp15: 'gyPa_m8fW-w',
+  sq_cp16: 'gyPa_m8fW-w',
+  sq_cp17: 'cEadsbTeze4',
+  sq_cp18: 'gyPa_m8fW-w',
+  sq_cp19: 'gyPa_m8fW-w',
+
+  // Trees
+  tree_cp1: 'l_7V5uYI2G0',
+  tree_cp2: 'l_7V5uYI2G0',
+  tree_cp3: 'l_7V5uYI2G0',
+  tree_cp4: 'l_7V5uYI2G0',
+  tree_cp5: 'l_7V5uYI2G0',
+  tree_cp6: 'l_7V5uYI2G0',
+  tree_cp7: 'l_7V5uYI2G0',
+  tree_cp8: 'l_7V5uYI2G0',
+  tree_cp9: 'l_7V5uYI2G0',
+  tree_cp10: 'l_7V5uYI2G0',
+  tree_cp11: 'l_7V5uYI2G0',
+  tree_cp12: 'l_7V5uYI2G0',
+  tree_cp13: 'l_7V5uYI2G0',
+  tree_cp14: 'l_7V5uYI2G0',
+  tree_cp15: 'l_7V5uYI2G0',
+  tree_cp16: 'l_7V5uYI2G0',
+  tree_cp17: 'l_7V5uYI2G0',
+  tree_cp18: 'l_7V5uYI2G0',
+  tree_cp19: 'l_7V5uYI2G0',
+  tree_cp20: 'l_7V5uYI2G0',
+  tree_cp21: 'l_7V5uYI2G0',
+  tree_cp22: 'l_7V5uYI2G0',
+  tree_cp23: 'l_7V5uYI2G0',
+  tree_cp24: 'l_7V5uYI2G0',
+  tree_cp25: 'l_7V5uYI2G0',
+  tree_cp26: 'l_7V5uYI2G0',
+  tree_cp27: 'l_7V5uYI2G0',
+  tree_cp28: 'l_7V5uYI2G0',
+  tree_cp29: 'l_7V5uYI2G0',
+  tree_cp30: 'l_7V5uYI2G0',
+  tree_cp31: 'l_7V5uYI2G0',
+  tree_cp32: 'l_7V5uYI2G0',
+  tree_cp33: 'l_7V5uYI2G0',
+  tree_cp34: 'l_7V5uYI2G0',
+  tree_cp35: 'aZNaLrVebKQ',
+  tree_cp36: 'aZNaLrVebKQ',
+  tree_cp37: 'l_7V5uYI2G0',
+  tree_cp38: '80Zug6D1_r4',
+  tree_cp39: 'sWf7k1x9XR4',
+  tree_cp40: 'fAfR_MstP00',
+  tree_cp41: 'fAfR_MstP00',
+  tree_cp42: 'fAfR_MstP00',
+  tree_cp43: 'fAfR_MstP00',
+  tree_cp44: 'fAfR_MstP00',
+  tree_cp45: 'fAfR_MstP00',
+  tree_cp46: 'fAfR_MstP00',
+  tree_cp47: 'fAfR_MstP00',
+  tree_cp48: 'fAfR_MstP00',
+  tree_cp49: 'fAfR_MstP00',
+  tree_cp50: 'fAfR_MstP00',
+  tree_cp51: 'fAfR_MstP00',
+  tree_cp52: 'fAfR_MstP00',
+  tree_cp53: 'fAfR_MstP00',
+  tree_cp54: 'X0oXMdtUDwo',
+
+  // Graphs
+  graph_cp1: 'M3_pLsDdeuU',
+  graph_cp2: 'M3_pLsDdeuU',
+  graph_cp3: 'M3_pLsDdeuU',
+  graph_cp4: 'M3_pLsDdeuU',
+  graph_cp5: 'M3_pLsDdeuU',
+  graph_cp6: 'M3_pLsDdeuU',
+  graph_cp7: 'M3_pLsDdeuU',
+  graph_cp8: 'M3_pLsDdeuU',
+  graph_cp9: 'M3_pLsDdeuU',
+  graph_cp10: 'M3_pLsDdeuU',
+  graph_cp11: 'M3_pLsDdeuU',
+  graph_cp12: 'M3_pLsDdeuU',
+  graph_cp13: 'M3_pLsDdeuU',
+  graph_cp14: 'M3_pLsDdeuU',
+  graph_cp15: 'M3_pLsDdeuU',
+  graph_cp16: 'M3_pLsDdeuU',
+  graph_cp17: 'M3_pLsDdeuU',
+  graph_cp18: 'M3_pLsDdeuU',
+  graph_cp19: 'M3_pLsDdeuU',
+  graph_cp20: 'M3_pLsDdeuU',
+  graph_cp21: 'M3_pLsDdeuU',
+  graph_cp22: 'M3_pLsDdeuU',
+  graph_cp23: 'M3_pLsDdeuU',
+  graph_cp24: 'M3_pLsDdeuU',
+  graph_cp25: 'M3_pLsDdeuU',
+  graph_cp26: 'M3_pLsDdeuU',
+  graph_cp27: 'M3_pLsDdeuU',
+  graph_cp28: 'M3_pLsDdeuU',
+  graph_cp29: 'M3_pLsDdeuU',
+  graph_cp30: 'M3_pLsDdeuU',
+  graph_cp31: 'M3_pLsDdeuU',
+  graph_cp32: 'V6H1qAeB-l4',
+  graph_cp33: 'V6H1qAeB-l4',
+  graph_cp34: 'V6H1qAeB-l4',
+  graph_cp35: 'V6H1qAeB-l4',
+  graph_cp36: 'V6H1qAeB-l4',
+  graph_cp37: 'V6H1qAeB-l4',
+  graph_cp38: 'V6H1qAeB-l4',
+  graph_cp39: 'V6H1qAeB-l4',
+  graph_cp40: 'V6H1qAeB-l4',
+  graph_cp41: '0vVofAhAYjc',
+  graph_cp42: '0vVofAhAYjc',
+  graph_cp43: '0vVofAhAYjc',
+  graph_cp44: 'mJcZjjKzeqk',
+  graph_cp45: 'mJcZjjKzeqk',
+  graph_cp46: 'DMnDM_sxVig',
+  graph_cp47: 'DMnDM_sxVig',
+  graph_cp48: 'DMnDM_sxVig',
+  graph_cp49: 'DMnDM_sxVig',
+  graph_cp50: 'DMnDM_sxVig',
+  graph_cp51: 'DMnDM_sxVig',
+  graph_cp52: 'DMnDM_sxVig',
+  graph_cp53: 'DMnDM_sxVig',
+  graph_cp54: 'R6uoSjZ2imo',
+  graph_cp55: 'qrAub5z8FeA',
+  graph_cp56: 'j1QDfU21iZk',
+
+  // DP
+  dp_cp1: 'tyB0ztf0DNY',
+  dp_cp2: 'mLfjzJsN8us',
+  dp_cp3: 'EgG3jsGoPvQ',
+  dp_cp4: 'EgG3jsGoPvQ',
+  dp_cp5: 'GrMBfJNk_NY',
+  dp_cp6: '3WaxQMELSkw',
+  dp_cp7: 'tyB0ztf0DNY',
+  dp_cp8: 'tyB0ztf0DNY',
+  dp_cp9: 'tyB0ztf0DNY',
+  dp_cp10: 'tyB0ztf0DNY',
+  dp_cp11: 'tyB0ztf0DNY',
+  dp_cp12: 'tyB0ztf0DNY',
+  dp_cp13: 'tyB0ztf0DNY',
+  dp_cp14: 'tyB0ztf0DNY',
+  dp_cp15: 'tyB0ztf0DNY',
+  dp_cp16: 'tyB0ztf0DNY',
+  dp_cp17: 'tyB0ztf0DNY',
+  dp_cp18: 'tyB0ztf0DNY',
+  dp_cp19: 'tyB0ztf0DNY',
+  dp_cp20: 'tyB0ztf0DNY',
+  dp_cp21: 'tyB0ztf0DNY',
+  dp_cp22: 'tyB0ztf0DNY',
+  dp_cp23: 'tyB0ztf0DNY',
+  dp_cp24: 'tyB0ztf0DNY',
+  dp_cp25: 'tyB0ztf0DNY',
+  dp_cp26: 'tyB0ztf0DNY',
+  dp_cp27: 'tyB0ztf0DNY',
+  dp_cp28: 'tyB0ztf0DNY',
+  dp_cp29: 'tyB0ztf0DNY',
+  dp_cp30: 'tyB0ztf0DNY',
+  dp_cp31: 'tyB0ztf0DNY',
+  dp_cp32: 'tyB0ztf0DNY',
+  dp_cp33: 'tyB0ztf0DNY',
+  dp_cp34: 'tyB0ztf0DNY',
+  dp_cp35: 'tyB0ztf0DNY',
+  dp_cp36: 'tyB0ztf0DNY',
+  dp_cp37: 'tyB0ztf0DNY',
+  dp_cp38: 'tyB0ztf0DNY',
+  dp_cp39: 'tyB0ztf0DNY',
+  dp_cp40: 'tyB0ztf0DNY',
+  dp_cp41: 'tyB0ztf0DNY',
+  dp_cp42: 'tyB0ztf0DNY',
+  dp_cp43: 'tyB0ztf0DNY',
+  dp_cp44: 'tyB0ztf0DNY',
+  dp_cp45: 'tyB0ztf0DNY',
+  dp_cp46: 'tyB0ztf0DNY',
+  dp_cp47: 'tyB0ztf0DNY',
+  dp_cp48: 'tyB0ztf0DNY',
+  dp_cp49: 'tyB0ztf0DNY',
+  dp_cp50: 'tyB0ztf0DNY',
+  dp_cp51: 'tyB0ztf0DNY',
+  dp_cp52: 'tyB0ztf0DNY',
+  dp_cp53: 'tyB0ztf0DNY',
+  dp_cp54: 'tyB0ztf0DNY',
+  dp_cp55: 'tyB0ztf0DNY',
+  dp_cp56: 'tyB0ztf0DNY',
+
+  // Greedy
+  greedy_cp1: 'n59vC9nJreU',
+  greedy_cp2: 'n59vC9nJreU',
+  greedy_cp3: 'n59vC9nJreU',
+  greedy_cp4: 'n59vC9nJreU',
+  greedy_cp5: 'n59vC9nJreU',
+  greedy_cp6: 'n59vC9nJreU',
+  greedy_cp7: 'n59vC9nJreU',
+  greedy_cp8: 'n59vC9nJreU',
+  greedy_cp9: 'n59vC9nJreU',
+  greedy_cp10: 'n59vC9nJreU',
+  greedy_cp11: 'n59vC9nJreU',
+  greedy_cp12: 'n59vC9nJreU',
+  greedy_cp13: 'n59vC9nJreU'
+};
+
+const apnaCheckpointVideos = {
+  // Start Coding Foundations (cp1 - cp4)
+  cp1: 'VTLCoHnyACE', // Flowchart & Pseudocode + Installation
+  cp2: 'Dxu7GKtdbnA', // Variable, Data Types & Operators
+  cp3: 'qR9U6bKxJ7g', // Conditional Statements & Loops
+  cp4: 'okhdtEk1iKk', // C++ STL Complete Tutorial
+
+  // Arrays Explorer (arr_cp1 - arr_cp28)
+  arr_cp1: '8wmn7k1TTcI', // Second Largest Element (Array Part 1)
+  arr_cp2: 'NWg38xWYzEg', // Rotate Array by K Places (Vectors Array Part 2)
+  arr_cp3: 'qsbCBduIs40', // Find Single Element (L20)
+  arr_cp4: 'KDH4mhFVvHw', // Longest Subarray with Sum K (Subarray Sum Equals K L41)
+  arr_cp5: '_xqIp2rj8bo', // Two Sum (Moore's Voting Algorithm & Pair Sum L11)
+  arr_cp6: 'J48aGjfjYTI', // Sort Array of 0s, 1s, and 2s (L25)
+  arr_cp7: '_xqIp2rj8bo', // Majority Element I (Moore's Voting L11)
+  arr_cp8: '9IZYqostl2M', // Maximum Subarray Sum (Kadane's L10)
+  arr_cp9: '8wmn7k1TTcI', // Rearrange Array by Sign
+  arr_cp10: 'WBzZCm46mFo', // Buy and Sell Stock (L13)
+  arr_cp11: '-1cLK6PaLsQ', // Next Permutation (L26)
+  arr_cp12: '8wmn7k1TTcI', // Leaders in an Array
+  arr_cp13: '8wmn7k1TTcI', // Longest Consecutive Sequence
+  arr_cp14: 'XMpdvwUObho', // Set Matrix Zeroes (Spiral Matrix L37)
+  arr_cp15: 'LEFFjgt5i6w', // Rotate Matrix 90 Degrees (Search 2D Matrix L36)
+  arr_cp16: 'XMpdvwUObho', // Spiral Matrix Traversal (L37)
+  arr_cp17: 'KDH4mhFVvHw', // Subarray Sum Equals K (L41)
+  arr_cp18: '8wmn7k1TTcI', // Pascal's Triangle
+  arr_cp19: '_xqIp2rj8bo', // Majority Element II (L11)
+  arr_cp20: 'K-RsltkN63w', // 3Sum (L39)
+  arr_cp21: 'X6sL8JTROLY', // 4Sum (L40)
+  arr_cp22: '8wmn7k1TTcI', // Subarrays with XOR K
+  arr_cp23: '8wmn7k1TTcI', // Merge Overlapping Intervals
+  arr_cp24: '-1cLK6PaLsQ', // Merge Arrays In-Place (L26)
+  arr_cp25: '0Fxc_jKj2vo', // Missing and Repeating (Two Sum / Hashing L38)
+  arr_cp26: 'ynnWDBTdVi0', // Count Inversions (L54)
+  arr_cp27: '8wmn7k1TTcI', // Reverse Pairs
+  arr_cp28: '8wmn7k1TTcI', // Maximum Product Subarray
+
+  // Hashing Explorer (hash_cp1 - hash_cp3)
+  hash_cp1: '0Fxc_jKj2vo', // Hashing Introduction (L38)
+  hash_cp2: '0Fxc_jKj2vo', // Count frequencies of elements (L38)
+  hash_cp3: '0Fxc_jKj2vo', // Highest/Lowest Frequency Elements (L38)
+
+  // Recursion Survivor (rec_cp1 - rec_cp22)
+  rec_cp1: '9OsMG4fI4OY', // Introduction to Recursion (L42)
+  rec_cp2: '4iT-GhvSKzc', // Problems on Recursion (L43)
+  rec_cp3: '9OsMG4fI4OY', // Parameterised and Functional Recursion (L42)
+  rec_cp4: '4iT-GhvSKzc', // Problems on Functional Recursion (L43)
+  rec_cp5: '4iT-GhvSKzc', // Multiple Recursion Calls (L43)
+  rec_cp6: 'pNzljlzDCiI', // Recursion on Subsequences (L44)
+  rec_cp7: 'pNzljlzDCiI', // All Kind of Patterns (L44)
+  rec_cp8: 'cQDtOBTy7_Y', // Merge Sort Algorithm (L51)
+  rec_cp9: '8MNB0Mba_Dc', // Quick Sort For Beginners (L53)
+  rec_cp10: 'jkgZw2WEaqA', // Combination Sum (L49)
+  rec_cp11: 'jkgZw2WEaqA', // Combination Sum II (L49)
+  rec_cp12: 'pNzljlzDCiI', // Subset Sum I (L44)
+  rec_cp13: 'pNzljlzDCiI', // Subset Sum II (L44)
+  rec_cp14: 'N4gJDGdhpLw', // Print all Permutations Approach 1 (L45)
+  rec_cp15: 'N4gJDGdhpLw', // Print all Permutations Approach 2 (L45)
+  rec_cp16: 'BdSJnIdR-4s', // N-Queens (L46)
+  rec_cp17: '70cP3qtJp-s', // Sudoku Solver (L47)
+  rec_cp18: 'Sp1jzttFVdE', // M-Coloring (Knights Tour L55)
+  rec_cp19: 'aZ0B1eWkSVU', // Palindrome Partitioning (L50)
+  rec_cp20: 'D8Yze9CDDAw', // Rat in A Maze (L48)
+  rec_cp21: 'aZ0B1eWkSVU', // K-th Permutation Sequence (L50)
+  rec_cp22: 'ynnWDBTdVi0', // Count Inversions in an Array (L54)
+
+  // Linked List Explorer (ll_cp1 - ll_cp29)
+  ll_cp1: 'LyuuqCVkP5I', // Introduction to LL (L57)
+  ll_cp2: 'LyuuqCVkP5I', // Introduction to LL (L57)
+  ll_cp3: 'LyuuqCVkP5I', // Deletion and Insertion in LL (L57)
+  ll_cp4: 'bO5DasTsaRQ', // Introduction to Doubly LL (L63)
+  ll_cp5: 'bO5DasTsaRQ', // Reverse a DLL (L63)
+  ll_cp6: 'f8RPIb-0DDE', // Add 2 numbers in LL (L61)
+  ll_cp7: 'LyuuqCVkP5I', // Odd Even Linked List (L57)
+  ll_cp8: 'LyuuqCVkP5I', // Sort LL of 0s, 1s, 2s (L57)
+  ll_cp9: 'LyuuqCVkP5I', // Remove Nth Node from end (L57)
+  ll_cp10: 'R-CKBYnOv1U', // Reverse a LinkedList (L58)
+  ll_cp11: 'LyuuqCVkP5I', // Check if LL is Palindrome (L57)
+  ll_cp12: 'LyuuqCVkP5I', // Add 1 to LL (L57)
+  ll_cp13: 'LyuuqCVkP5I', // Find intersection point (L57)
+  ll_cp14: 'nzaHG0dme4g', // Find middle element (L59)
+  ll_cp15: '-1E8ZMS0gSs', // Detect loop/cycle (L60)
+  ll_cp16: '-1E8ZMS0gSs', // Find length of Loop (L60)
+  ll_cp17: 'nzaHG0dme4g', // Delete middle node (L59)
+  ll_cp18: '-1E8ZMS0gSs', // Find starting point of Loop (L60)
+  ll_cp19: 'bO5DasTsaRQ', // Delete all occurrences DLL (L63)
+  ll_cp20: 'bO5DasTsaRQ', // Find all pairs DLL (L63)
+  ll_cp21: 'bO5DasTsaRQ', // Remove duplicates DLL (L63)
+  ll_cp22: '-swgIiMIlJo', // Reverse Nodes in K Group (L66)
+  ll_cp23: 'LyuuqCVkP5I', // Rotate a LL (L57)
+  ll_cp24: 'f8RPIb-0DDE', // Merge two sorted LL (L61)
+  ll_cp25: 'I8b0rff5F9M', // Flattening a LL (L65)
+  ll_cp26: 'f8RPIb-0DDE', // Merge K Sorted Lists (L61)
+  ll_cp27: 'LyuuqCVkP5I', // Sort a Linked List (L57)
+  ll_cp28: '8ze7Zopdsaw', // Clone a LL (L62)
+  ll_cp29: 'LyuuqCVkP5I', // Design Browser History (L57)
+
+  // Stack & Queue Explorer (sq_cp1 - sq_cp19)
+  sq_cp1: '0X-fV-1ir9c', // Intro Stack/Queue (L68)
+  sq_cp2: 'NlHupEeDXzY', // Check Balanced Parentheses (L69)
+  sq_cp3: '0X-fV-1ir9c', // Prefix/Infix/Postfix (L68)
+  sq_cp4: 'wHDm-N2m2XY', // Implement Min Stack (L73)
+  sq_cp5: 'NKbExYwvjb0', // Next Greater Element (L71)
+  sq_cp6: 'If--3pm9K3U', // Next Greater Element II (L75)
+  sq_cp7: 'WnjUfBn9nZM', // Previous Smaller Element (L72)
+  sq_cp8: 'UHHp8USwx4M', // Trapping Rainwater (L76)
+  sq_cp9: '0X-fV-1ir9c', // Sum of Subarray Minimum (L68)
+  sq_cp10: '0X-fV-1ir9c', // Sum of subarray ranges (L68)
+  sq_cp11: '0X-fV-1ir9c', // Asteroid Collisions (L68)
+  sq_cp12: 'ysy1o-QEj3k', // Largest Rectangle in Histogram (L74)
+  sq_cp13: 'ysy1o-QEj3k', // Maximal Rectangle (L74)
+  sq_cp14: '0X-fV-1ir9c', // Remove K Digits (L68)
+  sq_cp15: '01vBuZyMfqk', // Stock Span Problem (L70)
+  sq_cp16: 'XwG5cozqfaM', // Sliding Window Maximum (L83)
+  sq_cp17: 'OZPmEA_8FM8', // Celebrity Problem (L77)
+  sq_cp18: 'GsY6y0iPaHw', // Implement LRU Cache (L78)
+  sq_cp19: 'GsY6y0iPaHw', // Implement LFU Cache (L78)
+
+  // Trees Explorer (tree_cp1 - tree_cp54)
+  tree_cp1: 'eKJrXBCRuNQ', // Tree Intro (L85)
+  tree_cp2: 'eKJrXBCRuNQ', // Intro to Trees (L85)
+  tree_cp3: 'eKJrXBCRuNQ', // Representation C++ (L85)
+  tree_cp4: 'eKJrXBCRuNQ', // Representation Java (L85)
+  tree_cp5: 'eKJrXBCRuNQ', // BFS/DFS (L85)
+  tree_cp6: 'eKJrXBCRuNQ', // Preorder Traversal (L85)
+  tree_cp7: 'eKJrXBCRuNQ', // Inorder Traversal (L85)
+  tree_cp8: 'eKJrXBCRuNQ', // Postorder Traversal (L85)
+  tree_cp9: 'eKJrXBCRuNQ', // Level Order Traversal (L85)
+  tree_cp10: 'eKJrXBCRuNQ', // Iterative Preorder (L85)
+  tree_cp11: 'eKJrXBCRuNQ', // Iterative Inorder (L85)
+  tree_cp12: 'eKJrXBCRuNQ', // Iterative Postorder 2 Stack (L85)
+  tree_cp13: 'eKJrXBCRuNQ', // Iterative Postorder 1 Stack (L85)
+  tree_cp14: 'eKJrXBCRuNQ', // Pre/In/Post in One (L85)
+  tree_cp15: '7tzHzN_Ehus', // Height of Binary Tree (L86)
+  tree_cp16: '7tzHzN_Ehus', // Check Balanced Tree (L86)
+  tree_cp17: 'aPyDPImR5UM', // Diameter of Tree (L88)
+  tree_cp18: '7tzHzN_Ehus', // Maximum Path Sum (L86)
+  tree_cp19: 'tumW7jsjv68', // Identical Trees (L87)
+  tree_cp20: 'eKJrXBCRuNQ', // Zig-Zag Traversal (L85)
+  tree_cp21: 'eKJrXBCRuNQ', // Boundary Traversal (L85)
+  tree_cp22: 'eKJrXBCRuNQ', // Vertical Order Traversal (L85)
+  tree_cp23: 'FGr-syrhvOA', // Top View of Tree (L89)
+  tree_cp24: 'FGr-syrhvOA', // Bottom View of Tree (L89)
+  tree_cp25: 'FGr-syrhvOA', // Right/Left View of Tree (L89)
+  tree_cp26: 'tumW7jsjv68', // Symmetrical Tree (L87)
+  tree_cp27: 'AWJD__CfM6A', // Root to Node Path (L94)
+  tree_cp28: 'oX5D0uKOMck', // Lowest Common Ancestor (L91)
+  tree_cp29: 'rhz-csskg_A', // Maximum Width of Tree (L95)
+  tree_cp30: 'TY6kEejJEM0', // Children Sum Property (L93)
+  tree_cp31: 'ze4JO_ODl3w', // Nodes distance K (L90)
+  tree_cp32: '7tzHzN_Ehus', // Burn Tree from Node (L86)
+  tree_cp33: '7tzHzN_Ehus', // Count total nodes (L86)
+  tree_cp34: 'eKJrXBCRuNQ', // Requirements to construct tree (L85)
+  tree_cp35: '33b1M980cCA', // Construct from Pre/In (L92)
+  tree_cp36: '33b1M980cCA', // Construct from Post/In (L92)
+  tree_cp37: 'eKJrXBCRuNQ', // Serialize/Deserialize (L85)
+  tree_cp38: 'PUfADhkq1LI', // Morris Traversal (L96)
+  tree_cp39: 'dU2Z5HWSGM0', // Flatten Tree (L97)
+  tree_cp40: 'RuF7dPfj27Q', // Introduction to BST (L98)
+  tree_cp41: 'RuF7dPfj27Q', // Search in BST (L98)
+  tree_cp42: 'RuF7dPfj27Q', // Ceil in BST (L98)
+  tree_cp43: 'RuF7dPfj27Q', // Floor in BST (L98)
+  tree_cp44: 'RuF7dPfj27Q', // Insert Node in BST (L98)
+  tree_cp45: 'RuF7dPfj27Q', // Delete Node in BST (L98)
+  tree_cp46: 'Kq4BbvIhj44', // K-th Smallest/Largest in BST (L102)
+  tree_cp47: 'dSBcCynP1nA', // Validate BST (L100)
+  tree_cp48: 'ORxkZ12FrU4', // LCA in BST (L103)
+  tree_cp49: '-n5Ur1wE5Jc', // Construct BST Pre (L104)
+  tree_cp50: 'IHNkql1tAnk', // Inorder Pre/Successor (L110)
+  tree_cp51: 'dS1bKglre3A', // BST Iterator (L109)
+  tree_cp52: 'RuF7dPfj27Q', // Two Sum in BST (L98)
+  tree_cp53: '0KGzfij_SCk', // Recover BST (L106)
+  tree_cp54: 'Pr-HFxp7npk', // Largest BST in BT (L107)
+
+  // Graph Explorer (graph_cp1 - graph_cp56)
+  graph_cp1: 'RpgyCJBbl5E', // Intro to Graph (L111)
+  graph_cp2: 'RpgyCJBbl5E', // Representation C++ (L111)
+  graph_cp3: 'RpgyCJBbl5E', // Representation Java (L111)
+  graph_cp4: 'RpgyCJBbl5E', // Connected Components (L111)
+  graph_cp5: 'scQITTLgFJo', // BFS (L112)
+  graph_cp6: '3czYbhac160', // DFS (L113)
+  graph_cp7: 'J1yCPIP-K8s', // Number of Provinces (L130)
+  graph_cp8: 'AME6baBpswY', // Number of Islands (L116)
+  graph_cp9: 'JI_e2RzARbM', // Flood Fill Algorithm (L122)
+  graph_cp10: 'RmXo5SWkhCs', // Rotten Oranges (L117)
+  graph_cp11: 'MIjOkApZ39g', // Cycle Undirected BFS (L115)
+  graph_cp12: 'OZClCpPQDR4', // Cycle Undirected DFS (L114)
+  graph_cp13: 'scQITTLgFJo', // Distance of nearest cell (L112)
+  graph_cp14: '3czYbhac160', // Surrounded Regions (L113)
+  graph_cp15: 'scQITTLgFJo', // Number of Enclaves (L112)
+  graph_cp16: 'AME6baBpswY', // Number of Distinct Islands (L116)
+  graph_cp17: 'scQITTLgFJo', // Bipartite BFS (L112)
+  graph_cp18: '3czYbhac160', // Bipartite DFS (L113)
+  graph_cp19: 'AcppN5XFt24', // Cycle Directed DFS (L118)
+  graph_cp20: '0WIINUY12Yg', // Eventual Safe States DFS (L119)
+  graph_cp21: '0WIINUY12Yg', // Topological Sort DFS (L119)
+  graph_cp22: 'BnQpaTZg6Sc', // Kahn's Algorithm BFS (L123)
+  graph_cp23: 'BnQpaTZg6Sc', // Cycle Directed BFS (L123)
+  graph_cp24: '37cJ38HadM4', // Course Schedule (L120)
+  graph_cp25: 'BnQpaTZg6Sc', // Eventual Safe States BFS (L123)
+  graph_cp26: 'BnQpaTZg6Sc', // Alien Dictionary (L123)
+  graph_cp27: '0WIINUY12Yg', // Shortest Path DAG (L119)
+  graph_cp28: 'scQITTLgFJo', // Shortest Path Undirected Unit (L112)
+  graph_cp29: 'scQITTLgFJo', // Word Ladder I (L112)
+  graph_cp30: 'scQITTLgFJo', // Word Ladder II (L112)
+  graph_cp31: 'scQITTLgFJo', // Word Ladder II Leetcode (L112)
+  graph_cp32: '8gYBHjtjWBI', // Dijkstra PQ (L124)
+  graph_cp33: '8gYBHjtjWBI', // Dijkstra Set (L124)
+  graph_cp34: '8gYBHjtjWBI', // Dijkstra Complexity (L124)
+  graph_cp35: '8gYBHjtjWBI', // Print Shortest Path (L124)
+  graph_cp36: '8gYBHjtjWBI', // Shortest Path Binary Maze (L124)
+  graph_cp37: '8gYBHjtjWBI', // Path Min Effort (L124)
+  graph_cp38: 'CLmykzpeCCs', // Cheapest Flights (L132)
+  graph_cp39: '8gYBHjtjWBI', // Min Multiplications (L124)
+  graph_cp40: '8gYBHjtjWBI', // Number of Ways (L124)
+  graph_cp41: '3rFHlbJ7qKc', // Bellman Ford (L125)
+  graph_cp42: 'iZBXd-vjHUA', // Floyd Warshall (L136)
+  graph_cp43: 'iZBXd-vjHUA', // City Smallest Threshold (L136)
+  graph_cp44: 'Sflh1z6cIMk', // MST Theory (L127)
+  graph_cp45: 'Sflh1z6cIMk', // Prim's Algorithm (L127)
+  graph_cp46: 'nnrjWxWMo3E', // Disjoint Set (L128)
+  graph_cp47: 'inoM6jwj1CA', // Kruskal's Algorithm (L129)
+  graph_cp48: 'J1yCPIP-K8s', // Provinces DSU (L130)
+  graph_cp49: 'nnrjWxWMo3E', // Network Connected DSU (L128)
+  graph_cp50: 'nnrjWxWMo3E', // Accounts Merge DSU (L128)
+  graph_cp51: 'nnrjWxWMo3E', // Islands II Online DSU (L128)
+  graph_cp52: 'nnrjWxWMo3E', // Making Large Island DSU (L128)
+  graph_cp53: 'nnrjWxWMo3E', // Stones Removed DSU (L128)
+  graph_cp54: 'lqY8TE0P1S8', // Kosaraju's Algorithm (L135)
+  graph_cp55: '6h1SucBNxgc', // Bridges Tarjan (L133)
+  graph_cp56: 'cn7pov3BEmg', // Articulation Point (L134)
+};
+
+export const getCheckpointContent = (checkpointId, lang = 'cpp', dsaCourse = 'default') => {
+  let content = null;
+  if (checkpointId && checkpointId.startsWith('sheet_cp')) {
+    content = getDsaSheetCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('arr_cp')) {
+    content = getArraysCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('hash_cp')) {
+    content = getHashingCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('rec_cp')) {
+    content = getRecursionCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('ll_cp')) {
+    content = getLinkedListCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('sq_cp')) {
+    content = getStackQueueCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('tree_cp')) {
+    content = getTreesCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('graph_cp')) {
+    content = getGraphCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('dp_cp')) {
+    content = getDPCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('greedy_cp')) {
+    content = getGreedyCheckpointContent(checkpointId, lang);
+  } else if (checkpointId && checkpointId.startsWith('oops_cp')) {
+    content = getOopsCheckpointContent(checkpointId, lang);
   }
-  if (checkpointId && checkpointId.startsWith('hash_cp')) {
-    return getHashingCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('rec_cp')) {
-    return getRecursionCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('ll_cp')) {
-    return getLinkedListCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('sq_cp')) {
-    return getStackQueueCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('tree_cp')) {
-    return getTreesCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('graph_cp')) {
-    return getGraphCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('dp_cp')) {
-    return getDPCheckpointContent(checkpointId, lang);
-  }
-  if (checkpointId && checkpointId.startsWith('greedy_cp')) {
-    return getGreedyCheckpointContent(checkpointId, lang);
+
+  if (content) {
+    if ((dsaCourse === 'default' || dsaCourse === 'love-babbar') && (lang === 'cpp' || lang === 'c++')) {
+      const babbarVideoId = babbarCheckpointVideos[checkpointId];
+      if (babbarVideoId) {
+        content.videoEmbedUrl = `https://www.youtube.com/embed/${babbarVideoId}?rel=0&modestbranding=1`;
+      }
+    }
+    return content;
   }
   const language = (lang || 'cpp').toLowerCase();
 
@@ -1656,6 +2280,7 @@ export const getCheckpointContent = (checkpointId, lang = 'cpp') => {
         javascript: {
           title: 'Sum from 1 to N',
           desc: `JavaScript loops are your new tool!\n\nWrite sumToN(n) that returns 1+2+...+n.\n\nExample: sumToN(5) = 15\n\nðŸŽ¯ Use a for loop and a counter variable.`,
+          desc: `JavaScript loops are your new tool!\n\nWrite sumToN(n) that returns 1+2+...+n.\n\nExample: sumToN(5) = 15\n\n🎯 Use a for loop and a counter variable.`,
           functionName: 'sumToN',
           constraints: '1 <= n <= 10000',
           testCases: [
@@ -1749,11 +2374,19 @@ export const getCheckpointContent = (checkpointId, lang = 'cpp') => {
   const langChallenge = cp.challenges[language] || cp.challenges.cpp;
   const isLastCheckpoint = checkpointId === 'cp4';
 
+  let videoEmbedUrl = cp.videoEmbedUrl;
+  if ((dsaCourse === 'default' || dsaCourse === 'love-babbar') && (lang === 'cpp' || lang === 'c++')) {
+    const babbarVideoId = babbarCheckpointVideos[checkpointId];
+    if (babbarVideoId) {
+      videoEmbedUrl = `https://www.youtube.com/embed/${babbarVideoId}?rel=0&modestbranding=1`;
+    }
+  }
+
   return {
     title: cp.title,
     subtitle: cp.subtitle,
     // Each checkpoint has its own unique embed URL â€” NEVER repeated
-    videoEmbedUrl: cp.videoEmbedUrl,
+    videoEmbedUrl,
     challengeTitle: langChallenge.title,
     challengeDescription: langChallenge.desc,
     approach: langChallenge.approach || '',

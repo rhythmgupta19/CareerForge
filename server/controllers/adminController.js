@@ -119,41 +119,39 @@ exports.updateUserProgress = async (req, res) => {
       user.profile = { ...user.profile.toObject(), ...profile };
     }
 
-    // Safely update domainsProgress for active domain
-    if (user.activeDomain) {
-      const getProgressKey = (slug) => {
-        if (!slug) return 'dsa';
-        const lowercaseSlug = slug.toLowerCase();
-        if (lowercaseSlug === 'web-development' || lowercaseSlug === 'webdev') return 'webdev';
-        if (lowercaseSlug === 'open-source' || lowercaseSlug === 'opensource') return 'opensource';
-        if (lowercaseSlug === 'devops') return 'devops';
-        if (lowercaseSlug === 'dsa') return 'dsa';
-        if (lowercaseSlug.includes('web') || lowercaseSlug.includes('ui-ux')) return 'webdev';
-        if (lowercaseSlug.includes('open') || lowercaseSlug.includes('git')) return 'opensource';
-        if (lowercaseSlug.includes('dsa') || lowercaseSlug.includes('data')) return 'dsa';
-        return 'devops';
+    // Safely update domainsProgress
+    const getProgressKey = (slug) => {
+      if (!slug) return 'dsa';
+      const lowercaseSlug = slug.toLowerCase();
+      if (lowercaseSlug === 'web-development' || lowercaseSlug === 'webdev') return 'webdev';
+      if (lowercaseSlug === 'open-source' || lowercaseSlug === 'opensource') return 'opensource';
+      if (lowercaseSlug === 'devops') return 'devops';
+      if (lowercaseSlug === 'dsa') return 'dsa';
+      if (lowercaseSlug.includes('web') || lowercaseSlug.includes('ui-ux')) return 'webdev';
+      if (lowercaseSlug.includes('open') || lowercaseSlug.includes('git')) return 'opensource';
+      if (lowercaseSlug.includes('dsa') || lowercaseSlug.includes('data')) return 'dsa';
+      return 'devops';
+    };
+
+    const key = getProgressKey(user.activeDomain?.slug);
+    if (!user.domainsProgress) user.domainsProgress = {};
+    if (!user.domainsProgress[key]) {
+      user.domainsProgress[key] = {
+        xp: 0,
+        currentPhase: 0,
+        overallProgress: 0,
+        completedTopics: [],
+        startedTopics: [],
+        testResults: [],
+        codeSubmissions: []
       };
-
-      const key = getProgressKey(user.activeDomain.slug);
-      if (!user.domainsProgress) user.domainsProgress = {};
-      if (!user.domainsProgress[key]) {
-        user.domainsProgress[key] = {
-          xp: 0,
-          currentPhase: 0,
-          overallProgress: 0,
-          completedTopics: [],
-          startedTopics: [],
-          testResults: [],
-          codeSubmissions: []
-        };
-      }
-
-      if (xp !== undefined) user.domainsProgress[key].xp = xp;
-      if (overallProgress !== undefined) user.domainsProgress[key].overallProgress = overallProgress;
-      if (currentPhase !== undefined) user.domainsProgress[key].currentPhase = currentPhase;
-
-      user.markModified(`domainsProgress.${key}`);
     }
+
+    if (xp !== undefined) user.domainsProgress[key].xp = xp;
+    if (overallProgress !== undefined) user.domainsProgress[key].overallProgress = overallProgress;
+    if (currentPhase !== undefined) user.domainsProgress[key].currentPhase = currentPhase;
+
+    user.markModified(`domainsProgress.${key}`);
 
     await user.save();
     

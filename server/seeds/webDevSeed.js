@@ -134,19 +134,15 @@ const webDevTopics = {
   ]
 };
 
-// Overwrite Web Dev with a premium, gamified 9-phase roadmap
+// Overwrite Web Dev with the new 5-phase roadmap
 const webDevIdx = domainsToSeed.findIndex(d => d.slug === 'web-development');
 if (webDevIdx !== -1) {
   domainsToSeed[webDevIdx].phases = [
-    { phaseNumber: 0, name: 'The Web Voyager', description: 'Master the hidden mechanics of the internet: DNS, HTTP, and how browsers render the world.' },
-    { phaseNumber: 1, name: 'Structure Sensei', description: 'Learn to build the skeletal foundation of applications with semantic HTML5 and SEO best practices.' },
-    { phaseNumber: 2, name: 'Style Sorcerer', description: 'Control the visual realm using Modern CSS, Flexbox, CSS Grid, and responsive wizardry.' },
-    { phaseNumber: 3, name: 'Logic Legend', description: 'Harness the power of JavaScript. Master ES6+, DOM manipulation, and asynchronous programming.' },
-    { phaseNumber: 4, name: 'Version Vanguard', description: 'Learn the art of time travel with Git and collaborative warfare on GitHub.' },
-    { phaseNumber: 5, name: 'Component Commander', description: 'Step into the modern era with React. Master hooks, props, and virtual DOM strategies.' },
-    { phaseNumber: 6, name: 'API Architect', description: 'Build the engine. Master Node.js, Express, and RESTful API design from scratch.' },
-    { phaseNumber: 7, name: 'Schema Strategist', description: 'Master the data layer. Design scalable NoSQL schemas with MongoDB and Mongoose.' },
-    { phaseNumber: 8, name: 'Full Stack Titan', description: 'Assemble the MERN stack. Deploy live projects and become an industry-ready architect.' }
+    { phaseNumber: 0, name: 'Web Foundations & Responsive Layouts', description: 'Master the fundamentals of web pages (HTML, CSS, basic JS) and construct highly responsive layouts.' },
+    { phaseNumber: 1, name: 'JavaScript Mastery', description: 'Deep dive into JS fundamentals, scoping, asynchronous behavior, and preparation for placement interviews.' },
+    { phaseNumber: 2, name: 'Modern Frontend (React, Redux & TS)', description: 'Master component-driven development using React.js, global state using Redux Toolkit, and type safety with TypeScript.' },
+    { phaseNumber: 3, name: 'Backend Engineering & APIs', description: 'Learn servers, databases, advanced transactions, and production-grade auth systems using Node, Express, and MongoDB.' },
+    { phaseNumber: 4, name: 'Full Stack Integration & AI', description: 'Connect frontend and backend, secure your stack, and integrate Gemini AI APIs into a complete full stack project.' }
   ];
 }
 
@@ -163,42 +159,50 @@ async function seedAllDomains() {
       );
       console.log(`✅ Domain set: ${domain.name}`);
 
-      // Clear existing for this domain to avoid duplicates during re-seeding
-      await Phase.deleteMany({ domainId: domain._id });
-      await Topic.deleteMany({ domainId: domain._id });
-
       const phases = phaseData[domain.slug] || [];
       for (const phaseInfo of phases) {
-        const phase = await Phase.create({
-          ...phaseInfo,
-          domainId: domain._id,
-          order: phaseInfo.phaseNumber
-        });
+        const phase = await Phase.findOneAndUpdate(
+          { domainId: domain._id, phaseNumber: phaseInfo.phaseNumber },
+          {
+            ...phaseInfo,
+            domainId: domain._id,
+            order: phaseInfo.phaseNumber
+          },
+          { upsert: true, new: true }
+        );
         
         const topicKey = `${domain.slug}:${phase.phaseNumber}`;
         const topics = topicData[topicKey] || [];
         
         if (topics.length > 0) {
           for (const t of topics) {
-            await Topic.create({
-              ...t,
-              phaseId: phase._id,
-              domainId: domain._id,
-              isActive: true
-            });
+            await Topic.findOneAndUpdate(
+              { domainId: domain._id, phaseId: phase._id, title: t.title },
+              {
+                ...t,
+                phaseId: phase._id,
+                domainId: domain._id,
+                isActive: true
+              },
+              { upsert: true, new: true }
+            );
           }
         } else {
           // Default topic if none specified
-          await Topic.create({
-            title: `Intro to ${phase.name}`,
-            description: `Core concepts and foundations of ${phase.name}.`,
-            youtubeLink: 'https://www.youtube.com/watch?v=hcMzwfj824A',
-            estimatedTime: '1 hour',
-            phaseId: phase._id,
-            domainId: domain._id,
-            isActive: true,
-            order: 0
-          });
+          await Topic.findOneAndUpdate(
+            { domainId: domain._id, phaseId: phase._id, title: `Intro to ${phase.name}` },
+            {
+              title: `Intro to ${phase.name}`,
+              description: `Core concepts and foundations of ${phase.name}.`,
+              youtubeLink: 'https://www.youtube.com/watch?v=hcMzwfj824A',
+              estimatedTime: '1 hour',
+              phaseId: phase._id,
+              domainId: domain._id,
+              isActive: true,
+              order: 0
+            },
+            { upsert: true, new: true }
+          );
         }
       }
     }

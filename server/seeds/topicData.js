@@ -3,602 +3,129 @@
 const topicData = {
   'web-development:0': [
     {
-      title: 'HTML Complete Course',
-      description: 'Master HTML5 from scratch with the Apna College HTML tutorial. Build the skeleton of pages, learn semantic layout, and construct forms in this one-shot complete course.',
-      instructor: 'Apna College',
+      title: 'HTML, CSS and JavaScript Basics',
+      description: 'Get started with the fundamentals of HTML, CSS, and Javascript. Learn how the MERN stack coordinates frontend structure and basic interactivity.',
+      instructor: 'Sheryians Coding School',
       difficulty: 'beginner',
-      estimatedTime: '3 hours',
+      estimatedTime: '2 hours',
       order: 1,
-      youtubeLink: 'https://www.youtube.com/watch?v=HcOc7P5BMi4'
+      youtubeLink: 'https://www.youtube.com/watch?v=kkOuRJ69BRY'
+    },
+    {
+      title: 'Responsive Web Design & Layouts',
+      description: 'Master media queries, CSS Flexbox, CSS Grid, and responsive layout patterns by building a complete responsive landing page project from scratch.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'beginner',
+      estimatedTime: '4 hours',
+      order: 2,
+      youtubeLink: 'https://www.youtube.com/watch?v=J_r6hBo9lO4'
     }
   ],
   'web-development:1': [
     {
-      title: 'CSS Complete Course',
-      description: 'Master CSS from scratch with the Apna College CSS tutorial. Learn selectors, box model, layout design, Flexbox, and Grid in this one-shot complete course.',
-      instructor: 'Apna College',
+      title: 'JavaScript Fundamentals & Basics',
+      description: 'Deep dive into JS syntax, variable scopes, objects, arrays, loops, functions, and core programming structures.',
+      instructor: 'Sheryians Coding School',
       difficulty: 'beginner',
-      estimatedTime: '4 hours',
+      estimatedTime: '6 hours',
       order: 1,
-      youtubeLink: 'https://www.youtube.com/watch?v=ESnrn1kAD4E'
+      youtubeLink: 'https://www.youtube.com/watch?v=a-wVHL0lpb0'
+    },
+    {
+      title: 'Core JavaScript & Developer Fundamentals',
+      description: 'Master prototype inheritance, scopes, call stacks, context matching, execution cycles, and developer logic patterns.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'intermediate',
+      estimatedTime: '4 hours',
+      order: 2,
+      youtubeLink: 'https://www.youtube.com/watch?v=1aR7tcmWo_w'
+    },
+    {
+      title: 'Advanced JavaScript & Dynamic Projects',
+      description: 'Learn event loops, asynchronous programming, closures, APIs integration, and build multiple dynamic vanilla JavaScript projects.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'advanced',
+      estimatedTime: '5 hours',
+      order: 3,
+      youtubeLink: 'https://www.youtube.com/watch?v=wH6uf20dpAo'
+    },
+    {
+      title: 'JavaScript Interview Prep & Placement Challenges',
+      description: 'Prepare for technical placement interviews. Deep dive into standard JS interview questions, algorithmic problem solving in JS, and optimization tricks.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'advanced',
+      estimatedTime: '4 hours',
+      order: 4,
+      youtubeLink: 'https://www.youtube.com/watch?v=GVdBPJzmwQg'
     }
   ],
   'web-development:2': [
-    { title: 'Intro to JavaScript', description: 'Starting JavaScript Series: Learn history, environment setup, and basic syntax.', difficulty: 'beginner', estimatedTime: '1 hour', order: 1, youtubeLink: 'https://www.youtube.com/watch?v=1dFqthtouqU' },
-    { title: 'Variables and DataTypes', description: 'Understand variable declarations, scoping rules, and JavaScript primitives.', difficulty: 'beginner', estimatedTime: '1 hour', order: 2, youtubeLink: 'https://www.youtube.com/watch?v=u3v2H5mwixY' },
-    { title: 'Operators & Conditionals', description: 'Master arithmetic, logical, assignment operators and if-else decision statements.', difficulty: 'beginner', estimatedTime: '1 hour', order: 3, youtubeLink: 'https://www.youtube.com/watch?v=7k6oEConqLA' },
-    { title: 'Loops and Strings', description: 'Iterative execution using for, while, do-while loops and basic string operations.', difficulty: 'beginner', estimatedTime: '1 hour', order: 4, youtubeLink: 'https://www.youtube.com/watch?v=UXxwO_U_gXI' },
-    { title: 'Objects & Arrays', description: 'Learn reference types: arrays declaration, key-value object structures and properties.', difficulty: 'beginner', estimatedTime: '1 hour', order: 5, youtubeLink: 'https://www.youtube.com/watch?v=XK8loB2jYDE' },
-    { title: 'Functions & Arrow Functions', description: 'Master functional programming: plain function declarations, parameters, and ES6 arrow functions.', difficulty: 'beginner', estimatedTime: '1 hour', order: 6, youtubeLink: 'https://www.youtube.com/watch?v=nqC-UlGTssg' },
-    { title: 'Hoisting and Function Calls', description: 'Understand Javascript hoisting rules, execution context, and call stacks.', difficulty: 'beginner', estimatedTime: '1 hour', order: 7, youtubeLink: 'https://www.youtube.com/watch?v=eK4gqHb7P7w' },
-    { title: 'Temporal Dead Zone', description: 'Understand the Temporal Dead Zone (TDZ), let/const initialization boundaries.', difficulty: 'beginner', estimatedTime: '1 hour', order: 8, youtubeLink: 'https://www.youtube.com/watch?v=7NA3hX3IfVg' },
-    { title: 'Classes & Default Parameters', description: 'Learn OOP in JavaScript using ES6 classes, constructor logic, and default parameters.', difficulty: 'beginner', estimatedTime: '1 hour', order: 9, youtubeLink: 'https://www.youtube.com/watch?v=SslpdF_HlFc' },
-    { title: 'Common In-Built Objects', description: 'Learn standard library math functions, date formatting, and essential utility wrappers.', difficulty: 'beginner', estimatedTime: '1 hour', order: 10, youtubeLink: 'https://www.youtube.com/watch?v=cmgpJxt1q6k' },
-    { title: 'Object Cloning & Garbage Collection', description: 'Deep copy vs shallow copy, object cloning techniques, and memory management.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 11, youtubeLink: 'https://www.youtube.com/watch?v=9KBadAcKVrU' },
-    { title: 'Error Handling', description: 'Prevent crashes using try-catch blocks and throwing custom error objects.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 12, youtubeLink: 'https://www.youtube.com/watch?v=u2xLcx3sC_k' },
-    { title: 'DOM Manipulation Basics', description: 'Selecting elements, inserting, updating, and removing nodes dynamically.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 13, youtubeLink: 'https://www.youtube.com/watch?v=uoII7VSDF3k' },
-    { title: 'DOM Manipulation Styling', description: 'Change visual styling of HTML elements using classList, style property, and CSSOM rules.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 14, youtubeLink: 'https://www.youtube.com/watch?v=5Udw0F6DIhA' },
-    { title: 'Events & Listeners', description: 'Handling user interactions with addEventListener, event bubbling, and delegation.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 15, youtubeLink: 'https://www.youtube.com/watch?v=x2gl4KwUIV8' },
-    { title: 'Reflow & Repaint', description: 'Understand browser rendering engine performance optimizations: avoiding layout thrashing.', difficulty: 'intermediate', estimatedTime: '1 hour', order: 16, youtubeLink: 'https://www.youtube.com/watch?v=kqFauVbe-1M' },
-    { title: 'The Event Loop', description: 'Deep dive into JS concurrency model: call stack, web APIs, callback queue, and microtask queue.', difficulty: 'advanced', estimatedTime: '1 hour', order: 17, youtubeLink: 'https://www.youtube.com/watch?v=FqaCRrxiS_A' },
-    { title: 'Promises in JavaScript', description: 'Manage asynchronous flows, promise resolution, rejection, and chaining handlers.', difficulty: 'advanced', estimatedTime: '1 hour', order: 18, youtubeLink: 'https://www.youtube.com/watch?v=Bgf2bXr6psI' },
-    { title: 'Async/Await & Fetch API', description: 'Write synchronous-looking asynchronous code and fetch remote APIs using HTTP requests.', difficulty: 'advanced', estimatedTime: '1 hour', order: 19, youtubeLink: 'https://www.youtube.com/watch?v=EL3PKEHggrE' },
-    { title: 'Closures', description: 'Master nested scopes: lexical scoping, closed variables, and functional state preservation.', difficulty: 'advanced', estimatedTime: '1 hour', order: 20, youtubeLink: 'https://www.youtube.com/watch?v=ThJOl1gqIjs' },
-    { title: 'LeetCode Metrics App Project', description: 'Assemble everything together to build a fully functional LeetCode Metrics tracker application.', difficulty: 'advanced', estimatedTime: '2 hours', order: 21, youtubeLink: 'https://www.youtube.com/watch?v=5dDkw_yCSgw' }
+    {
+      title: 'ReactJS Fundamentals & Component Architecture',
+      description: 'Master React components, state, props, JSX syntax, hooks (useState, useEffect, useRef), and virtual DOM reconciliation.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'intermediate',
+      estimatedTime: '10 hours',
+      order: 1,
+      youtubeLink: 'https://www.youtube.com/watch?v=3LRZRSIh_KE'
+    },
+    {
+      title: 'State Management with Redux Toolkit',
+      description: 'Learn modern global state management using Redux Toolkit (RTK). Implement stores, slices, reducers, and selectors in a real-world project.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'intermediate',
+      estimatedTime: '3 hours',
+      order: 2,
+      youtubeLink: 'https://www.youtube.com/watch?v=Q5TqsetwCoE'
+    },
+    {
+      title: 'TypeScript Domination',
+      description: 'Master TypeScript features including types, interfaces, generics, TS configuration, and integrating strict typing with React.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'intermediate',
+      estimatedTime: '4 hours',
+      order: 3,
+      youtubeLink: 'https://www.youtube.com/watch?v=lVzb6pmel_E'
+    }
   ],
   'web-development:3': [
     {
-      title: 'Git & GitHub Complete Course',
-      description: 'Master version control, repository creation, branching, commits, and pull requests in this one-shot complete course.',
-      instructor: 'Apna College',
-      difficulty: 'beginner',
-      estimatedTime: '2 hours',
+      title: 'Node.js, Express & MongoDB Foundations',
+      description: 'Build scalable backend servers using Node.js, Express.js routing, and document-based data persistence with MongoDB/Mongoose schemas.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'intermediate',
+      estimatedTime: '8 hours',
       order: 1,
-      youtubeLink: 'https://www.youtube.com/watch?v=q8EevlEpQ2A'
+      youtubeLink: 'https://www.youtube.com/watch?v=0IciwnJ6PJI'
+    },
+    {
+      title: 'Bank Transaction System Backend Project',
+      description: 'Build a secure and reliable backend for a banking transaction system. Learn concurrent db transactions, account schemas, and routing logic.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'advanced',
+      estimatedTime: '5 hours',
+      order: 2,
+      youtubeLink: 'https://www.youtube.com/watch?v=NQOAQP0mow0'
+    },
+    {
+      title: 'Production Authentication & Security',
+      description: 'Implement professional authentication: JSON Web Tokens (JWT), refresh tokens rotation, secure HTTP-only cookies, OTP systems, and multi-device logouts.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'advanced',
+      estimatedTime: '4 hours',
+      order: 3,
+      youtubeLink: 'https://www.youtube.com/watch?v=pkKn8q5AvsY'
     }
   ],
   'web-development:4': [
     {
-      title: 'React JS Roadmap',
-      description: 'Learn the layout of the series, pre-requisites, and a complete roadmap to master React JS.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
+      title: 'GenAI + Full Stack Integration with Gemini',
+      description: 'Connect frontend React and backend Node.js with Gemini AI APIs. Build a production-ready application integrating artificial intelligence features.',
+      instructor: 'Sheryians Coding School',
+      difficulty: 'advanced',
+      estimatedTime: '6 hours',
       order: 1,
-      youtubeLink: 'https://www.youtube.com/watch?v=vz1RlUyrc3w'
-    },
-    {
-      title: 'Create React Projects',
-      description: 'Understand how to create a React project using create-react-app and modern build tools like Vite.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 2,
-      youtubeLink: 'https://www.youtube.com/watch?v=k3KqQvywToE'
-    },
-    {
-      title: 'Understand the React Flow and Structure',
-      description: 'Deep dive into the folder structure, package.json, and execution flow of a React application.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 3,
-      youtubeLink: 'https://www.youtube.com/watch?v=yNbnA5pryMg'
-    },
-    {
-      title: 'Create Your Own React Library and JSX',
-      description: 'Learn the inner workings of JSX and build a custom miniature React render engine from scratch.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 4,
-      youtubeLink: 'https://www.youtube.com/watch?v=kAOuj6o7Kxs'
-    },
-    {
-      title: 'Why You Need Hooks and Project',
-      description: 'Understand state synchronization, React\'s reactive UI updates, and building a counter project using hooks.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 5,
-      youtubeLink: 'https://www.youtube.com/watch?v=lI7IIOWM0Mo'
-    },
-    {
-      title: 'Virtual DOM, Fibre and Reconciliation',
-      description: 'Understand the React Virtual DOM, fiber architecture, and reconciliation algorithm.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 6,
-      youtubeLink: 'https://www.youtube.com/watch?v=MPCVGFvgVEQ'
-    },
-    {
-      title: 'Tailwind and Props in ReactJS',
-      description: 'Learn how to use Tailwind CSS in React and pass data to components using props.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 7,
-      youtubeLink: 'https://www.youtube.com/watch?v=bB6707XzCNc'
-    },
-    {
-      title: 'React Interview Question on Counter',
-      description: 'Solve a classic React interview question regarding state updates and queueing batch updates.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 8,
-      youtubeLink: 'https://www.youtube.com/watch?v=tOYkV6Yhrhs'
-    },
-    {
-      title: 'Building a React Project: bgChanger',
-      description: 'Build a background color changer app to practice state management and event handling.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 9,
-      youtubeLink: 'https://www.youtube.com/watch?v=_lJ3KNMue3w'
-    },
-    {
-      title: 'useEffect, useRef and useCallback with Project',
-      description: 'Master side effects, mutable references, and performance memoization by building a password generator.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 10,
-      youtubeLink: 'https://www.youtube.com/watch?v=Lt4vy8hfc-s'
-    },
-    {
-      title: 'Custom Hooks in React: Currency Project',
-      description: 'Learn how to write clean, reusable custom hooks by building a dynamic currency converter app.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 11,
-      youtubeLink: 'https://www.youtube.com/watch?v=AFDYnd-XPa8'
-    },
-    {
-      title: 'React Router Crash Course',
-      description: 'Implement client-side routing, nested routes, route loaders, and parameters using React Router.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 12,
-      youtubeLink: 'https://www.youtube.com/watch?v=VJov5QWEKE4'
-    },
-    {
-      title: 'Context API Crash Course with 2 Projects',
-      description: 'Master React Context API for global state management and build two practical applications.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 13,
-      youtubeLink: 'https://www.youtube.com/watch?v=JQVBGtZMqgU'
-    },
-    {
-      title: 'Context API with Local Storage Project',
-      description: 'Build a todo application that persists state across reloads using Context API and Local Storage.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 14,
-      youtubeLink: 'https://www.youtube.com/watch?v=6KQeopPE36I'
-    },
-    {
-      title: 'Redux Toolkit Crash Course',
-      description: 'Learn state management with Redux Toolkit (RTK) using stores, reducers, and selectors.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 15,
-      youtubeLink: 'https://www.youtube.com/watch?v=1i04-A7kfFI'
-    },
-    {
-      title: 'Mega Project in React Choice',
-      description: 'Introduction and planning phase for our end-to-end production-grade React application.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1 hour',
-      order: 16,
-      youtubeLink: 'https://www.youtube.com/watch?v=CqNSTD9ENb0'
-    },
-    {
-      title: 'Mega Project in React: The Hard Way',
-      description: 'Start building a full-featured blog application using modern frontend and backend integration.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 17,
-      youtubeLink: 'https://www.youtube.com/watch?v=P-WHzz2M5aU'
-    },
-    {
-      title: 'Appwrite Backend for React Project',
-      description: 'Configure and set up Appwrite as the backend service provider for authentication and database.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 18,
-      youtubeLink: 'https://www.youtube.com/watch?v=zLWif1pFYJg'
-    },
-    {
-      title: 'ENV and Appwrite in React Project',
-      description: 'Securely manage environment variables in React and instantiate the Appwrite client.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1 hour',
-      order: 19,
-      youtubeLink: 'https://www.youtube.com/watch?v=4_JlIr8yry0'
-    },
-    {
-      title: 'Build Authentication Service with Appwrite',
-      description: 'Create a professional auth service wrapper class for user login, signup, and logout flow.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 20,
-      youtubeLink: 'https://www.youtube.com/watch?v=0Py5cGGW2lE'
-    },
-    {
-      title: 'Appwrite Database, File Upload and Custom Queries',
-      description: 'Implement database operations, document creation, image uploads, and queries in Appwrite.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 21,
-      youtubeLink: 'https://www.youtube.com/watch?v=lzx52HnWh4Y'
-    },
-    {
-      title: 'Configure Redux Toolkit in Big Projects',
-      description: 'Integrate Redux Toolkit to track authentication state globally across the mega blog app.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 22,
-      youtubeLink: 'https://www.youtube.com/watch?v=8QGKg_W5sDQ'
-    },
-    {
-      title: 'Production Grade React Components',
-      description: 'Build reusable, highly styled UI elements like inputs, buttons, containers, and select fields.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '2 hours',
-      order: 23,
-      youtubeLink: 'https://www.youtube.com/watch?v=BSaYsHVpaK0'
-    },
-    {
-      title: 'Use React Hook Form in Production',
-      description: 'Manage form validation, submission, and state cleanly using React Hook Form.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '2 hours',
-      order: 24,
-      youtubeLink: 'https://www.youtube.com/watch?v=lfMyCuB6xfc'
-    },
-    {
-      title: 'Adding Form and Slug Values',
-      description: 'Develop the blog post creation form with automated slug generation based on the title.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 25,
-      youtubeLink: 'https://www.youtube.com/watch?v=-6LvNku2nJE'
-    },
-    {
-      title: 'Building Pages: Mega Project',
-      description: 'Implement routing pages for home, posts, authentication screens, and edit-post workflows.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '2 hours',
-      order: 26,
-      youtubeLink: 'https://www.youtube.com/watch?v=rC644qOZUro'
-    },
-    {
-      title: 'CORS and Debugging in React Project',
-      description: 'Resolve cross-origin resource sharing (CORS) issues and debug API calls in production.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 27,
-      youtubeLink: 'https://www.youtube.com/watch?v=Od4rQCU41s4'
-    },
-    {
-      title: 'Deploy React App to Production',
-      description: 'Learn how to build, optimize, and deploy your production-ready React app to hosting services.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 28,
-      youtubeLink: 'https://www.youtube.com/watch?v=dg2Gw1HSlpQ'
-    },
-    {
-      title: 'Assignments for React Course',
-      description: 'Check out assignments and challenges to practice and solidify your React skills.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '2 hours',
-      order: 29,
-      youtubeLink: 'https://www.youtube.com/watch?v=KqGze7HCTIA'
-    },
-    {
-      title: 'React Series Conclusion',
-      description: 'Conclusion of the core series, summarizing your learning path and next steps.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1 hour',
-      order: 30,
-      youtubeLink: 'https://www.youtube.com/watch?v=3o4qc9WRtWE'
-    },
-    {
-      title: 'Connecting Frontend and Backend in JS',
-      description: 'Configure a development server proxy to seamlessly handle CORS and connect frontend to backend.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 31,
-      youtubeLink: 'https://www.youtube.com/watch?v=fFHyqhmnVfs'
-    },
-    {
-      title: 'State Optimization in React Interviews',
-      description: 'Explore a common React interview challenge on optimizing renders by avoiding unnecessary state.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1 hour',
-      order: 32,
-      youtubeLink: 'https://www.youtube.com/watch?v=P4X0vPTQX4A'
-    },
-    {
-      title: 'Testing Datatype Skills in React Interviews',
-      description: 'Learn how state references, objects, arrays, and primitive values behave during React updates.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1 hour',
-      order: 33,
-      youtubeLink: 'https://www.youtube.com/watch?v=M3AxZX3g00w'
-    },
-    {
-      title: 'Handle APIs like a Pro in React',
-      description: 'Handle APIs efficiently using Axios, abort controllers, race condition protection, and custom state hooks.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '2 hours',
-      order: 34,
-      youtubeLink: 'https://www.youtube.com/watch?v=NxAwOjb_NlA'
-    },
-    {
-      title: 'Common Production Mistake in React',
-      description: 'Analyze common architectural and performance mistakes in React production projects and how to fix them.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 35,
-      youtubeLink: 'https://www.youtube.com/watch?v=UsNdgJY6tCY'
-    }
-  ],
-  'web-development:5': [
-    {
-      title: 'Javascript Backend Roadmap',
-      description: 'A comprehensive roadmap outlining how to master Node.js, Express, databases, and general server-side development.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 1,
-      youtubeLink: 'https://www.youtube.com/watch?v=EH3vGeqeIAo'
-    },
-    {
-      title: 'Deploy Backend Code in Production',
-      description: 'Learn the deployment process, cloud server setup, and hosting a Node.js backend in production.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 2,
-      youtubeLink: 'https://www.youtube.com/watch?v=pOV4EjUtl70'
-    },
-    {
-      title: 'Connect Frontend and Backend in JS',
-      description: 'Understand full-stack connections, cross-origin resource sharing, and setting up development proxies.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 3,
-      youtubeLink: 'https://www.youtube.com/watch?v=fFHyqhmnVfs'
-    },
-    {
-      title: 'Taking Backend to the Next Level',
-      description: 'Learn the advanced standards, practices, and tooling needed to build robust, scalable backends.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 4,
-      youtubeLink: 'https://www.youtube.com/watch?v=10hRlpUNeNA'
-    },
-    {
-      title: 'Data Modelling for Backend with Mongoose',
-      description: 'Master database schemas and data relationships in MongoDB using Mongoose.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 5,
-      youtubeLink: 'https://www.youtube.com/watch?v=VbGl3msgce8'
-    },
-    {
-      title: 'Ecommerce and Hospital Management Modelling',
-      description: 'Hands-on data modeling exercise representing complex relations like products, orders, patients, and staff.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1.5 hours',
-      order: 6,
-      youtubeLink: 'https://www.youtube.com/watch?v=lA_mNpddN5U'
-    },
-    {
-      title: 'Setup a Professional Backend Project',
-      description: 'Learn professional project setups: config folders, environment variables, express configuration, and source structure.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1.5 hours',
-      order: 7,
-      youtubeLink: 'https://www.youtube.com/watch?v=9B4CvtzXRpc'
-    },
-    {
-      title: 'Connect Database in MERN with Debugging',
-      description: 'Implement MongoDB connection helpers with try-catch blocks and debug common network issues.',
-      instructor: 'Chai aur Code',
-      difficulty: 'beginner',
-      estimatedTime: '1 hour',
-      order: 8,
-      youtubeLink: 'https://www.youtube.com/watch?v=w4z8Py-UoNk'
-    },
-    {
-      title: 'Custom API Response and Error Handling',
-      description: 'Develop standardized middleware for handling server exceptions, client errors, and formatted JSON responses.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 9,
-      youtubeLink: 'https://www.youtube.com/watch?v=S5EpsMjel-M'
-    },
-    {
-      title: 'User and Video Model with Hooks and JWT',
-      description: 'Define mongoose schemas, leverage model pre-save hooks for password hashing, and sign JWT tokens.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 10,
-      youtubeLink: 'https://www.youtube.com/watch?v=eWnZVUXMq8k'
-    },
-    {
-      title: 'File Upload in Backend using Multer',
-      description: 'Configure Multer middleware for handling multiform file uploads and saving them to local disks or cloud storage.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 11,
-      youtubeLink: 'https://www.youtube.com/watch?v=6KPXn2Ha0cM'
-    },
-    {
-      title: 'HTTP Crash Course',
-      description: 'Understand the web\'s backbone: HTTP headers, status codes, standard methods, and request bodies.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1 hour',
-      order: 12,
-      youtubeLink: 'https://www.youtube.com/watch?v=qgZiUvV41TI'
-    },
-    {
-      title: 'Router and Controller Setup with Debugging',
-      description: 'Map Express routes to controller logic to achieve clean separation of concerns.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 13,
-      youtubeLink: 'https://www.youtube.com/watch?v=HqcGLJSORaA'
-    },
-    {
-      title: 'Logic Building: User Register Controller',
-      description: 'Implement step-by-step logic for user signup: field validation, duplicate checks, image uploads, and db creation.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '2 hours',
-      order: 14,
-      youtubeLink: 'https://www.youtube.com/watch?v=VKXnSwNm_lE'
-    },
-    {
-      title: 'How to Use Postman for Backend',
-      description: 'Test and document HTTP APIs using Postman collections, environments, headers, and request variables.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1 hour',
-      order: 15,
-      youtubeLink: 'https://www.youtube.com/watch?v=_u-WgSN5ymU'
-    },
-    {
-      title: 'Access & Refresh Token, Middleware and Cookies',
-      description: 'Secure routes using token authentication. Read and write JWTs using cookies.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 16,
-      youtubeLink: 'https://www.youtube.com/watch?v=7DVpag3cO0g'
-    },
-    {
-      title: 'Access Token and Refresh Token in Practice',
-      description: 'Understand how client tokens are updated using rotation algorithms and db validations.',
-      instructor: 'Chai aur Code',
-      difficulty: 'intermediate',
-      estimatedTime: '1.5 hours',
-      order: 17,
-      youtubeLink: 'https://www.youtube.com/watch?v=L2_gIrDxCes'
-    },
-    {
-      title: 'Writing Update Controllers for User',
-      description: 'Implement profile update logic: changing avatars, email edits, and password updates.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 18,
-      youtubeLink: 'https://www.youtube.com/watch?v=9azRerL6CZc'
-    },
-    {
-      title: 'Understand the Subscription Schema',
-      description: 'Design and implement database relationships for follower-following systems and channel subscriptions.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 19,
-      youtubeLink: 'https://www.youtube.com/watch?v=4_Ge2QEcT8k'
-    },
-    {
-      title: 'Learn MongoDB Aggregation Pipelines',
-      description: 'Deep dive into MongoDB aggregations: match, group, lookup, and project operators.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '2 hours',
-      order: 20,
-      youtubeLink: 'https://www.youtube.com/watch?v=fDTf1mk-jQg'
-    },
-    {
-      title: 'Sub-pipelines and Dynamic Routes',
-      description: 'Create complex nested aggregation lookups for user profiles, history tracking, and dynamic routers.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '2 hours',
-      order: 21,
-      youtubeLink: 'https://www.youtube.com/watch?v=qNnR7cuVliI'
-    },
-    {
-      title: 'Summary of Backend Series',
-      description: 'A comprehensive review of what has been built, patterns covered, and project architecture.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1 hour',
-      order: 22,
-      youtubeLink: 'https://www.youtube.com/watch?v=VUgl3i8DdW4'
-    },
-    {
-      title: 'MongoDB Models for Likes, Playlists & Tweets',
-      description: 'Create schemas representing user interactions, post likes, custom playlists, and tweets.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 23,
-      youtubeLink: 'https://www.youtube.com/watch?v=-5yWyE4AiVk'
-    },
-    {
-      title: 'Build in Public and Open Source',
-      description: 'Learn how to document your progress, push clean code, contribute to open source, and display your backend projects.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 24,
-      youtubeLink: 'https://www.youtube.com/watch?v=3ouqT3lfiUE'
-    },
-    {
-      title: 'Backend Series Final Wrapup',
-      description: 'Wrap up the backend curriculum, test the final system, and explore next learning paths.',
-      instructor: 'Chai aur Code',
-      difficulty: 'advanced',
-      estimatedTime: '1.5 hours',
-      order: 25,
-      youtubeLink: 'https://www.youtube.com/watch?v=Uc3Iq41npyI'
+      youtubeLink: 'https://www.youtube.com/watch?v=zG3hNL08Dro'
     }
   ],
   'data-science:0': [
@@ -1015,6 +542,32 @@ const topicData = {
   ],
   'dsa:4': [
     {
+      title: 'OOPs Master',
+      description: 'Master Object-Oriented Programming (OOPs) concepts in C++ including Classes, Objects, Inheritance, Polymorphism, Encapsulation, and Abstraction.',
+      instructor: 'Love Babbar',
+      difficulty: 'intermediate',
+      estimatedTime: '4 hours',
+      order: 1,
+      isCheckpointModule: true,
+      checkpoints: [
+        {
+          id: 'oops_cp1',
+          label: 'L42. OOPs Concepts in C++ || Part-1',
+          description: 'Checkpoint 1: Classes, Objects, Constructors, Destructors, and memory allocation.',
+          youtubeLink: 'https://www.youtube.com/embed/BS9nCj391r8?rel=0&modestbranding=1'
+        },
+        {
+          id: 'oops_cp2',
+          label: 'L43. 4 Pillars of OOPs Concept - Inheritance, Polymorphism, Encapsulation & Abstraction',
+          description: 'Checkpoint 2: The 4 core pillars of OOPs: Encapsulation, Inheritance, Polymorphism, and Abstraction.',
+          youtubeLink: 'https://www.youtube.com/embed/V1P9wX8sZ0Q?rel=0&modestbranding=1'
+        }
+      ],
+      youtubeLink: 'https://www.youtube.com/watch?v=BS9nCj391r8&list=PLDzeHZWIZsTryvtXdMr6rPh4IDexB5NIA'
+    }
+  ],
+  'dsa:5': [
+    {
       title: 'Linked List Explorer',
       description: 'Understand singly linked lists, traverse nodes, find the middle node, and search elements. Watch tutorials, solve coding challenges, and track your progress in real-time!',
       instructor: 'Striver',
@@ -1201,7 +754,7 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=cg6JGiXhQ9c&list=PLgUwDviBIf0rAuz8tVcM0AymmhTRsfaLU'
     }
   ],
-  'dsa:5': [
+  'dsa:6': [
     {
       title: 'Stack & Queue Explorer',
       description: 'Master linear data structures, LIFO/FIFO patterns, bracket balancing, next greater element search, and queue summaries. Watch tutorials, solve coding challenges, and track your progress in real-time!',
@@ -1329,7 +882,7 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=tqQ5fTamIN4&list=PLgUwDviBIf0pOd5zvVVSzgpo6BaCpHT9c'
     }
   ],
-  'dsa:6': [
+  'dsa:7': [
     {
       title: 'Trees Explorer',
       description: 'Learn binary tree representations, node traversal sums, calculating max depth, and leaf node counts. Watch tutorials, solve coding challenges, and track your progress in real-time!',
@@ -1667,7 +1220,7 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=OYqYEM1bMK8&list=PLgUwDviBIf0q8Hkd7bK2Bpryj2xVJk8Vk'
     }
   ],
-  'dsa:7': [
+  'dsa:8': [
     {
       title: 'Graph Explorer',
       description: 'Learn graph representations, path existence checks via BFS, and counting connected components via DFS. Watch tutorials, solve coding challenges, and track your progress in real-time!',
@@ -2017,7 +1570,7 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=M3_pLsDdeuU&list=PLgUwDviBIf0oE3gA41TKO2H5bHpPd7fzn'
     }
   ],
-  'dsa:8': [
+  'dsa:9': [
     {
       title: 'Dynamic Programming Explorer',
       description: 'Master memoization and bottom-up tabulation to optimize recursive algorithms. Watch tutorials, solve coding challenges, and track your progress in real-time!',
@@ -2367,7 +1920,7 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=tyB0ztf0DNY&list=PLgUwDviBIf0pwFf-BnpkXxs0Ra0eU2sJY'
     }
   ],
-  'dsa:9': [
+  'dsa:10': [
     {
       title: 'Greedy Explorer',
       description: 'Master greedy choice properties and local optimization strategies. Watch tutorials, solve coding challenges, and track your progress in real-time!',
@@ -2459,10 +2012,41 @@ const topicData = {
       youtubeLink: 'https://www.youtube.com/watch?v=DIX2p7vb9co&list=PLgUwDviBIf0rF1w2Koyh78zafB0cz7tea'
     }
   ],
-  'dsa:10': [
+  'dsa:11': [
     { title: 'Heaps & Heapify', description: 'Max/Min Heap representations, insertion/deletion, Heapify, and HeapSort.', instructor: 'Love Babbar', difficulty: 'intermediate', estimatedTime: '4 hours', order: 1, youtubeLink: 'https://www.youtube.com/watch?v=HqPJF2L5h9U', theoryLink: 'https://www.geeksforgeeks.org/heap-data-structure/', practiceLink: 'https://leetcode.com/tag/heap-priority-queue/' },
     { title: 'Heap Interview Questions', description: 'Kth smallest element, merge heaps, median in a stream.', instructor: 'Love Babbar', difficulty: 'advanced', estimatedTime: '5 hours', order: 2, youtubeLink: 'https://www.youtube.com/watch?v=HqPJF2L5h9U', theoryLink: 'https://www.geeksforgeeks.org/heap-data-structure/', practiceLink: 'https://leetcode.com/problems/find-median-from-data-stream/' },
-    { title: 'Tries & Implementation', description: 'Prefix trees, insertion, search, and prefix matching algorithms.', instructor: 'Love Babbar', difficulty: 'intermediate', estimatedTime: '4 hours', order: 3, youtubeLink: 'https://www.youtube.com/watch?v=dBGUmUQhjaM', theoryLink: 'https://www.geeksforgeeks.org/trie-insert-and-search/', practiceLink: 'https://leetcode.com/problems/implement-trie-prefix-tree/' }
+    { title: 'Tries & Implementation', description: 'Prefix trees, insertion, search, and prefix matching algorithms.', instructor: 'Love Babbar', difficulty: 'intermediate', estimatedTime: '4 hours', order: 3, youtubeLink: 'https://www.youtube.com/watch?v=dBGUmUQhjaM', theoryLink: 'https://www.geeksforgeeks.org/trie-insert-and-search/', practiceLink: 'https://leetcode.com/problems/implement-trie-prefix-tree/' },
+    {
+      title: 'DSA Cheat Sheet (Top Repeated)',
+      description: 'A collection of the most repeated DSA coding questions asked in technical interviews at top companies like Google, Amazon, Microsoft, and Meta.',
+      instructor: 'Striver & Love Babbar',
+      difficulty: 'intermediate',
+      estimatedTime: '8-10 hours',
+      order: 4,
+      isCheckpointModule: true,
+      checkpoints: [
+        { id: 'sheet_cp1', label: '1. Two Sum', description: 'Google, Amazon, Meta, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=DRU_nIY4j4c' },
+        { id: 'sheet_cp2', label: '2. Buy & Sell Stock', description: 'Amazon, Microsoft, Google, Apple', youtubeLink: 'https://www.youtube.com/watch?v=excAOcl19kk' },
+        { id: 'sheet_cp3', label: '3. Contains Duplicate', description: 'Amazon, Adobe, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=3OamzN90kQg' },
+        { id: 'sheet_cp4', label: '4. Product Except Self', description: 'Amazon, Microsoft, Facebook', youtubeLink: 'https://www.youtube.com/watch?v=gReAturMcRs' },
+        { id: 'sheet_cp5', label: '5. Maximum Subarray', description: 'Amazon, Microsoft, Google', youtubeLink: 'https://www.youtube.com/watch?v=H5PvPRwUPng' },
+        { id: 'sheet_cp6', label: '6. Reverse Linked List', description: 'Amazon, Microsoft, Adobe', youtubeLink: 'https://www.youtube.com/watch?v=iRtLEoL-r-Y' },
+        { id: 'sheet_cp7', label: '7. Detect List Cycle', description: 'Amazon, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=aFitA8X1518' },
+        { id: 'sheet_cp8', label: '8. Merge Sorted Lists', description: 'Amazon, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=Xb4sraKQV2o' },
+        { id: 'sheet_cp9', label: '9. Valid Parentheses', description: 'Amazon, Facebook, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=WKpHszpdfnM' },
+        { id: 'sheet_cp10', label: '10. Next Greater Element', description: 'Amazon, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=V09NfaGf2Ao' },
+        { id: 'sheet_cp11', label: '11. Invert Binary Tree', description: 'Google, Amazon', youtubeLink: 'https://www.youtube.com/watch?v=fKgZaGX-c4Y' },
+        { id: 'sheet_cp12', label: '12. Max Depth Tree', description: 'Amazon, Goldman Sachs', youtubeLink: 'https://www.youtube.com/watch?v=eD3tmO66aSE' },
+        { id: 'sheet_cp13', label: '13. Lowest Common Ancestor BST', description: 'Amazon, Microsoft, Facebook', youtubeLink: 'https://www.youtube.com/watch?v=cX_kPV_yS2Y' },
+        { id: 'sheet_cp14', label: '14. Tree Level Order', description: 'Amazon, Microsoft, Bloomberg', youtubeLink: 'https://www.youtube.com/watch?v=EoAsWbO7sqg' },
+        { id: 'sheet_cp15', label: '15. Number of Islands', description: 'Amazon, Google, Microsoft, Meta', youtubeLink: 'https://www.youtube.com/watch?v=muncqlKJ8ZY' },
+        { id: 'sheet_cp16', label: '16. Path in Graph', description: 'Facebook, Google', youtubeLink: 'https://www.youtube.com/watch?v=f2EfG57Rq3Y' },
+        { id: 'sheet_cp17', label: '17. Climbing Stairs', description: 'Amazon, Adobe, Google', youtubeLink: 'https://www.youtube.com/watch?v=A617IOwlq7E' },
+        { id: 'sheet_cp18', label: '18. Coin Change', description: 'Amazon, Microsoft, Goldman Sachs', youtubeLink: 'https://www.youtube.com/watch?v=HGYgy8WYyfU' },
+        { id: 'sheet_cp19', label: '19. Longest Common Subseq', description: 'Amazon, Microsoft, Honeywell', youtubeLink: 'https://www.youtube.com/watch?v=NPvvyJh-C_w' },
+        { id: 'sheet_cp20', label: '20. N Meetings in One Room', description: 'Amazon, Microsoft', youtubeLink: 'https://www.youtube.com/watch?v=zPtI8q9ALU8' }
+      ]
+    }
   ]
 
 ,
@@ -2657,7 +2241,117 @@ const topicData = {
         "order": 1,
         "youtubeLink": "https://www.youtube.com/watch?v=3c-iBn73dDE"
     }
-]
+],
+  'open-source:1': [
+    {
+      "title": "Git Basics Tutorial",
+      "description": "Learn git init, commit, push, pull and basics of version control.",
+      "difficulty": "beginner",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=apGV9Kg7ics"
+    }
+  ],
+  'open-source:2': [
+    {
+      "title": "GitHub Collaboration Guide",
+      "description": "Understand repositories, forks, stars, and basic collaboration.",
+      "difficulty": "beginner",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=RGOj5yH7evk"
+    }
+  ],
+  'open-source:3': [
+    {
+      "title": "Markdown Crash Course",
+      "description": "Master README formatting, basic markup syntax, and documentation editing.",
+      "difficulty": "beginner",
+      "estimatedTime": "30 mins",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=HUELvF7IPGQ"
+    }
+  ],
+  'open-source:4': [
+    {
+      "title": "Finding Good First Issues",
+      "description": "How to browse issues, filter tags, and find beginner friendly tasks.",
+      "difficulty": "beginner",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=Hco3QeN_Q28"
+    }
+  ],
+  'open-source:5': [
+    {
+      "title": "Creating Pull Requests",
+      "description": "Step-by-step guide to staging commits, opening PRs, and addressing code review feedback.",
+      "difficulty": "beginner",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=Hco3QeN_Q28"
+    }
+  ],
+  'open-source:6': [
+    {
+      "title": "Branching and Merge Conflicts",
+      "description": "Learn branching strategies, git merge, rebase, and resolving conflicts.",
+      "difficulty": "intermediate",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=Hco3QeN_Q28"
+    }
+  ],
+  'open-source:7': [
+    {
+      "title": "The Art of Code Review",
+      "description": "How to review open source code, provide constructive feedback, and collaborate.",
+      "difficulty": "intermediate",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=l_a6a0qXpEw"
+    }
+  ],
+  'open-source:8': [
+    {
+      "title": "Contributing to Documentation",
+      "description": "Why documentation is important and how to submit improvements to wikis and docs.",
+      "difficulty": "beginner",
+      "estimatedTime": "45 mins",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=Hco3QeN_Q28"
+    }
+  ],
+  'open-source:9': [
+    {
+      "title": "Beginner Friendly Repositories",
+      "description": "Explore curated lists of repositories welcoming first-time contributors.",
+      "difficulty": "beginner",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=yGe30KKKqpY"
+    }
+  ],
+  'open-source:10': [
+    {
+      "title": "Your First Contribution",
+      "description": "Putting it all together to submit your first merged PR to a real repository.",
+      "difficulty": "intermediate",
+      "estimatedTime": "2 hours",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=yGe30KKKqpY"
+    }
+  ],
+  'open-source:11': [
+    {
+      "title": "Building your Open Source Portfolio",
+      "description": "Optimize your GitHub profile, pin key contributions, and showcase your work.",
+      "difficulty": "intermediate",
+      "estimatedTime": "1 hour",
+      "order": 1,
+      "youtubeLink": "https://www.youtube.com/watch?v=yGe30KKKqpY"
+    }
+  ]
 };
 
 module.exports = topicData;

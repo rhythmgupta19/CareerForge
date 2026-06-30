@@ -8,12 +8,14 @@ const languages = [
 ];
 
 const StarterCodeEditor = ({
-  value = {},
-  functionSignature = {},
+  value,
+  functionSignature,
   onChange,
   onFunctionSignatureChange
 }) => {
   const [activeLanguage, setActiveLanguage] = useState('javascript');
+  const safeValue = value || {};
+  const safeFunctionSignature = functionSignature || {};
 
   return (
     <div className="space-y-4">
@@ -40,10 +42,10 @@ const StarterCodeEditor = ({
         </label>
         <input
           type="text"
-          value={functionSignature[activeLanguage] || ''}
+          value={safeFunctionSignature[activeLanguage] || ''}
           onChange={(event) =>
             onFunctionSignatureChange({
-              ...functionSignature,
+              ...safeFunctionSignature,
               [activeLanguage]: event.target.value
             })
           }
@@ -56,10 +58,10 @@ const StarterCodeEditor = ({
           Starter Code
         </label>
         <textarea
-          value={value[activeLanguage] || ''}
+          value={safeValue[activeLanguage] || ''}
           onChange={(event) =>
             onChange({
-              ...value,
+              ...safeValue,
               [activeLanguage]: event.target.value
             })
           }

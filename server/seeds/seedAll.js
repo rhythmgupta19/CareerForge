@@ -11,96 +11,15 @@ const Domain = require('../models/Domain');
 const Phase = require('../models/Phase');
 const Topic = require('../models/Topic');
 const Assessment = require('../models/Assessment');
-const DevOpsAssessment = require('../models/DevOpsAssessment');
-const UserAssessmentProgress = require('../models/UserAssessmentProgress');
 const Badge = require('../models/Badge');
 const CloudCredit = require('../models/CloudCredit');
 const Problem = require('../models/Problem');
 const Submission = require('../models/Submission');
 const UserProgress = require('../models/UserProgress');
-const Blog = require('../models/Blog');
-const Project = require('../models/Project');
-const Internship = require('../models/Internship');
 
 const domainData = require('./domainData');
 const phaseData = require('./phaseData');
 const topicData = require('./topicData');
-
-const blogs = [
-  {
-    title: 'Demystifying the Event Loop in JavaScript',
-    content: 'JavaScript is single-threaded, but how does it handle asynchronous operations without locking up the UI? In this article, we deep-dive into execution contexts, the call stack, Web APIs, microtask queue, and how the event loop orchestrates them all to keep your React applications running smooth.',
-    author: 'Siddharth Gupta',
-    category: 'Web Development',
-    tags: ['JavaScript', 'Async', 'Event Loop', 'WebDev'],
-    imageUrl: 'https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?auto=format&fit=crop&w=600&q=80'
-  },
-  {
-    title: 'Top 10 Kubernetes Best Practices for 2026',
-    content: 'Scaling applications in production can be challenging. We cover essential best practices for Kubernetes deployments: resource limits, readiness/liveness probes, node selectors, secret management, Helm charts, and building lightweight containers to optimize cluster costs.',
-    author: 'Rohan Sharma',
-    category: 'DevOps',
-    tags: ['Kubernetes', 'Docker', 'DevOps', 'Scaling'],
-    imageUrl: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&w=600&q=80'
-  }
-];
-
-const internships = [
-  {
-    title: 'Frontend Engineer Intern',
-    company: 'Vercel Inc.',
-    location: 'Remote',
-    stipend: '$2,500 / Month',
-    description: 'Join the Next.js framework core team to build next-generation visual styling capabilities, improve compiler performance, and contribute to standard component libraries.',
-    applyLink: 'https://vercel.com/careers',
-    domain: 'webdev',
-    requirements: ['Proficient in React & TypeScript', 'Good understanding of SSR & routing', 'Familiarity with TailwindCSS and UI design principles']
-  },
-  {
-    title: 'DevOps Cloud Intern',
-    company: 'HashiCorp',
-    location: 'San Francisco, CA (Hybrid)',
-    stipend: '$3,000 / Month',
-    description: 'Work with the Terraform team to improve infrastructure-as-code providers, build GitHub Action workflow integrations, and monitor multi-region AWS environments.',
-    applyLink: 'https://hashicorp.com/careers',
-    domain: 'devops',
-    requirements: ['Familiarity with AWS, GCP or Azure', 'Basic knowledge of Terraform & IaC', 'Scripting experience in Python or Go']
-  }
-];
-
-const projects = [
-  {
-    title: 'E-Commerce Microservices Orchestration',
-    description: 'Build and deploy a secure, high-availability e-commerce microservices cluster orchestrating web gateways, product catalogs, and payment services.',
-    domain: 'devops',
-    difficulty: 'advanced',
-    steps: [
-      { stepNumber: 1, title: 'Containerize Services', guidance: 'Write multi-stage Dockerfiles for the Gateway, Catalog, and Payment services using alpine base images.' },
-      { stepNumber: 2, title: 'Local Orchestration', guidance: 'Create a docker-compose.yml defining environment configurations, persistent volume attachments, and networks.' },
-      { stepNumber: 3, title: 'Kubernetes Pod Deployment', guidance: 'Configure K8s Deployments, ClusterIP Services, and set up CPU/Memory resource constraints for stability.' },
-      { stepNumber: 4, title: 'Ingress Controller Setup', guidance: 'Install and configure NGINX Ingress Controller to route public traffic to internal cluster nodes.' }
-    ],
-    roadmap: [
-      { phaseName: 'Phase 1: Local Containerization', tasks: ['Multi-stage Dockerfiles', 'Docker Compose definitions', 'Environment secrets configuration'] },
-      { phaseName: 'Phase 2: Kubernetes Migration', tasks: ['Deployment manifests', 'Cluster routing policies', 'ConfigMaps & Secrets management'] }
-    ]
-  },
-  {
-    title: 'Full-Stack Responsive Collaborative Dashboard',
-    description: 'Develop a highly interactive, responsive collaborative Kanban dashboard supporting real-time WebSockets state updates, drag-and-drop cards, and user authentication.',
-    domain: 'webdev',
-    difficulty: 'intermediate',
-    steps: [
-      { stepNumber: 1, title: 'Backend REST API & DB Setup', guidance: 'Create Express.js routes for users and boards. Implement JWT auth and connect to MongoDB.' },
-      { stepNumber: 2, title: 'WebSocket Integration', guidance: 'Integrate Socket.io on the Node server to broadcast card drag-drop modifications to active client sessions.' },
-      { stepNumber: 3, title: 'React Kanban UI Board', guidance: 'Build React boards using CSS Grid or Flexbox, styling it with harmonious GFG-theme colors.' }
-    ],
-    roadmap: [
-      { phaseName: 'Phase 1: Server and DB Structure', tasks: ['JWT Middleware', 'Mongoose Board schemas', 'Board CRUD routes'] },
-      { phaseName: 'Phase 2: Live React Client', tasks: ['Vite app layout', 'Socket.io client event hookups', 'Drag & drop state updates'] }
-    ]
-  }
-];
 
 const cloudCredits = [
   { title: 'GitHub Student Developer Pack', description: 'Free tools and services for students', link: 'https://education.github.com/pack', platform: 'GitHub', icon: '🐙', category: 'education', eligibility: 'Students with .edu email or proof of enrollment', order: 1 },
@@ -115,8 +34,10 @@ const cloudCredits = [
   { title: 'Render Free Tier', description: 'Free web services and databases', link: 'https://render.com/', platform: 'Render', icon: '⚡', category: 'hosting', order: 10 },
   { title: 'Railway Free Plan', description: 'Deploy apps with free monthly credits', link: 'https://railway.app/', platform: 'Railway', icon: '🚂', category: 'hosting', order: 11 }
 ];
-async function seedDB() {
+async function seedDB(force = false) {
   try {
+    const isProduction = process.env.NODE_ENV === 'production';
+
     if (mongoose.connection.readyState === 0) {
       const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/careerforge';
       await mongoose.connect(uri);
@@ -125,121 +46,172 @@ async function seedDB() {
       console.log('✅ Already connected to MongoDB');
     }
 
-    // Clear existing data
-    await Promise.all([
-      User.deleteMany({}),
-      Domain.deleteMany({}),
-      Phase.deleteMany({}),
-      Topic.deleteMany({}),
-      Assessment.deleteMany({}),
-      DevOpsAssessment.deleteMany({}),
-      UserAssessmentProgress.deleteMany({}),
-      Badge.deleteMany({}),
-      CloudCredit.deleteMany({}),
-      Problem.deleteMany({}),
-      Submission.deleteMany({}),
-      UserProgress.deleteMany({}),
-      Blog.deleteMany({}),
-      Project.deleteMany({}),
-      Internship.deleteMany({})
-    ]);
-    console.log('🗑️  Cleared existing data');
+    // Safety check for production
+    if (isProduction && !force) {
+      const userCount = await User.countDocuments();
+      const domainCount = await Domain.countDocuments();
+      if (userCount > 0 || domainCount > 0) {
+        console.error('❌ [Safety Block] Seeding is aborted in production because the database is not empty.');
+        console.error(`📊 Users: ${userCount}, Domains: ${domainCount}`);
+        throw new Error('Database seeding blocked in production to prevent data loss/corruption.');
+      }
+    }
 
-    // Seed cloud credits
-    await CloudCredit.insertMany(cloudCredits);
+    // Clear existing user data in non-production environments only if explicitly requested
+    const shouldClearUsers = process.argv.includes('--clear-users') || process.env.CLEAR_USERS === 'true';
+    if (shouldClearUsers && !isProduction) {
+      console.log('🗑️  Clearing user data (requested)...');
+      await Promise.all([
+        User.deleteMany({}),
+        Submission.deleteMany({}),
+        UserProgress.deleteMany({})
+      ]);
+    } else {
+      console.log('⚠️  Retaining all user data!');
+    }
+
+    // Seed cloud credits (upsert by title)
+    for (const credit of cloudCredits) {
+      await CloudCredit.findOneAndUpdate(
+        { title: credit.title },
+        credit,
+        { upsert: true, new: true }
+      );
+    }
     console.log('☁️  Cloud credits seeded');
 
-    // Seed blogs, projects, internships
-    await Blog.insertMany(blogs);
-    await Project.insertMany(projects);
-    await Internship.insertMany(internships);
-    console.log('📝 Blogs, Projects, and Internships seeded');
+    // Seed admin user (only if not already existing)
+    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@careerforge.com').toLowerCase().trim();
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    if (!existingAdmin) {
+      await User.create({
+        fullName: 'CareerForge Admin',
+        email: adminEmail,
+        password: process.env.ADMIN_PASSWORD || 'Admin@123',
+        role: 'admin'
+      });
+      console.log('👤 Admin user created');
+    } else {
+      console.log('👤 Admin user already exists');
+    }
 
-    // Seed admin user
-    const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Admin@123', 12);
-    await User.create({
-      fullName: 'CareerForge Admin',
-      email: process.env.ADMIN_EMAIL || 'admin@careerforge.com',
-      password: process.env.ADMIN_PASSWORD || 'Admin@123',
-      role: 'admin'
-    });
-    console.log('👤 Admin user created');
-
-    // Seed domains and their phases/topics
+    // Seed domains and their phases/topics (upsert-based to preserve ObjectIds)
     for (const domainInfo of domainData) {
-      const domain = await Domain.create(domainInfo);
+      const domain = await Domain.findOneAndUpdate(
+        { slug: domainInfo.slug },
+        domainInfo,
+        { upsert: true, new: true }
+      );
       console.log(`📁 Domain: ${domain.name}`);
+
+      if (domain.slug === 'web-development') {
+        console.log('🗑️  Clearing old Web Development phases, topics, and badges for a clean seed...');
+        await Promise.all([
+          Phase.deleteMany({ domainId: domain._id }),
+          Topic.deleteMany({ domainId: domain._id }),
+          Badge.deleteMany({ domainId: domain._id })
+        ]);
+      }
 
       const phases = phaseData[domain.slug] || [];
       let phaseCount = 0;
 
       for (const phaseInfo of phases) {
-        const phase = await Phase.create({
-          ...phaseInfo,
-          domainId: domain._id,
-          order: phaseInfo.phaseNumber
-        });
+        // Shift phaseNumber to start at 0 if the domain is not already 0-indexed (like WebDev and DSA)
+        const needsShift = (domain.slug !== 'dsa' && domain.slug !== 'web-development');
+        const adjustedPhaseNumber = needsShift ? (phaseInfo.phaseNumber - 1) : phaseInfo.phaseNumber;
+
+        const phase = await Phase.findOneAndUpdate(
+          { domainId: domain._id, phaseNumber: adjustedPhaseNumber },
+          {
+            ...phaseInfo,
+            phaseNumber: adjustedPhaseNumber,
+            domainId: domain._id,
+            order: adjustedPhaseNumber
+          },
+          { upsert: true, new: true }
+        );
         phaseCount++;
 
-        // Add topics for this phase if available
-        const topicKey = `${domain.slug}:${phase.phaseNumber}`;
+        // Add topics for this phase if available (lookup using the original phaseNumber key)
+        const topicKey = `${domain.slug}:${phaseInfo.phaseNumber}`;
         const topics = topicData[topicKey] || [];
         for (const topicInfo of topics) {
-          const topic = await Topic.create({ ...topicInfo, phaseId: phase._id, domainId: domain._id });
+          const topic = await Topic.findOneAndUpdate(
+            { domainId: domain._id, phaseId: phase._id, title: topicInfo.title },
+            { ...topicInfo, phaseId: phase._id, domainId: domain._id },
+            { upsert: true, new: true }
+          );
           
           // Create topic completion badge (One video = One badge)
-          await Badge.create({
-            name: `${topic.title} Badge`,
-            description: `Completed "${topic.title}" in ${domain.name}`,
-            icon: '📜',
-            domainId: domain._id,
-            phaseId: phase._id,
-            topicId: topic._id,
-            type: 'topic-completion',
-            unlockCondition: `Complete the ${topic.title} topic`,
-            order: topic.order
-          });
+          await Badge.findOneAndUpdate(
+            { domainId: domain._id, phaseId: phase._id, topicId: topic._id, type: 'topic-completion' },
+            {
+              name: `${topic.title} Badge`,
+              description: `Completed "${topic.title}" in ${domain.name}`,
+              icon: '📜',
+              domainId: domain._id,
+              phaseId: phase._id,
+              topicId: topic._id,
+              type: 'topic-completion',
+              unlockCondition: `Complete the ${topic.title} topic`,
+              order: topic.order
+            },
+            { upsert: true, new: true }
+          );
         }
 
         // Add default assessment for each phase
-        await Assessment.create({
-          phaseId: phase._id,
-          domainId: domain._id,
-          title: `${phase.name} Assessment`,
-          description: `Assessment for ${phase.name}`,
-          type: 'custom',
-          platform: 'HackerRank',
-          assessmentLink: 'ADMIN_WILL_ADD_HACKERRANK_ASSESSMENT_LINK',
-          passingScore: 60,
-          difficultyRating: phase.phaseNumber <= 3 ? 'beginner' : phase.phaseNumber <= 7 ? 'intermediate' : 'advanced',
-          maxAttempts: 3,
-          unlocksNextPhase: true,
-          order: phase.phaseNumber
-        });
+        await Assessment.findOneAndUpdate(
+          { domainId: domain._id, phaseId: phase._id },
+          {
+            phaseId: phase._id,
+            domainId: domain._id,
+            title: `${phase.name} Assessment`,
+            description: `Assessment for ${phase.name}`,
+            type: 'custom',
+            platform: 'HackerRank',
+            assessmentLink: 'ADMIN_WILL_ADD_HACKERRANK_ASSESSMENT_LINK',
+            passingScore: 60,
+            difficultyRating: phase.phaseNumber <= 3 ? 'beginner' : phase.phaseNumber <= 7 ? 'intermediate' : 'advanced',
+            maxAttempts: 3,
+            unlocksNextPhase: true,
+            order: phase.phaseNumber
+          },
+          { upsert: true, new: true }
+        );
 
         // Add phase badge
-        await Badge.create({
-          name: `${phase.name} Badge`,
-          description: `Completed ${phase.name} in ${domain.name}`,
-          icon: '🏅',
-          domainId: domain._id,
-          phaseId: phase._id,
-          type: 'phase-completion',
-          unlockCondition: `Complete all topics in ${phase.name} and pass assessment`,
-          order: phase.phaseNumber
-        });
+        await Badge.findOneAndUpdate(
+          { domainId: domain._id, phaseId: phase._id, type: 'phase-completion' },
+          {
+            name: `${phase.name} Badge`,
+            description: `Completed ${phase.name} in ${domain.name}`,
+            icon: '🏅',
+            domainId: domain._id,
+            phaseId: phase._id,
+            type: 'phase-completion',
+            unlockCondition: `Complete all topics in ${phase.name} and pass assessment`,
+            order: phase.phaseNumber
+          },
+          { upsert: true, new: true }
+        );
       }
 
       // Domain completion badge
-      await Badge.create({
-        name: `${domain.name} Master`,
-        description: `Completed the entire ${domain.name} roadmap`,
-        icon: '🏆',
-        domainId: domain._id,
-        type: 'domain-completion',
-        unlockCondition: `Complete all ${phaseCount} phases in ${domain.name}`,
-        order: 999
-      });
+      await Badge.findOneAndUpdate(
+        { domainId: domain._id, type: 'domain-completion' },
+        {
+          name: `${domain.name} Master`,
+          description: `Completed the entire ${domain.name} roadmap`,
+          icon: '🏆',
+          domainId: domain._id,
+          type: 'domain-completion',
+          unlockCondition: `Complete all ${phaseCount} phases in ${domain.name}`,
+          order: 999
+        },
+        { upsert: true, new: true }
+      );
 
       // Update domain stats
       await Domain.findByIdAndUpdate(domain._id, { totalPhases: phaseCount });
@@ -255,7 +227,13 @@ async function seedDB() {
       { name: 'Backtracking Warrior', description: 'Mastered backtracking techniques', icon: '⚔️', type: 'special', unlockCondition: 'Complete checkpoint 15 of Recursion' },
       { name: 'Recursion Survivor', description: 'Completed all recursion challenges', icon: '👑', type: 'special', unlockCondition: 'Complete all 22 checkpoints' }
     ];
-    await Badge.insertMany(streakBadges);
+    for (const badgeInfo of streakBadges) {
+      await Badge.findOneAndUpdate(
+        { name: badgeInfo.name },
+        badgeInfo,
+        { upsert: true, new: true }
+      );
+    }
 
     // Seed problem bank (Admin problems)
     try {
@@ -264,14 +242,6 @@ async function seedDB() {
       console.log('📝 Problem bank seeded successfully');
     } catch (err) {
       console.error('❌ Failed to seed problem bank:', err.message);
-    }
-
-    // Seed DevOps mini-assessments
-    try {
-      const seedDevOps = require('./seedDevOpsAssessments');
-      await seedDevOps();
-    } catch (err) {
-      console.error('❌ Failed to seed DevOps assessments:', err.message);
     }
 
     console.log('\n🎉 Database seeded successfully!');
@@ -284,7 +254,8 @@ async function seedDB() {
 }
 
 if (require.main === module) {
-  seedDB()
+  const force = process.argv.includes('--force');
+  seedDB(force)
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 }

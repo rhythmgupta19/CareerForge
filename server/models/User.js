@@ -4,8 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const domainProgressSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
-  hasCompletedOnboarding: { type: Boolean, default: false },
-  currentPhase: { type: Number, default: 0 },
+  currentPhase: { type: Number, default: -1 },
   overallProgress: { type: Number, default: 0, min: 0, max: 100 },
   currentCheckpoint: { type: String, default: '' },
   lastOpenedTopic: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
@@ -36,12 +35,6 @@ const domainProgressSchema = new mongoose.Schema({
     attemptedAt: { type: Date, default: Date.now },
     attemptNumber: { type: Number, default: 1 }
   }],
-  miniAssessmentResults: [{
-    topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
-    score: { type: Number },
-    passed: { type: Boolean },
-    attemptedAt: { type: Date, default: Date.now }
-  }],
   codeSubmissions: [{
     topicId: { type: mongoose.Schema.Types.ObjectId, ref: 'Topic' },
     code: { type: String },
@@ -65,10 +58,10 @@ const domainProgressSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: false, minlength: 6 },
-  googleId: { type: String, unique: true, sparse: true },
+  password: { type: String, required: function() { return this.provider !== 'google'; }, minlength: 6 },
   role: { type: String, enum: ['student', 'admin', 'mentor'], default: 'student' },
-  isPaidSubscriber: { type: Boolean, default: false },
+  googleId: { type: String, default: '' },
+  provider: { type: String, enum: ['local', 'google'], default: 'local' },
   avatar: { type: String, default: '' },
   phone: { type: String, default: '' },
   
@@ -159,7 +152,7 @@ userSchema.set('toObject', { virtuals: true });
 
 // Hash password before save
 userSchema.pre('save', async function(next) {
-  if (!this.password || !this.isModified('password')) return next();
+  if (!this.isModified('password') || !this.password) return next();
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   next();

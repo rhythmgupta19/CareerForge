@@ -12,6 +12,10 @@ const Domains = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    fetchDomains();
+  }, []);
+
   const fetchDomains = async () => {
     try {
       const res = await api.get('/domains');
@@ -22,10 +26,6 @@ const Domains = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchDomains();
-  }, []);
 
   const handleSelectDomain = async (domainId) => {
     const currentDomainId = user.selectedDomain?._id || user.selectedDomain;
@@ -55,12 +55,14 @@ const Domains = () => {
   const activeDomains = domains.filter(d => {
     const name = d.name.toLowerCase();
     const slug = (d.slug || '').toLowerCase();
+    if (slug === 'open-source' || name.includes('open source')) return false;
     return activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops');
   });
 
   const comingSoonDomains = domains.filter(d => {
     const name = d.name.toLowerCase();
     const slug = (d.slug || '').toLowerCase();
+    if (slug === 'open-source' || name.includes('open source')) return false;
     return !(activeKeys.includes(slug) || name.includes('dsa') || name.includes('web development') || name.includes('devops'));
   });
 
@@ -155,7 +157,7 @@ const Domains = () => {
                 {prog && (prog.overallProgress > 0 || prog.xp > 0) && (
                   <div className="mb-6 space-y-2 bg-[var(--land-bg-alt)] p-3.5 rounded-xl border border-[var(--border-light)]">
                     <div className="flex justify-between text-[10px] font-black text-[var(--text-light)] uppercase tracking-widest">
-                      <span>Lvl {prog.currentPhase !== undefined && prog.currentPhase !== null ? prog.currentPhase : 0}</span>
+                      <span>Lvl {prog.currentPhase ?? 0}</span>
                       <span>{prog.overallProgress || 0}%</span>
                     </div>
                     <div className="w-full bg-[var(--border-light)] h-1.5 rounded-full overflow-hidden">
