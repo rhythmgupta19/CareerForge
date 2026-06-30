@@ -253,6 +253,17 @@ async function seedDB(force = false) {
       console.error('❌ Failed to seed terminal labs:', err.message);
     }
 
+    // Seed DevOps assessments (both topic-level and level-level assessments)
+    try {
+      const seedDevOpsAssessments = require('./seedDevOpsAssessments');
+      await seedDevOpsAssessments();
+      const seedDevOpsLevelAssessments = require('./seedDevOpsLevelAssessments');
+      await seedDevOpsLevelAssessments();
+      console.log('📝 DevOps MCQ assessments & level assessments seeded successfully');
+    } catch (err) {
+      console.error('❌ Failed to seed DevOps assessments:', err.message);
+    }
+
 
     console.log('\n🎉 Database seeded successfully!');
     console.log(`📧 Admin: ${process.env.ADMIN_EMAIL || 'admin@careerforge.com'}`);
