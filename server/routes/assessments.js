@@ -21,9 +21,12 @@ router.post('/level/complete-without-assessment', protect, devopsC.completeLevel
 
 
 // Admin DevOps MCQ Routes
+router.get('/admin/all', protect, authorize('admin'), devopsC.getAllAssessmentsAdmin);
+router.post('/admin/reorder', protect, authorize('admin'), devopsC.reorderAssessmentsAdmin);
 router.post('/admin/save', protect, authorize('admin'), devopsC.saveAssessmentAdmin);
-router.delete('/admin/:moduleId', protect, authorize('admin'), devopsC.deleteAssessmentAdmin);
+router.delete('/admin/:id', protect, authorize('admin'), devopsC.deleteAssessmentAdmin);
 router.get('/admin/stats/:moduleId', protect, authorize('admin'), devopsC.getAssessmentStats);
 router.get('/admin/scores/:moduleId', protect, authorize('admin'), devopsC.getAssessmentScores);
+
 
 module.exports = router;

@@ -807,22 +807,30 @@ const AdminDashboard = () => {
               <h3 className="text-lg font-black text-slate-800 dark:text-white">Milestone Assessments</h3>
               <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Manage and assign diagnostic tests / validation assessments to specific domains</p>
             </div>
-            <button
-              onClick={() => {
-                if (domains.length === 0) {
-                  toast.error("Please add a domain specialization path first!");
-                  return;
-                }
-                setNewAssessment({
-                  ...newAssessment,
-                  domainId: domains[0]._id
-                });
-                setShowAssessmentModal(true);
-              }}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
-            >
-              <FiPlus /> Assign Assessment
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/admin/assessments')}
+                className="px-4 py-2 bg-indigo-605 hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow"
+              >
+                <FiSettings /> Manage MCQ Assessments
+              </button>
+              <button
+                onClick={() => {
+                  if (domains.length === 0) {
+                    toast.error("Please add a domain specialization path first!");
+                    return;
+                  }
+                  setNewAssessment({
+                    ...newAssessment,
+                    domainId: domains[0]._id
+                  });
+                  setShowAssessmentModal(true);
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-white rounded-xl text-xs font-black transition-all flex items-center gap-2"
+              >
+                <FiPlus /> Assign Assessment
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -186,44 +186,117 @@ exports.submitAssessment = async (req, res) => {
 // @route   POST /api/assessments/admin/save
 exports.saveAssessmentAdmin = async (req, res) => {
   try {
-    const { roadmapId, levelId, moduleId, title, questions } = req.body;
-    if (!roadmapId || !levelId || !moduleId || !title || !questions) {
-      return res.status(400).json({ success: false, message: 'All assessment fields are required.' });
-    }
-    if (questions.length !== 10) {
-      return res.status(400).json({ success: false, message: 'Assessment must contain exactly 10 questions.' });
+    const { 
+      assessmentId, 
+      roadmapId, 
+      levelId, 
+      moduleId, 
+      assignmentType, 
+      title, 
+      questions,
+      passingPercentage,
+      maxAttempts,
+      timeLimitMinutes,
+      isPublished,
+      order
+    } = req.body;
+
+    if (!roadmapId || !levelId || !title || !questions) {
+      return res.status(400).json({ success: false, message: 'roadmapId, levelId, title, and questions are required.' });
     }
 
-    let assessment = await DevOpsAssessment.findOne({ moduleId });
-    if (assessment) {
-      assessment.title = title;
-      assessment.roadmapId = roadmapId;
-      assessment.levelId = levelId;
-      assessment.questions = questions;
-      await assessment.save();
+    if (questions.length < 1 || questions.length > 20) {
+      return res.status(400).json({ success: false, message: 'Assessment must contain between 1 and 20 questions.' });
+    }
+
+    let assessment;
+    if (assessmentId) {
+      assessment = await DevOpsAssessment.findById(assessmentId);
     } else {
-      assessment = await DevOpsAssessment.create({
+      // Find existing by assignment combination
+      assessment = await DevOpsAssessment.findOne({
         roadmapId,
         levelId,
-        moduleId,
-        title,
-        questions
+        moduleId: moduleId || null,
+        assignmentType: assignmentType || 'topic'
       });
     }
 
-    res.json({ success: true, data: assessment });
+    const updateFields = {
+      roadmapId,
+      levelId,
+      moduleId: moduleId || null,
+      assignmentType: assignmentType || 'topic',
+      title,
+      questions,
+      passingPercentage: passingPercentage !== undefined ? passingPercentage : 70,
+      maxAttempts: maxAttempts !== undefined ? maxAttempts : 3,
+      timeLimitMinutes: timeLimitMinutes !== undefined ? timeLimitMinutes : 0,
+      isPublished: isPublished !== undefined ? isPublished : true,
+      order: order !== undefined ? order : 0
+    };
+
+    if (assessment) {
+      Object.assign(assessment, updateFields);
+      await assessment.save();
+    } else {
+      assessment = await DevOpsAssessment.create(updateFields);
+    }
+
+    res.json({ success: true, message: 'Assessment saved successfully.', data: assessment });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Admin: Delete an entire assessment
-// @route   DELETE /api/assessments/admin/:moduleId
+// @route   DELETE /api/assessments/admin/:id
 exports.deleteAssessmentAdmin = async (req, res) => {
   try {
-    const { moduleId } = req.params;
-    await DevOpsAssessment.findOneAndDelete({ moduleId });
+    const { id } = req.params;
+    let result = await DevOpsAssessment.findByIdAndDelete(id);
+    if (!result) {
+      result = await DevOpsAssessment.findOneAndDelete({ moduleId: id });
+    }
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Assessment not found.' });
+    }
     res.json({ success: true, message: 'DevOps Assessment deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Admin: Get all assessments populated with Domain, Phase, Topic
+// @route   GET /api/assessments/admin/all
+exports.getAllAssessmentsAdmin = async (req, res) => {
+  try {
+    const assessments = await DevOpsAssessment.find({})
+      .populate('roadmapId', 'name slug')
+      .populate('levelId', 'name phaseNumber')
+      .populate('moduleId', 'title order')
+      .sort({ order: 1, createdAt: -1 });
+      
+    res.json({ success: true, data: assessments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Admin: Reorder assessments
+// @route   POST /api/assessments/admin/reorder
+exports.reorderAssessmentsAdmin = async (req, res) => {
+  try {
+    const { orders } = req.body;
+    if (!orders || !Array.isArray(orders)) {
+      return res.status(400).json({ success: false, message: 'orders array is required.' });
+    }
+    
+    for (let item of orders) {
+      await DevOpsAssessment.findByIdAndUpdate(item.id, { order: item.order });
+    }
+    
+    res.json({ success: true, message: 'Assessments reordered successfully.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
