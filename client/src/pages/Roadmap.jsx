@@ -1171,14 +1171,21 @@ const Roadmap = () => {
 const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA }) => {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (phaseId) {
       setLoading(true);
-      api.get(`/topics/phase/${phaseId}`).then(res => {
-        setTopics(res.data.data);
-        setLoading(false);
-      });
+      setError(null);
+      api.get(`/topics/phase/${phaseId}`)
+        .then(res => {
+          setTopics(res.data.data);
+          setLoading(false);
+        })
+        .catch(err => {
+          setError(err.response?.data?.message || 'Failed to load level topics.');
+          setLoading(false);
+        });
     }
   }, [phaseId]);
 
@@ -1189,6 +1196,22 @@ const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA }) => {
       <div className="animate-spin rounded-full h-8 w-8 border-4 border-[var(--primary)] border-t-transparent mx-auto"></div>
     </div>
   );
+
+  if (error) {
+    return (
+      <div className="col-span-full py-12 px-6 bg-rose-500/5 border border-rose-500/20 rounded-2xl text-center space-y-4 relative z-10 animate-fade-in">
+        <div className="w-12 h-12 bg-rose-500/10 border border-rose-500/30 text-rose-500 rounded-full flex items-center justify-center text-lg mx-auto shadow-inner">
+          🔒
+        </div>
+        <div>
+          <h4 className="text-xs font-black text-rose-500 uppercase tracking-widest">Level Restricted</h4>
+          <p className="text-[11px] text-zinc-400 font-semibold mt-2 max-w-md mx-auto leading-relaxed">
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
