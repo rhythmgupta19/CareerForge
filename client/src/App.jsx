@@ -37,6 +37,8 @@ import EditProblem from './pages/admin/EditProblem';
 import ManageSubmissions from './pages/admin/ManageSubmissions';
 import ManageTestCases from './pages/admin/ManageTestCases';
 import ManageTopics from './pages/admin/ManageTopics';
+import ManageTerminalLabs from './pages/admin/ManageTerminalLabs';
+
 import InstallPrompt from './components/InstallPrompt';
 
 function App() {
@@ -85,6 +87,8 @@ function App() {
               <Route path="/admin/problems/test-cases/:id" element={<ManageTestCases />} />
               <Route path="/admin/submissions" element={<ManageSubmissions />} />
               <Route path="/admin/topics" element={<ManageTopics />} />
+              <Route path="/admin/terminal" element={<ManageTerminalLabs />} />
+
             </Route>
           </Route>
 

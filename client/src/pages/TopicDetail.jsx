@@ -16,6 +16,8 @@ import { getDsaLanguageContent, getCheckpointContent } from '../utils/dsaContent
 import { getWebDevLanguageContent, getWebDevCheckpointContent } from '../utils/webDevContent';
 import { getLessonAssessment, normalizeDsaLanguage } from '../utils/dsaPersonalization';
 import RecursionVisualizer from '../components/RecursionVisualizer';
+import PracticeTerminal from '../components/devops/PracticeTerminal';
+
 
 // Audio Feedback Sound Engine for high gamification engagement
 const playSoundEffect = (type) => {
@@ -207,9 +209,14 @@ const TopicDetail = () => {
   const [confidenceLevel, setConfidenceLevel] = useState(3);
   const [revisionNeeded, setRevisionNeeded] = useState(false);
 
-  // Progressive Question Difficulty State
   const [activeDifficulty, setActiveDifficulty] = useState(() => localStorage.getItem(`dsa_difficulty_${id}`) || 'beginner');
   const [lessonAnswers, setLessonAnswers] = useState({});
+
+  // DevOps Terminal States
+  const [terminalLabs, setTerminalLabs] = useState([]);
+  const [completedTerminalLabs, setCompletedTerminalLabs] = useState([]);
+  const [activeLabId, setActiveLabId] = useState('');
+
   
   useEffect(() => {
     if (id) {
@@ -585,7 +592,10 @@ const TopicDetail = () => {
                       (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'dsa');
   const isWebDevDomain = topic?.domainId?.slug === 'web-development' || topic?.domainId === 'web-development' || 
                         (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'web-development');
-  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain;
+  const isDevOpsDomain = topic?.domainId?.slug === 'devops' || topic?.domainId === 'devops' ||
+                        (typeof topic?.domainId === 'object' && topic?.domainId?.slug === 'devops');
+  const shouldSplitWorkspace = isDsaDomain || isWebDevDomain || isDevOpsDomain;
+
 
   const availableLanguages = useMemo(() => {
     if (isWebDevDomain) {
@@ -611,6 +621,58 @@ const TopicDetail = () => {
 
   const lessonAssessment = shouldSplitWorkspace ? getLessonAssessment(topic?.title, selectedLang) : [];
   const lessonAssessmentComplete = !shouldSplitWorkspace || lessonAssessment.every((_, index) => (lessonAnswers[index] || '').trim().length > 0);
+
+  const matchedLabId = useMemo(() => {
+    if (!topic || !isDevOpsDomain) return '';
+    const title = (topic.title || '').toLowerCase();
+    if (title.includes('linux') || title.includes('user') || title.includes('bash') || title.includes('shell')) {
+      return 'devops_lab_1';
+    }
+    if (title.includes('git') || title.includes('version')) {
+      return 'devops_lab_2';
+    }
+    if (title.includes('docker') || title.includes('container') || title.includes('image')) {
+      return 'devops_lab_3';
+    }
+    if (title.includes('kubernetes') || title.includes('k8s') || title.includes('orchestr') || title.includes('kubectl')) {
+      return 'devops_lab_4';
+    }
+    return 'devops_lab_1';
+  }, [topic, isDevOpsDomain]);
+
+  useEffect(() => {
+    if (isDevOpsDomain && id) {
+      const fetchDevOpsProgress = async () => {
+        try {
+          const { data } = await api.get(`/terminal/progress/${id}`);
+          if (data.success && data.progress) {
+            setCompletedTerminalLabs(data.progress.completedLabs || []);
+          }
+        } catch (err) {
+          console.warn('Failed to load DevOps progress', err);
+        }
+      };
+      
+      const fetchAllLabs = async () => {
+        try {
+          const { data } = await api.get('/terminal/labs');
+          if (data.success) {
+            setTerminalLabs(data.labs || []);
+          }
+        } catch (err) {
+          console.warn('Failed to load labs catalog', err);
+        }
+      };
+
+      fetchDevOpsProgress();
+      fetchAllLabs();
+      
+      if (matchedLabId) {
+        setActiveLabId(matchedLabId);
+      }
+    }
+  }, [isDevOpsDomain, id, matchedLabId]);
+
 
   // Active checkpoint content (only relevant when isCheckpointModule)
   const activeCheckpointContent = useMemo(() => {
@@ -2760,7 +2822,148 @@ const TopicDetail = () => {
           )}
 
           {/* Left Pane Scrollable Content */}
-          {learningStep === 1 ? (
+          {isDevOpsDomain ? (
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-6">
+              {/* DevOps Video */}
+              {activeVideoEmbedUrl && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FiYoutube className="text-red-500 text-base" />
+                    <span className="text-xs font-black text-white">Tutorial Video</span>
+                  </div>
+                  <div className="aspect-video bg-black rounded-xl overflow-hidden border border-[var(--border)] shadow-lg">
+                    {isDirectVideoUrl(activeVideoEmbedUrl) ? (
+                      <video
+                        id="tutorial-video-player"
+                        src={activeVideoEmbedUrl}
+                        className="w-full h-full"
+                        controls
+                        playsInline
+                        crossOrigin="anonymous"
+                        onLoadedMetadata={handleLoadedMetadataDirectVideo}
+                        onTimeUpdate={handleTimeUpdateDirectVideo}
+                        onPause={handlePauseDirectVideo}
+                        onEnded={handleEndedDirectVideo}
+                        onError={handleDirectVideoError}
+                      />
+                    ) : (
+                      <iframe
+                        id="tutorial-video-iframe"
+                        src={activeVideoEmbedUrl ? `${activeVideoEmbedUrl}${activeVideoEmbedUrl.includes('?') ? '&' : '?'}enablejsapi=1` : "https://www.youtube.com/embed/EAR7De6Goz4?enablejsapi=1"}
+                        className="w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Lab Objectives */}
+              {terminalLabs.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
+                    <span className="text-xs font-black text-[var(--text-main)] uppercase tracking-wider flex items-center gap-1.5">
+                      📂 Practice Lab Challenge
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {terminalLabs
+                      .filter(lab => lab.labId === activeLabId)
+                      .map(lab => {
+                        const isLabDone = completedTerminalLabs.includes(lab.labId);
+                        return (
+                          <div key={lab.labId} className="p-4 bg-[var(--bg-sub)] rounded-xl border border-[var(--border)] space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="font-black text-sm text-[var(--text-main)] flex items-center gap-1.5">
+                                <span>⚙️</span> {lab.title}
+                              </div>
+                              <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${isLabDone ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30' : 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'}`}>
+                                {isLabDone ? '✓ Completed' : '⚡ Active'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[var(--text-muted)] font-medium">{lab.description}</p>
+                            
+                            <div className="space-y-1.5 pt-2 border-t border-[var(--border)]/40">
+                              <div className="text-[9px] text-[var(--text-light)] uppercase tracking-wider font-bold">Objectives Tasks</div>
+                              <div className="space-y-1">
+                                {lab.objectives.map((obj, oIdx) => (
+                                  <div key={oIdx} className="flex items-start gap-2 text-[10px] font-semibold text-[var(--text-main)]">
+                                    <span className="text-indigo-400 mt-0.5">▪</span>
+                                    <span>{obj}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Switch Lab Environment */}
+                  <div className="space-y-2">
+                    <div className="text-[9px] text-[var(--text-light)] uppercase tracking-wider font-bold">Switch Predefined Lab Environment</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {terminalLabs.map(lab => {
+                        const isLabDone = completedTerminalLabs.includes(lab.labId);
+                        const isActive = lab.labId === activeLabId;
+                        return (
+                          <button
+                            key={lab.labId}
+                            onClick={() => setActiveLabId(lab.labId)}
+                            className={`p-2.5 rounded-lg border text-left transition-all ${
+                              isActive
+                                ? 'bg-[var(--primary-light)] border-[var(--primary)] text-[var(--text-main)] shadow-sm'
+                                : 'bg-[var(--bg-sub)] border-[var(--border)] hover:bg-[var(--bg-card)]'
+                            }`}
+                          >
+                            <div className="font-bold text-[10px] truncate">{lab.title}</div>
+                            <div className="text-[8px] text-[var(--text-muted)] mt-0.5 flex justify-between items-center">
+                              <span className="capitalize">{lab.category}</span>
+                              <span className={isLabDone ? 'text-emerald-500 font-bold' : 'text-zinc-500'}>
+                                {isLabDone ? 'Done ✓' : 'Pending'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Log Topic Completion */}
+              <div className="card p-5 border-emerald-500/20 border-t-2 space-y-4">
+                <h3 className="text-xs font-black text-[var(--text-main)] flex items-center gap-1.5">
+                  <FiCheckCircle className="text-emerald-500" /> Log Topic Mastered &amp; Claim XP
+                </h3>
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.post('/progress/complete-topic', {
+                        topicId: id,
+                        studyTimeMinutes: 60,
+                        notes: `Completed DevOps topic: ${topic?.title}`,
+                        difficultyFeedback: 'medium',
+                        confidenceLevel: 5,
+                        revisionNeeded: false
+                      });
+                      await refreshUser();
+                      toast.success(`🚀 DevOps Topic "${topic?.title}" Complete! +150 XP earned!`);
+                      navigate('/roadmap');
+                    } catch {
+                      toast.error('Failed to save topic completion.');
+                    }
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-500/25"
+                >
+                  Complete DevOps Topic &amp; Claim Rewards 🏆
+                </button>
+              </div>
+            </div>
+          ) : learningStep === 1 ? (
             <div className="flex-1 flex flex-col bg-black relative w-full h-full">
               {isDirectVideoUrl(activeVideoEmbedUrl) ? (
                 <video
@@ -2786,6 +2989,7 @@ const TopicDetail = () => {
                   allowFullScreen
                 ></iframe>
               )}
+
 
               <div className="p-4 bg-[#18181b] border-t border-[#2e2e2e] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -3236,7 +3440,13 @@ const TopicDetail = () => {
             isFullscreen ? 'fixed inset-0 z-50 w-screen h-screen' : 'relative'
           } ${isMobile && activeWorkspaceTab !== 'code' ? 'hidden' : 'flex'}`}
         >
-          {isWebDevDomain ? (
+          {isDevOpsDomain ? (
+            <PracticeTerminal
+              topicId={id}
+              activeLabId={activeLabId}
+              onProgressUpdate={(completed) => setCompletedTerminalLabs(completed)}
+            />
+          ) : isWebDevDomain ? (
             <WebDevPlayground 
               topicId={id} 
               boilerplate={{
@@ -3247,6 +3457,7 @@ const TopicDetail = () => {
               editorTheme={editorTheme} 
             />
           ) : (
+
             <>
           {/* Editor Header Controller panel */}
           <div className="bg-[#141416] px-4 py-2 border-b border-[var(--border)] flex justify-between items-center text-xs text-[var(--text-muted)] shrink-0">

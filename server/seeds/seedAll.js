@@ -244,6 +244,16 @@ async function seedDB(force = false) {
       console.error('❌ Failed to seed problem bank:', err.message);
     }
 
+    // Seed terminal labs
+    try {
+      const seedTerminalLabs = require('./seedTerminalLabs');
+      await seedTerminalLabs();
+      console.log('🐧 Terminal labs seeded successfully');
+    } catch (err) {
+      console.error('❌ Failed to seed terminal labs:', err.message);
+    }
+
+
     console.log('\n🎉 Database seeded successfully!');
     console.log(`📧 Admin: ${process.env.ADMIN_EMAIL || 'admin@careerforge.com'}`);
     console.log(`🔑 Password: ${process.env.ADMIN_PASSWORD || 'Admin@123'}`);
