@@ -197,3 +197,15 @@ exports.resetOnboardingAdmin = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Admin: Run global roadmap progress migration and repair
+// @route   POST /api/admin/migrate-roadmaps
+exports.runRoadmapMigrationAdmin = async (req, res) => {
+  try {
+    const runRoadmapMigration = require('../scripts/roadmapMigration');
+    const report = await runRoadmapMigration();
+    res.json({ success: true, message: 'Roadmap progress migration ran successfully', data: report });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

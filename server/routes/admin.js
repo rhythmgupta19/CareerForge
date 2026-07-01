@@ -8,6 +8,7 @@ router.get('/users', protect, authorize('admin'), c.getAllUsers);
 router.put('/users/:id/role', protect, authorize('admin'), c.updateUserRole);
 router.put('/users/:id/progress', protect, authorize('admin'), c.updateUserProgress);
 router.post('/users/:id/reset-onboarding', protect, authorize('admin'), c.resetOnboardingAdmin);
+router.post('/migrate-roadmaps', protect, authorize('admin'), c.runRoadmapMigrationAdmin);
 router.delete('/users/:id', protect, authorize('admin'), c.deleteUser);
 
 // Mentor routes

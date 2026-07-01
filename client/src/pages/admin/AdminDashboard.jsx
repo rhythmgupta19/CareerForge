@@ -31,8 +31,10 @@ const AdminDashboard = () => {
   const [topics, setTopics] = useState([]);
   const [assessments, setAssessments] = useState([]);
   
-  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments' | 'feedback'
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'domains' | 'topics' | 'assessments' | 'feedback' | 'maintenance'
   const [loading, setLoading] = useState(true);
+  const [migrationReport, setMigrationReport] = useState(null);
+  const [migrating, setMigrating] = useState(false);
 
   // Feedback System State
   const [feedbacks, setFeedbacks] = useState([]);
@@ -208,6 +210,26 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       toast.error("Failed to reset onboarding", { id: loadingToast });
+    }
+  };
+
+  const handleRunMigration = async () => {
+    if (!window.confirm("Are you sure you want to run the global roadmap progress reconciliation? This will scan and verify progress for all users.")) return;
+    setMigrating(true);
+    const loadingToast = toast.loading("Running global roadmap reconciliation...");
+    try {
+      const res = await api.post('/admin/migrate-roadmaps');
+      if (res.data.success) {
+        toast.success("Roadmap migration completed successfully!", { id: loadingToast });
+        setMigrationReport(res.data.data);
+        // Refresh users to reflect updated progress
+        const usersRes = await api.get('/admin/users');
+        setUsers(usersRes.data.data || []);
+      }
+    } catch (err) {
+      toast.error("Failed to run roadmap migration", { id: loadingToast });
+    } finally {
+      setMigrating(false);
     }
   };
 
@@ -478,6 +500,12 @@ const AdminDashboard = () => {
                 className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'feedback' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
               >
                 ⭐ User Feedback
+              </button>
+              <button
+                onClick={() => setActiveTab('maintenance')}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'maintenance' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                🛠️ Maintenance
               </button>
             </div>
             <Link
@@ -1064,6 +1092,139 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'maintenance' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-6">
+          <div>
+            <h3 className="text-lg font-black text-slate-800 dark:text-white">System Maintenance & Repairs</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Perform system-wide cleanup, data migrations, and user progress repairs.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="text-2xl">🔄</div>
+                <h4 className="font-black text-slate-800 dark:text-white text-sm">Roadmap Progress Reconciliation</h4>
+                <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed">
+                  Scans all active users and matches their roadmap checkpoints against video watch logs and assessment scores. Recomputes progress percentages, unlocks levels that should be available, and clears invalid locks.
+                </p>
+              </div>
+              <button
+                onClick={handleRunMigration}
+                disabled={migrating}
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-650 hover:bg-emerald-600 dark:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 shadow"
+              >
+                {migrating ? 'Running Reconciliation...' : 'Run Global Progress Repair'}
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 flex flex-col justify-between space-y-4 opacity-60">
+              <div className="space-y-2">
+                <div className="text-2xl">🧹</div>
+                <h4 className="font-black text-slate-800 dark:text-white text-sm">Session Data Cleanup</h4>
+                <p className="text-slate-650 dark:text-slate-400 text-xs leading-relaxed">
+                  Prunes expired user sessions, cleans up orphaned feedback, and refreshes leaderboards.
+                </p>
+              </div>
+              <button
+                disabled
+                className="w-full sm:w-auto px-6 py-3 bg-slate-300 dark:bg-slate-800 text-slate-500 rounded-xl text-xs font-black transition-all cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                Automated Mode Active
+              </button>
+            </div>
+          </div>
+
+          {migrationReport && (
+            <div className="bg-white dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-6 shadow-sm">
+              <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/5 pb-4">
+                <div>
+                  <h4 className="font-black text-slate-800 dark:text-white text-sm">Verification &amp; Migration Report</h4>
+                  <span className="text-[9px] font-bold text-slate-500 uppercase">RUN AT: {new Date(migrationReport.startedAt).toLocaleString()}</span>
+                </div>
+                <button
+                  onClick={() => setMigrationReport(null)}
+                  className="text-xs font-black text-rose-600 dark:text-rose-400 hover:underline"
+                >
+                  Clear Report
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Users Scanned</span>
+                  <span className="text-xl font-black text-slate-800 dark:text-white mt-1 block">{migrationReport.totalUsersScanned}</span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Users Repaired</span>
+                  <span className="text-xl font-black text-emerald-600 dark:text-indigo-400 mt-1 block">{migrationReport.totalUsersRepaired}</span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Status</span>
+                  <span className="text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded mt-1.5 inline-block">COMPLETED</span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-white/5">
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Duration</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-white mt-2 block">
+                    {Math.round(new Date(migrationReport.completedAt) - new Date(migrationReport.startedAt))} ms
+                  </span>
+                </div>
+              </div>
+
+              {migrationReport.details.length > 0 ? (
+                <div className="space-y-4">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Detailed Reconciliations:</span>
+                  <div className="max-h-[400px] overflow-y-auto pr-2 divide-y divide-slate-100 dark:divide-white/5 space-y-4">
+                    {migrationReport.details.map((detail) => (
+                      <div key={detail.userId} className="pt-4 first:pt-0">
+                        <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                          <span className="font-bold text-slate-800 dark:text-white text-xs block">{detail.fullName}</span>
+                          <span className="text-[10px] text-slate-500 font-semibold block">{detail.email}</span>
+                        </div>
+                        <div className="pl-4 space-y-3 text-xs">
+                          {detail.changes.map((c, idx) => (
+                            <div key={idx} className="bg-slate-50 dark:bg-slate-900/35 border border-slate-200/50 dark:border-white/5 rounded-xl p-3.5 space-y-1.5">
+                              <div className="font-black text-emerald-700 dark:text-indigo-400 text-[10px] uppercase tracking-wider">Domain: {c.domain}</div>
+                              {c.topicsAdded.length > 0 && (
+                                <div>
+                                  <span className="font-bold text-slate-500 dark:text-slate-400">Reconciled Topics:</span>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {c.topicsAdded.map(tName => (
+                                      <span key={tName} className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-white/5 text-[10px] text-slate-700 dark:text-slate-355 font-medium">{tName}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {(c.oldProgress !== c.newProgress || c.oldPhase !== c.newPhase) && (
+                                <div className="flex flex-wrap gap-4 text-[10px] font-bold mt-1">
+                                  {c.oldProgress !== c.newProgress && (
+                                    <span className="text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-0.5 rounded border border-amber-100 dark:border-amber-900/20">
+                                      Progress: {c.oldProgress}% → {c.newProgress}%
+                                    </span>
+                                  )}
+                                  {c.oldPhase !== c.newPhase && (
+                                    <span className="text-purple-650 bg-purple-50 dark:bg-purple-950/20 px-2.5 py-0.5 rounded border border-purple-100 dark:border-purple-900/20">
+                                      Level: Lvl {c.oldPhase} → Lvl {c.newPhase}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-500 dark:text-slate-550 text-xs font-bold bg-slate-50/50 dark:bg-slate-950/20 rounded-xl border border-dashed border-slate-200 dark:border-white/5">
+                  Scan finished. All user records are perfectly synced! No repairs needed.
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
