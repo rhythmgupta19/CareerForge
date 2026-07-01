@@ -196,6 +196,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleResetOnboarding = async () => {
+    if (!window.confirm("Are you sure you want to reset onboarding for this user? They will have to complete the questionnaire again on login.")) return;
+    const loadingToast = toast.loading("Resetting user onboarding...");
+    try {
+      const res = await api.post(`/admin/users/${selectedUser._id}/reset-onboarding`);
+      if (res.data.success) {
+        toast.success("User onboarding has been reset!", { id: loadingToast });
+        setUsers(users.map(u => u._id === selectedUser._id ? res.data.data : u));
+        setSelectedUser(res.data.data);
+      }
+    } catch (err) {
+      toast.error("Failed to reset onboarding", { id: loadingToast });
+    }
+  };
+
   const handleCreateDomain = async (e) => {
     e.preventDefault();
     if (!newDomain.name || !newDomain.slug) {
@@ -1172,6 +1187,15 @@ const AdminDashboard = () => {
                   >
                     {updatingProgress ? "Applying Changes..." : "Apply Personalization Settings"}
                   </button>
+
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/5">
+                    <button
+                      onClick={handleResetOnboarding}
+                      className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2"
+                    >
+                      🔄 Reset DevOps Onboarding
+                    </button>
+                  </div>
                 </div>
               </div>
 

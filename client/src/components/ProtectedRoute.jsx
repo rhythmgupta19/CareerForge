@@ -25,8 +25,16 @@ const ProtectedRoute = ({ allowedRoles }) => {
   }
 
   // Force profile setup for students
-  if (user.role === 'student' && user.activeDomain && !user.profile?.isProfileComplete && location.pathname !== '/setup-profile') {
-     return <Navigate to="/setup-profile" replace />;
+  if (user.role === 'student' && user.activeDomain) {
+    const activeSlug = user.activeDomain.slug || user.selectedDomain?.slug || '';
+    const isDevOps = activeSlug.toLowerCase() === 'devops';
+    const needsOnboarding = isDevOps 
+      ? !user.profile?.onboardingCompleted 
+      : !user.profile?.isProfileComplete;
+
+    if (needsOnboarding && location.pathname !== '/setup-profile') {
+      return <Navigate to="/setup-profile" replace />;
+    }
   }
 
   return <Outlet />;

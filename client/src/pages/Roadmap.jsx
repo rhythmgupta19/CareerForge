@@ -33,6 +33,8 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { analyzeDsaProfile, DSA_LEVELS, DSA_LANGUAGE_LABELS, getDsaBadgeForLevel, getStreakRank, normalizeDsaLanguage } from '../utils/dsaPersonalization';
 import { STRIVER_A2Z_SHEET } from '../utils/striverA2ZContent';
+import DevOpsOnboarding from '../components/devops/DevOpsOnboarding';
+
 
 // Beautiful gamified icons for DSA and Generic roadmaps
 const getLevelIcon = (index, domainSlug) => {
@@ -551,7 +553,7 @@ const Roadmap = () => {
                     >
                       <span className="text-4xl mb-1 filter drop-shadow-sm">{getLevelIcon(index, domain.slug)}</span>
                       <span className="text-[8px] font-black uppercase tracking-widest mt-0.5">LVL {phaseNum}</span>
-                      {isDSA && index < dsaAnalysis.startingLevel && (
+                      {((isDSA && index < dsaAnalysis.startingLevel) || (!isDSA && index < (user.profile?.startingLevel ?? 0))) && (
                         <div className="absolute -bottom-3 bg-sky-500 text-white text-[7px] px-2 py-0.5 rounded-full font-black shadow-sm">
                           AI SKIP
                         </div>

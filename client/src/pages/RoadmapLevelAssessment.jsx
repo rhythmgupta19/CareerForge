@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { FiCheckCircle, FiXCircle, FiArrowLeft, FiHelpCircle, FiChevronRight, FiRefreshCw, FiBookOpen, FiZap } from 'react-icons/fi';
 import { motion } from 'framer-motion';

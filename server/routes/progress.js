@@ -17,6 +17,7 @@ router.post('/video-progress', protect, c.saveVideoProgress);
 router.post('/webdev-project', protect, c.saveWebDevProject);
 router.get('/webdev-project/:topicId', protect, c.getWebDevProject);
 router.post('/repair-users', protect, c.repairUsers);
+router.post('/onboarding', protect, c.submitOnboarding);
 
 
 module.exports = router;

@@ -863,3 +863,86 @@ exports.repairUsers = async (req, res) => {
   }
 };
 
+// @desc    Submit DevOps onboarding questionnaire
+// @route   POST /api/progress/onboarding
+exports.submitOnboarding = async (req, res) => {
+  try {
+    const { answers, manualLevel } = req.body;
+    if (!answers) {
+      return res.status(400).json({ success: false, message: 'Answers are required.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const q1 = answers.networking === 'yes';
+    const q2 = answers.linux === 'yes';
+    const q3 = answers.git === 'yes';
+    const q4 = answers.docker === 'yes';
+    const q5 = answers.kubernetes === 'yes';
+    const q6 = answers.beginner === 'yes';
+
+    let startingLevel = 0;
+    let isExperienced = false;
+
+    // Experienced check
+    if (q6) {
+      // Beginner -> Level 0
+      startingLevel = 0;
+    } else if (q4 || q5 || (q1 && q2 && q3)) {
+      isExperienced = true;
+      startingLevel = manualLevel !== undefined ? parseInt(manualLevel, 10) : 0;
+    } else if (q1 && q2) {
+      // Knows Networking and Linux -> Skip to Level 2
+      startingLevel = 2;
+    } else if (q1) {
+      // Knows Networking -> Skip Level 0
+      startingLevel = 1;
+    } else {
+      // Beginner -> Level 0
+      startingLevel = 0;
+    }
+
+    if (!user.profile) user.profile = {};
+    user.profile.onboardingCompleted = true;
+    user.profile.isProfileComplete = true;
+    user.profile.startingLevel = startingLevel;
+    user.profile.skillAssessmentAnswers = answers;
+
+    if (!user.domainsProgress) user.domainsProgress = {};
+    if (!user.domainsProgress.devops) {
+      user.domainsProgress.devops = {
+        xp: 0,
+        currentPhase: startingLevel,
+        overallProgress: 0,
+        completedTopics: [],
+        startedTopics: [],
+        testResults: [],
+        codeSubmissions: []
+      };
+    } else {
+      user.domainsProgress.devops.currentPhase = startingLevel;
+    }
+
+    user.markModified('profile');
+    user.markModified('domainsProgress.devops');
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Onboarding completed successfully.',
+      data: {
+        onboardingCompleted: true,
+        startingLevel,
+        isExperienced,
+        currentPhase: startingLevel
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

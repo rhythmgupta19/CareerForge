@@ -161,3 +161,39 @@ exports.updateUserProgress = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Admin: Reset a user's DevOps onboarding
+// @route   POST /api/admin/users/:id/reset-onboarding
+exports.resetOnboardingAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (!user.profile) user.profile = {};
+    user.profile.onboardingCompleted = false;
+    user.profile.isProfileComplete = false;
+    user.profile.startingLevel = 0;
+    user.profile.skillAssessmentAnswers = {};
+
+    if (!user.domainsProgress) user.domainsProgress = {};
+    if (!user.domainsProgress.devops) user.domainsProgress.devops = {};
+    user.domainsProgress.devops.currentPhase = 0;
+    user.domainsProgress.devops.overallProgress = 0;
+    user.domainsProgress.devops.completedTopics = [];
+    user.domainsProgress.devops.startedTopics = [];
+    user.domainsProgress.devops.testResults = [];
+    user.domainsProgress.devops.codeSubmissions = [];
+
+    user.markModified('profile');
+    user.markModified('domainsProgress.devops');
+
+    await user.save();
+
+    res.json({ success: true, message: 'Onboarding reset successfully', data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

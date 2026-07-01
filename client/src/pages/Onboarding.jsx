@@ -6,11 +6,26 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiMoon, FiSun, FiZap } from 'react-icons/fi';
 import { analyzeDsaProfile, normalizeDsaLanguage } from '../utils/dsaPersonalization';
+import DevOpsOnboarding from '../components/devops/DevOpsOnboarding';
 
 const Onboarding = () => {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
   const [theme, setTheme] = useState(() => localStorage.getItem('careerforge_theme') || 'light');
+
+  const activeDomainSlug = user?.activeDomain?.slug || user?.selectedDomain?.slug || 'dsa';
+
+  if (activeDomainSlug.toLowerCase() === 'devops') {
+    return (
+      <DevOpsOnboarding 
+        onCompleted={async () => {
+          await refreshUser();
+          navigate('/roadmap');
+        }} 
+      />
+    );
+  }
+
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
@@ -20,7 +35,6 @@ const Onboarding = () => {
     else document.documentElement.classList.remove('dark');
   }, [theme]);
 
-  const activeDomainSlug = user?.activeDomain?.slug || user?.selectedDomain?.slug || 'dsa';
   const isDsa = activeDomainSlug === 'dsa';
 
   // Construct questions dynamically based on domain selection
