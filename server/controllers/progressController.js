@@ -444,10 +444,25 @@ exports.submitAssessment = async (req, res) => {
       user.activityLog.push({ date: today, minutes: 0, topicsCompleted: 0, assessmentsPassed: 1 });
     }
 
+    const newlyEarnedBadges = [];
+    const certRef = { cert: null };
+    if (passed) {
+      await exports.checkAndAdvancePhase(user, user.activeDomain._id, key, newlyEarnedBadges, certRef);
+    }
+
     user.markModified(`domainsProgress.${key}`);
     await user.save();
 
-    res.json({ success: true, message: passed ? 'Assessment passed!' : 'Keep trying!', data: { passed, score } });
+    res.json({ 
+      success: true, 
+      message: passed ? 'Assessment passed!' : 'Keep trying!', 
+      data: { 
+        passed, 
+        score,
+        newlyEarnedBadges,
+        newlyEarnedCertificate: certRef.cert
+      } 
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

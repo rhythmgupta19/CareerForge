@@ -40,9 +40,12 @@ async function runRoadmapMigration() {
     };
 
     for (let user of allUsers) {
-      if (!user.domainsProgress) continue;
-
       let userRepaired = false;
+      if (!user.domainsProgress) {
+        user.domainsProgress = {};
+        userRepaired = true;
+      }
+
       const userRepairDetails = {
         userId: user._id,
         email: user.email,
@@ -59,7 +62,23 @@ async function runRoadmapMigration() {
       // Loop through each domain
       for (const domain of allDomains) {
         const key = getProgressKey(domain.slug);
-        const progress = user.domainsProgress[key];
+        let progress = user.domainsProgress[key];
+        
+        // If this is the user's active domain, initialize progress map if missing
+        if (!progress && user.activeDomain && user.activeDomain.toString() === domain._id.toString()) {
+          user.domainsProgress[key] = {
+            xp: 0,
+            currentPhase: 0,
+            overallProgress: 0,
+            completedTopics: [],
+            startedTopics: [],
+            testResults: [],
+            codeSubmissions: []
+          };
+          progress = user.domainsProgress[key];
+          userRepaired = true;
+        }
+
         if (!progress) continue;
 
         // Ensure array structures

@@ -4,7 +4,7 @@ import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { 
   FiLock, FiUnlock, FiCheckCircle, FiPlayCircle, FiZap, FiStar, 
-  FiTrendingUp, FiAward, FiClock, FiCode, FiInfo, FiSearch 
+  FiTrendingUp, FiAward, FiClock, FiCode, FiInfo, FiSearch, FiChevronRight
 } from 'react-icons/fi';
 
 const SHEET_QUESTIONS = [
@@ -657,6 +657,7 @@ const Roadmap = () => {
                 activeLevel={activeLevel}
                 isDSA={isDSA}
                 domainSlug={domain?.slug}
+                isCurrentActiveLevel={activeLevel === (activeDomainProgress.currentPhase ?? 0)}
               />
             </motion.div>
           )}
@@ -1171,7 +1172,7 @@ const Roadmap = () => {
   );
 };
 
-const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA, domainSlug }) => {
+const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA, domainSlug, isCurrentActiveLevel }) => {
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -1259,7 +1260,7 @@ const TopicsList = ({ phaseId, isTopicCompleted, activeLevel, isDSA, domainSlug 
         );
       })}
 
-      {allCompleted && domainSlug === 'devops' && (
+      {allCompleted && isCurrentActiveLevel && (
         <div className="col-span-full mt-8 p-6 bg-gradient-to-r from-indigo-950 via-[#141416] to-indigo-950 border-2 border-indigo-500/25 rounded-3xl text-center space-y-4 shadow-xl relative overflow-hidden">
           <div className="text-4xl">🎯</div>
           <div>

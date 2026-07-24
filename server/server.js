@@ -72,6 +72,12 @@ app.use('/api/submissions', require('./routes/submissionRoutes'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/terminal', require('./routes/terminal'));
+app.use('/api/activity', require('./routes/activity'));
+app.use('/api/admin/activity', require('./routes/adminActivity'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
+app.use('/api/blogs', require('./routes/blogs'));
+app.use('/api/suggestions', require('./routes/suggestions'));
+app.use('/api/projects', require('./routes/projects'));
 
 
 // Health check

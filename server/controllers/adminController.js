@@ -90,6 +90,112 @@ exports.getAdminStats = async (req, res) => {
     const publishedProblems = await Problem.countDocuments({ isPublished: true });
     const totalSubmissions = await Submission.countDocuments();
 
+    // Helper to resolve progress keys
+    const getProgressKey = (slug) => {
+      if (!slug) return 'dsa';
+      const lowercaseSlug = slug.toLowerCase();
+      if (lowercaseSlug === 'web-development' || lowercaseSlug === 'webdev') return 'webdev';
+      if (lowercaseSlug === 'open-source' || lowercaseSlug === 'opensource') return 'opensource';
+      if (lowercaseSlug === 'devops') return 'devops';
+      if (lowercaseSlug === 'dsa') return 'dsa';
+      return 'dsa';
+    };
+
+    const allUsers = await User.find({ role: 'student' }).populate('activeDomain');
+    const studentsOnLevel = {};
+    const roadmapCompletion = {};
+    const roadmapCounts = {};
+
+    allUsers.forEach(u => {
+      if (u.activeDomain) {
+        const key = getProgressKey(u.activeDomain.slug);
+        const progressObj = u.domainsProgress?.[key] || {};
+        const phase = progressObj.currentPhase || 0;
+        const progressVal = progressObj.overallProgress || 0;
+
+        if (!studentsOnLevel[key]) studentsOnLevel[key] = {};
+        studentsOnLevel[key][phase] = (studentsOnLevel[key][phase] || 0) + 1;
+
+        if (!roadmapCompletion[key]) {
+          roadmapCompletion[key] = 0;
+          roadmapCounts[key] = 0;
+        }
+        roadmapCompletion[key] += progressVal;
+        roadmapCounts[key] += 1;
+      }
+    });
+
+    Object.keys(roadmapCompletion).forEach(key => {
+      if (roadmapCounts[key] > 0) {
+        roadmapCompletion[key] = Math.round(roadmapCompletion[key] / roadmapCounts[key]);
+      }
+    });
+
+    // Compute difficult levels
+    const UserActivity = require('../models/UserActivity');
+    const activities = await UserActivity.find({}, 'userId assessments videosWatched').lean();
+    const assessmentStats = {};
+    
+    activities.forEach(act => {
+      if (act.assessments) {
+        act.assessments.forEach(ass => {
+          if (ass.assessmentId) {
+            if (!assessmentStats[ass.assessmentId]) {
+              assessmentStats[ass.assessmentId] = { title: ass.title, attempts: 0, failures: 0 };
+            }
+            assessmentStats[ass.assessmentId].attempts += 1;
+            if (!ass.passed) {
+              assessmentStats[ass.assessmentId].failures += 1;
+            }
+          }
+        });
+      }
+    });
+
+    const difficultLevels = Object.values(assessmentStats)
+      .map(s => ({
+        title: s.title || 'Validation Quiz',
+        failureRate: s.attempts > 0 ? Math.round((s.failures / s.attempts) * 100) : 0,
+        attempts: s.attempts
+      }))
+      .sort((a, b) => b.failureRate - a.failureRate)
+      .slice(0, 5);
+
+    // Compute most skipped videos
+    const Topic = require('../models/Topic');
+    const allTopics = await Topic.find({ isActive: true }, 'title youtubeLink').lean();
+    const topicMap = {};
+    allTopics.forEach(t => {
+      topicMap[t._id.toString()] = t;
+    });
+
+    const skippedVideosMap = {};
+    allUsers.forEach(u => {
+      if (u.activeDomain) {
+        const key = getProgressKey(u.activeDomain.slug);
+        const completed = u.domainsProgress?.[key]?.completedTopics || [];
+        completed.forEach(ct => {
+          const tId = ct.topicId?.toString() || ct.toString();
+          const topicObj = topicMap[tId];
+          if (topicObj) {
+            const userActivityObj = activities.find(a => a.userId?.toString() === u._id.toString());
+            const watchLog = userActivityObj?.videosWatched?.find(vw => vw.videoId === tId);
+            const pct = watchLog ? watchLog.completionPercentage : 0;
+            if (pct < 50) {
+              if (!skippedVideosMap[tId]) {
+                skippedVideosMap[tId] = { title: topicObj.title, skipCount: 0 };
+              }
+              skippedVideosMap[tId].skipCount += 1;
+            }
+          }
+        });
+      }
+    });
+
+    const mostSkippedVideos = Object.values(skippedVideosMap)
+      .sort((a, b) => b.skipCount - a.skipCount)
+      .slice(0, 5);
+
     res.json({
       success: true,
       data: {
@@ -100,7 +206,11 @@ exports.getAdminStats = async (req, res) => {
         totalAssessments,
         totalProblems,
         publishedProblems,
-        totalSubmissions
+        totalSubmissions,
+        studentsOnLevel,
+        roadmapCompletion,
+        difficultLevels,
+        mostSkippedVideos
       }
     });
   } catch (error) {
@@ -111,7 +221,7 @@ exports.getAdminStats = async (req, res) => {
 // @desc    Update user progress/XP/profile (admin)
 exports.updateUserProgress = async (req, res) => {
   try {
-    const { xp, overallProgress, currentPhase, profile } = req.body;
+    const { xp, overallProgress, currentPhase, profile, activeDomain } = req.body;
     const user = await User.findById(req.params.id).populate('activeDomain');
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -132,6 +242,31 @@ exports.updateUserProgress = async (req, res) => {
       if (lowercaseSlug.includes('dsa') || lowercaseSlug.includes('data')) return 'dsa';
       return 'devops';
     };
+
+    if (activeDomain !== undefined) {
+      user.activeDomain = activeDomain || null;
+      if (activeDomain) {
+        const Domain = require('../models/Domain');
+        const domain = await Domain.findById(activeDomain);
+        if (domain) {
+          const key = getProgressKey(domain.slug);
+          if (!user.domainsProgress) user.domainsProgress = {};
+          if (!user.domainsProgress[key]) {
+            user.domainsProgress[key] = {
+              xp: 0,
+              currentPhase: 0,
+              overallProgress: 0,
+              completedTopics: [],
+              startedTopics: [],
+              testResults: [],
+              codeSubmissions: []
+            };
+          }
+          user.markModified(`domainsProgress.${key}`);
+        }
+      }
+      await user.populate('activeDomain');
+    }
 
     const key = getProgressKey(user.activeDomain?.slug);
     if (!user.domainsProgress) user.domainsProgress = {};

@@ -846,6 +846,56 @@ const TopicDetail = () => {
     };
   }, [checkpointVideoEmbedUrl, activeCheckpoint, user, id]);
 
+  // Unified effect to periodically update window.cf_videoAnalytics for heartbeat tracking
+  useEffect(() => {
+    if (!topic) return;
+
+    let progressInterval = setInterval(() => {
+      let currentTime = 0;
+      let duration = 0;
+      let isPlaying = false;
+
+      // Check if it's a direct HTML5 video
+      const videoElement = document.getElementById('tutorial-video-player');
+      if (videoElement) {
+        currentTime = videoElement.currentTime;
+        duration = videoElement.duration || 0;
+        isPlaying = !videoElement.paused;
+      } 
+      // Else check if it's a YouTube video
+      else if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+        try {
+          currentTime = playerRef.current.getCurrentTime();
+          duration = playerRef.current.getDuration() || 0;
+          isPlaying = playerRef.current.getPlayerState() === 1; // 1 is playing
+        } catch (e) {}
+      }
+
+      if (isPlaying && duration > 0) {
+        const completionPercentage = Math.min(100, Math.round((currentTime / duration) * 100));
+        
+        window.cf_videoAnalytics = {
+          videoId: id,
+          title: topic.title,
+          watchTime: (window.cf_videoAnalytics?.videoId === id ? window.cf_videoAnalytics.watchTime : 0) + 5,
+          completionPercentage,
+          lastWatchedAt: new Date()
+        };
+
+        // Auto-complete the video if watch completion percentage is at least 90%
+        if (completionPercentage >= 90 && !isVideoFinished && !isCompleted) {
+          setIsVideoFinished(true);
+          toast.success("Tutorial video completed! Assessment is now unlocked! 🔓");
+        }
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(progressInterval);
+      window.cf_videoAnalytics = null;
+    };
+  }, [topic, id, isCompleted, isVideoFinished]);
+
   // Reset boilerplate when topic, language, or difficulty changes
   useEffect(() => {
     if (langContent?.editorBoilerplate) {

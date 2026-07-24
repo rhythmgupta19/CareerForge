@@ -122,7 +122,9 @@ exports.submitAssessment = async (req, res) => {
     // 2. If user passed, update their roadmap completedTopics & XP
     if (passed) {
       const user = await User.findById(req.user._id);
-      const key = 'devops';
+      const Domain = require('../models/Domain');
+      const domain = await Domain.findById(assessment.roadmapId);
+      const key = getProgressKey(domain?.slug);
       
       const domainProgress = getSafeDomainProgress(user, key);
       const alreadyCompleted = domainProgress.completedTopics.some(ct => ct.topicId.toString() === moduleId.toString());
@@ -132,7 +134,7 @@ exports.submitAssessment = async (req, res) => {
           topicId: moduleId,
           completedAt: new Date(),
           studyTimeMinutes: 30,
-          notes: 'Passed the DevOps MCQ mini assessment!',
+          notes: `Passed the ${domain?.name || 'DevOps'} MCQ mini assessment!`,
           confidenceLevel: 5,
           revisionNeeded: false
         });
@@ -473,10 +475,12 @@ exports.submitLevelAssessment = async (req, res) => {
     // If passed, auto-advance phase using checkAndAdvancePhase helper
     if (passed) {
       const User = require('../models/User');
+      const Domain = require('../models/Domain');
       const { checkAndAdvancePhase } = require('./progressController');
       const user = await User.findById(req.user._id);
       
-      const key = 'devops';
+      const domain = await Domain.findById(assessment.roadmapId);
+      const key = getProgressKey(domain?.slug);
       await checkAndAdvancePhase(user, assessment.roadmapId, key);
       
       user.markModified(`domainsProgress.${key}`);
@@ -528,16 +532,21 @@ exports.completeLevelWithoutAssessment = async (req, res) => {
       ]
     });
 
-    if (assessmentExists) {
+    const Assessment = require('../models/Assessment');
+    const externalAssessmentExists = await Assessment.exists({ phaseId: levelId, isActive: true });
+
+    if (assessmentExists || externalAssessmentExists) {
       return res.status(400).json({ success: false, message: 'Assessment exists for this level. You must attempt it.' });
     }
 
     // Advance phase directly
     const User = require('../models/User');
     const Topic = require('../models/Topic');
+    const Domain = require('../models/Domain');
     const { checkAndAdvancePhase } = require('./progressController');
     const user = await User.findById(req.user._id);
-    const key = 'devops';
+    const domainObj = await Domain.findById(phase.domainId);
+    const key = getProgressKey(domainObj?.slug);
 
     const topicsInPhase = await Topic.find({ phaseId: levelId, isActive: true });
     const domainProgress = user.domainsProgress[key];

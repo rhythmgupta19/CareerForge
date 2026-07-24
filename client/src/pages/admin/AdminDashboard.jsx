@@ -53,6 +53,7 @@ const AdminDashboard = () => {
   const [customXp, setCustomXp] = useState(0);
   const [customProgress, setCustomProgress] = useState(0);
   const [customPhase, setCustomPhase] = useState(0);
+  const [customDomain, setCustomDomain] = useState('');
 
   // New Domain Creation Modal State
   const [showDomainModal, setShowDomainModal] = useState(false);
@@ -175,6 +176,7 @@ const AdminDashboard = () => {
     setCustomXp(activeProg.xp || 0);
     setCustomProgress(activeProg.overallProgress || 0);
     setCustomPhase(activeProg.currentPhase || 0);
+    setCustomDomain(user.activeDomain?._id || user.activeDomain || '');
   };
 
   const handleSaveProgress = async () => {
@@ -184,7 +186,8 @@ const AdminDashboard = () => {
       const res = await api.put(`/admin/users/${selectedUser._id}/progress`, {
         xp: Number(customXp),
         overallProgress: Number(customProgress),
-        currentPhase: Number(customPhase)
+        currentPhase: Number(customPhase),
+        activeDomain: customDomain || null
       });
       if (res.data.success) {
         toast.success("Student records updated!", { id: loadingToast });
@@ -506,6 +509,12 @@ const AdminDashboard = () => {
                 className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'maintenance' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
               >
                 🛠️ Maintenance
+              </button>
+              <button
+                onClick={() => setActiveTab('roadmap-analytics')}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${activeTab === 'roadmap-analytics' ? 'bg-emerald-600 dark:bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'}`}
+              >
+                📊 Roadmap Analytics
               </button>
             </div>
             <Link
@@ -1228,6 +1237,126 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {activeTab === 'roadmap-analytics' && (
+        <div className="admin-panel bg-white dark:bg-slate-900/40 border border-slate-150 dark:border-white/5 rounded-3xl p-6 shadow-md dark:shadow-xl space-y-8 animate-fade-in">
+          <div>
+            <h3 className="text-lg font-black text-slate-800 dark:text-white flex items-center gap-2">📊 Roadmap Analytics Dashboard</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">High-fidelity metrics on student distribution, roadmap completion, and course friction areas</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 animate-fade-in">
+            {/* Specialization Enrollment & Average Progress */}
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-6">
+              <h4 className="font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider border-b border-slate-200/50 dark:border-white/5 pb-2">🧭 Enrollment & Completion Rates</h4>
+              <div className="space-y-4">
+                {domains.map(dom => {
+                  const key = getProgressKey(dom.slug);
+                  const completionRate = stats?.roadmapCompletion?.[key] || 0;
+                  // Count total students in this domain
+                  const levelCounts = stats?.studentsOnLevel?.[key] || {};
+                  const studentCount = Object.values(levelCounts).reduce((a, b) => a + b, 0);
+
+                  return (
+                    <div key={dom._id} className="space-y-2">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{dom.name}</span>
+                        <span className="font-black text-slate-800 dark:text-white">{studentCount} Students Enrolled</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-500">Average Completion Rate:</span>
+                        <span className="font-black text-emerald-500">{completionRate}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400"
+                          style={{ width: `${completionRate}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Students Level Distribution */}
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-6">
+              <h4 className="font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider border-b border-slate-200/50 dark:border-white/5 pb-2">👥 Students Level Distribution</h4>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {domains.map(dom => {
+                  const key = getProgressKey(dom.slug);
+                  const levelCounts = stats?.studentsOnLevel?.[key] || {};
+                  const hasStudents = Object.keys(levelCounts).length > 0;
+
+                  return (
+                    <div key={dom._id} className="space-y-2 pb-3 border-b last:border-0 border-slate-200/40 dark:border-white/5">
+                      <span className="font-black text-[10px] text-slate-500 uppercase tracking-widest block">{dom.name}</span>
+                      {hasStudents ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {Object.entries(levelCounts).map(([lvl, count]) => (
+                            <div key={lvl} className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/5 p-2 rounded-xl text-center">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase block">Level {lvl}</span>
+                              <span className="text-sm font-black text-slate-800 dark:text-white">{count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] italic text-slate-400 block">No students currently on this path.</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Most Difficult Concepts / Assessments */}
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
+              <h4 className="font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider border-b border-slate-200/50 dark:border-white/5 pb-2">⚠️ Toughest Concepts & Assessments</h4>
+              <div className="space-y-3">
+                {stats?.difficultLevels && stats.difficultLevels.length > 0 ? (
+                  stats.difficultLevels.map((lvl, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl hover:border-rose-500/20 transition-all">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-white block">{lvl.title}</span>
+                        <span className="text-[9px] text-slate-500 font-semibold">{lvl.attempts} Total Attempts</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-black text-rose-500">{lvl.failureRate}% Failure Rate</span>
+                        <span className="text-[8px] text-slate-400 block uppercase font-bold">Needs Mentor Support</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-xs italic text-slate-400 block text-center py-6">No assessment data compiled yet.</span>
+                )}
+              </div>
+            </div>
+
+            {/* Most Skipped Videos */}
+            <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
+              <h4 className="font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider border-b border-slate-200/50 dark:border-white/5 pb-2">🎥 Most Skipped Video Lessons</h4>
+              <div className="space-y-3">
+                {stats?.mostSkippedVideos && stats.mostSkippedVideos.length > 0 ? (
+                  stats.mostSkippedVideos.map((vid, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-3 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl hover:border-amber-500/20 transition-all">
+                      <div>
+                        <span className="text-xs font-bold text-slate-800 dark:text-white block truncate max-w-[200px]">{vid.title}</span>
+                        <span className="text-[9px] text-slate-500 font-semibold">Video Lesson</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-black text-amber-500">{vid.skipCount} Skips</span>
+                        <span className="text-[8px] text-slate-400 block uppercase font-bold">Needs Video Update</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <span className="text-xs italic text-slate-400 block text-center py-6">No video skips registered.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* User Personalization Modal (Drawer style) */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex justify-end">
@@ -1339,6 +1468,30 @@ const AdminDashboard = () => {
                       onChange={(e) => setCustomPhase(e.target.value)}
                       className="bg-slate-50 dark:bg-slate-950/85 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white font-bold w-full focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500"
                     />
+                  </div>
+
+                  {/* Assigned Domain Selection */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Assign Course Specialization:</label>
+                    <select
+                      value={customDomain}
+                      onChange={(e) => {
+                        setCustomDomain(e.target.value);
+                        // If they switch the domain, update the sliders to this domain's progress if it already exists
+                        const newDomainObj = domains.find(d => d._id === e.target.value);
+                        const key = getProgressKey(newDomainObj?.slug);
+                        const activeProg = selectedUser.domainsProgress?.[key] || {};
+                        setCustomXp(activeProg.xp || 0);
+                        setCustomProgress(activeProg.overallProgress || 0);
+                        setCustomPhase(activeProg.currentPhase || 0);
+                      }}
+                      className="bg-slate-50 dark:bg-slate-950/85 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white font-bold w-full focus:outline-none focus:border-emerald-650 dark:focus:border-indigo-500"
+                    >
+                      <option value="">Unassigned</option>
+                      {domains.map(d => (
+                        <option key={d._id} value={d._id}>{d.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <button
